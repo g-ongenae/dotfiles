@@ -7,7 +7,7 @@ function getCurrentBranch {
 
 function pull {
 	getCurrentBranch
-	git pull origin "$CURRENT_BRANCH"
+	git pull origin $CURRENT_BRANCH
 }
 
 function push {
@@ -20,11 +20,11 @@ function push {
 	fi
 	read -rp "Are you sure you want to use $REMOTE as remote ?"
 
-	REMOTE_EXIST=$(git ls-remote --heads "$REMOTE" "$CURRENT_BRANCH" | grep -e "$CURRENT_BRANCH" | wc -l)
+	REMOTE_EXIST=$(git ls-remote --heads $REMOTE $CURRENT_BRANCH | grep -e "$CURRENT_BRANCH" | wc -l)
 	if [[ "$REMOTE_EXIST" ]]; then
-		git push "$REMOTE $CURRENT_BRANCH"
+		git push $REMOTE $CURRENT_BRANCH
 	else
-		git push --set-upstream "$REMOTE $CURRENT_BRANCH"
+		git push --set-upstream $REMOTE $CURRENT_BRANCH
 	fi
 }
 
@@ -51,7 +51,7 @@ function switch_branch {
 
 	read -rp "What branch do you want to switch to ?" BRANCH_INDEX
 
-	git checkout "${BRANCHES[$BRANCH_INDEX]}"
+	git checkout ${BRANCHES[$BRANCH_INDEX]}
 }
 
 ## Some checks before committing
