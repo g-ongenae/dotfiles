@@ -1,0 +1,44 @@
+# Aliases
+
+## Clear
+alias c="clear"
+
+## Change Directory
+alias cd..="cd .."
+alias code="cd ~/Documents/code"
+alias dotfiles="cd $CWD/../"
+alias other="cd ~/Documents/other"
+alias study="cd ~/Documents/study"
+alias work="cd ~/Documents/work"
+alias write="cd ~/Documents/write"
+
+## List
+alias ls..="ls .."
+alias ls="ls $LS_OPTIONS -GhF"
+alias ll="ls $LS_OPTIONS -GlAhF"
+alias la="ls $LS_OPTIONS -GaAhF"
+alias lr="ls $LS_OPTIONS -GRAhF"
+alias lf="ls $LS_OPTIONS -GRAhF | grep ':$' | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's/-/|/'"
+
+## Program
+alias vscode="open -a 'visual studio code'"
+alias typora="open -a typora"
+
+## Remove
+alias ri="rm -I"
+alias rf="rm -vf"
+alias rr="rm -vR"
+alias rm="rm -v"
+
+## Tree
+alias tree..="tree .."
+
+## Shell
+alias _="sudo"
+alias exit="osascript -e 'tell application \"Terminal\" to quit'"
+alias reload="exec $SHELL -l"
+
+## Yarn
+
+alias y="yarn"
+alias yr="yarn run"

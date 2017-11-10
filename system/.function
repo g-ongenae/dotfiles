@@ -1,0 +1,139 @@
+# Functions
+
+## Open
+function atom {
+	if [ "$#" == 0 ]; then
+		open -a atom .
+	else
+		open -a atom "$1"
+	fi
+}
+
+## CD functions
+# cd .. n-times
+# Source: https://unix.stackexchange.com/a/13101
+# (c) 2007 stefan w. GPLv3
+function up {
+	UPS=""
+	for i in $(seq 1 $1)
+	do
+		UPS=$UPS"../"
+	done
+	cd $UPS || exit
+}
+
+# Move to a folder and get a recap
+function recap {
+	cd "$@" || exit;
+	echo "$@" " containing :"
+	ls -GhF;
+	echo "$@" " is :"
+	[[ -d "$@/.git" ]] && git status || echo "Not a repository.";
+}
+
+## Mkdir
+# Move to folder created
+function nd {
+	[[ -d "$1" ]] || mkdir "$1" && cd "$1" || exit;
+}
+
+## Move
+function trash { mv "$@" ~/.Trash; }
+
+## Project functions
+
+### Today I learned
+function firstLineTilPost {
+	echo "---
+layout: post
+title: \"$1\"
+date: $DATE
+categories: main
+comments: true
+---" > "$NEWFILE"
+}
+
+function til {
+	if [ "$#" == 0 ]; then
+		cd ~/Documents/code/til/
+		return
+	fi
+
+	DATE=$(date +%Y-%m-%d)
+	case "$1" in
+		new)
+			NEWFILE="$HOME/Documents/code/til/_post/$DATE-$2.markdown"
+			firstLineTilPost "$2"
+			atom "$NEWFILE"
+			;;
+		open)
+			if [ "$2" == "now" ]; then
+				atom "$HOME/Documents/code/til/_post/$DATE-*.markdown"
+			fi
+			;;
+		cmp)
+			read -rp "Going to commit with message: $2 Press enter to confirm."
+			cd ~/Documents/code/til/ || exit
+			git commit -am "$2"
+			gpsh
+			;;
+		*)
+			echo "Usage: Ease TIL gestion."
+			echo "new NAME initialize a til post"
+			echo "open DATE open til post of a specify date | now"
+			echo "cmp MESSAGE commit and push til modifications"
+			;;
+	esac
+}
+
+### Try
+function try {
+	if [ "$#" == 0 ]; then
+		cd ~/Documents/try/
+	fi
+
+	case "$1" in
+		new)
+			echo "What's your project's name ?"
+			read -r NAME
+			FOLDER="$HOME/Documents/try/$NAME"
+			mkdir "$FOLDER"
+			cd "$FOLDER" || exit
+			echo "$FOLDER created."
+			if [ "$2" == "node" ]; then
+				yarn init
+			fi
+			;;
+		*)
+			echo "Usage: Create new project easily."
+			echo "new PROJECTLANG initialize a project folder"
+			;;
+	esac
+}
+
+## GitHub
+
+function github {
+	if [ "$#" == 0 ]; then
+		cd ~/Documents/code/github
+		return
+	fi
+
+	case "$1" in
+		io)
+			cd ~/Documents/code/g-ongenae.github.io
+			atom .
+			;;
+		d|desktop)
+			# Use git d instead
+			open -a 'github desktop'
+			;;
+		w|web)
+			open https://github.com/
+			;;
+		h|help)
+			echo "		- Open github folder"
+			echo "io	- Open g-ongenae.github.io folder"
+			echo "w		- Open Github in the browser"
+	esac
+}

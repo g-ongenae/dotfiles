@@ -1,0 +1,9 @@
+# Git ignore
+
+## Private files
+
+secret/
+
+## System
+.DS_Store
+.Rhistory
