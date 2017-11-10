@@ -15,6 +15,9 @@
 	contrib = shortlog --summary --numbered
 	d = "!f() { open -a 'github desktop'; }; f"
 	df = diff --word-diff
+	f = flow
+	h = help
+	i = init
 	l = log --one-line -n 20
 	ld = "!sh -c \"git log --since '${1:-1} days ago' --oneline --author $(git config user.email)\" -"
 	log = log -n 10
@@ -22,7 +25,9 @@
 	pop = stash apply
 	pr = "!f() { git fetch -fu ${2:-origin} refs/pull/$1/head:pr/$1 && git checkout pr/$1; }; f"
 	revert = checkout --
+	ri = "!f() { rm .git && git init; }; f"
 	show-ignored = "! git clean -ndX | perl -pe 's/Would remove/Ignored:/'"
+	squash = rebase -i
 	st = status
 	stash = stash save
 	unstage = checkout -- HEAD
@@ -48,3 +53,8 @@
 	oldHighlight = red bold 52
 	newNormal = green bold
 	newHighlight = green bold 22
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
