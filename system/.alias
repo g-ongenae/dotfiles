@@ -6,7 +6,7 @@ alias c="clear"
 ## Change Directory
 alias cd..="cd .."
 alias code="cd ~/Documents/code"
-alias dotfiles="cd $CWD/../"
+alias dotfiles="cd ~/Documents/code/dotfiles/"
 alias other="cd ~/Documents/other"
 alias study="cd ~/Documents/study"
 alias work="cd ~/Documents/work"
@@ -21,7 +21,7 @@ alias lr="ls $LS_OPTIONS -GRAhF"
 alias lf="ls $LS_OPTIONS -GRAhF | grep ':$' | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's/-/|/'"
 
 ## Open
-alias secret="atom $CWD/../secret"
+alias secret="atom ~/Documents/code/dotfiles/secret"
 
 ## Program
 alias vscode="open -a 'visual studio code'"
@@ -35,6 +35,14 @@ alias rm="rm -v"
 
 ## Tree
 alias tree..="tree .."
+alias tree="tree -CF"
+alias tre3="tree -CF -L 3"
+alias tred="tree -CF -d"
+alias trei="tree -CF -I 'node_modules'"
+alias trej="tree -CF -o tree.log -j"
+alias trel="tree -CF -p"
+alias tres="tree -CF | less"
+alias tret="tree -CF -tp"
 
 ## Shell
 alias _="sudo"

@@ -25,7 +25,7 @@
 	pop = stash apply
 	pr = "!f() { git fetch -fu ${2:-origin} refs/pull/$1/head:pr/$1 && git checkout pr/$1; }; f"
 	revert = checkout --
-	ri = "!f() { rm .git && git init; }; f"
+	ri = "!f() { mv .git ~/.Trash && git init; }; f"
 	show-ignored = "! git clean -ndX | perl -pe 's/Would remove/Ignored:/'"
 	squash = rebase -i
 	st = status

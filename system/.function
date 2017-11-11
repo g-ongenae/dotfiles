@@ -24,11 +24,17 @@ function up {
 
 # Move to a folder and get a recap
 function recap {
-	cd "$@" || exit;
-	echo "$@" " containing :"
+	if [ "$#" == 0 ]; then
+		DIR="."
+	else
+		DIR="$@"
+	fi
+
+	cd "$DIR" || exit;
+	echo $DIR " containing :"
 	ls -GhF;
-	echo "$@" " is :"
-	[[ -d "$@/.git" ]] && git status || echo "Not a repository.";
+	echo "$DIR" " is :"
+	[[ -d "$DIR/.git" ]] && git status || echo "Not a repository.";
 }
 
 ## Mkdir
@@ -90,6 +96,7 @@ function til {
 function try {
 	if [ "$#" == 0 ]; then
 		cd ~/Documents/try/
+		return
 	fi
 
 	case "$1" in
@@ -135,5 +142,6 @@ function github {
 			echo "		- Open github folder"
 			echo "io	- Open g-ongenae.github.io folder"
 			echo "w		- Open Github in the browser"
+			;;
 	esac
 }
