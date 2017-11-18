@@ -49,7 +49,8 @@ alias _="sudo"
 alias exit="osascript -e 'tell application \"Terminal\" to quit'"
 alias reload="exec $SHELL -l"
 
-## Yarn
-
+## Yarn & NPM
+alias n="npm"
+alias nr="npm run"
 alias y="yarn"
 alias yr="yarn run"
