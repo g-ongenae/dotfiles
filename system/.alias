@@ -46,7 +46,7 @@ alias tret="tree -CF -tp"
 
 ## Shell
 alias _="sudo"
-alias exit="osascript -e 'tell application \"Terminal\" to quit'"
+alias q="osascript -e 'tell application \"Terminal\" to quit'"
 alias reload="exec $SHELL -l"
 
 ## Yarn & NPM
