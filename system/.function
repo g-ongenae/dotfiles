@@ -46,6 +46,20 @@ function nd {
 ## Move
 function trash { mv "$@" ~/.Trash; }
 
+## JSON Output
+function json {
+	if [ "$#" == 1 ]; then
+		if [ -f "$1" ]; then
+			cat $1 | python -m json.tool
+		else
+			# TODO: Check is a valid link
+			curl -s "$1" | python -m json.tool
+		fi
+	else
+		echo "Usage: json <file/url>"
+	fi
+}
+
 ## Project functions
 
 ### Today I learned
