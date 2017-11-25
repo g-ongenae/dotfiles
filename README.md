@@ -10,3 +10,10 @@ I'm taking ideas from:
 - and much more, from https://dotfiles.github.io/.
 
 Still learning and building, though.
+
+## Install
+
+Run:
+```bash
+bash install.sh
+```
