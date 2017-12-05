@@ -100,20 +100,20 @@ function til {
 	DATE=$(date +%Y-%m-%d)
 	case "$1" in
 		new)
-			NEWFILE="$HOME/Documents/code/til/_post/$DATE-$2.markdown"
+			NEWFILE="$HOME/Documents/code/til/_posts/$DATE-$2.markdown"
 			firstLineTilPost "$2"
 			atom "$NEWFILE"
 			;;
 		open)
 			if [ "$2" == "now" ]; then
-				atom "$HOME/Documents/code/til/_post/$DATE-*.markdown"
+				atom "$HOME/Documents/code/til/_posts/$DATE-*.markdown"
 			fi
 			;;
 		cmp)
 			read -rp "Going to commit with message: $2 Press enter to confirm."
 			cd ~/Documents/code/til/ || exit
 			git commit -am "$2"
-			gpsh
+			push
 			;;
 		*)
 			echo "Usage: Ease TIL gestion."
