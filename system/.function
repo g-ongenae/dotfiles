@@ -60,6 +60,23 @@ function json {
 	fi
 }
 
+## Journal
+function new_day {
+	jrnl_today=`jrnl -on today`
+	if [ "$jrnl_today" == "" ]; then
+		echo "What are you working on today?"
+		read -p "Open Journal? (Yes/No) => " answer
+		case "$answer" in
+			[Yy]* )
+				jrnl
+				;;
+			*)
+				echo "Ok! Have a good day!"
+				;;
+		esac
+	fi
+}
+
 ## Project functions
 
 ### Today I learned

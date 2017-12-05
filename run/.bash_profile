@@ -28,3 +28,6 @@ unset READLINK CURRENT_SCRIPT SCRIPT_PATH DOTFILE
 
 # Export
 export DOTFILES_DIR DOTFILES_EXTRA_DIR
+
+# Ask for today work
+new_day
