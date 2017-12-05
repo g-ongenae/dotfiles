@@ -62,6 +62,7 @@ function json {
 
 ## Journal
 function new_day {
+	trap 'echo "" && return' SIGINT
 	jrnl_today=`jrnl -on today`
 	if [ "$jrnl_today" == "" ]; then
 		echo "What are you working on today?"
