@@ -31,9 +31,9 @@ function recap {
 	fi
 
 	cd "$DIR" || exit;
-	echo $DIR " containing :"
+	echo $DIR " containing:"
 	ls -GhF;
-	echo "$DIR" " is :"
+	echo "$DIR" " is:"
 	[[ -d "$DIR/.git" ]] && git status || echo "Not a repository.";
 }
 
@@ -132,7 +132,7 @@ function try {
 
 	case "$1" in
 		new)
-			echo "What's your project's name ?"
+			echo "What's your project's name? "
 			read -r NAME
 			FOLDER="$HOME/Documents/try/$NAME"
 			mkdir "$FOLDER"
@@ -150,7 +150,6 @@ function try {
 }
 
 ## GitHub
-
 function github {
 	if [ "$#" == 0 ]; then
 		cd ~/Documents/code/github

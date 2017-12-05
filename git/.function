@@ -18,7 +18,7 @@ function push {
 	else
 		REMOTE="origin"
 	fi
-	read -rp "Are you sure you want to use $REMOTE as remote ?"
+	read -rp "Are you sure you want to use $REMOTE as remote? Press ^C to exit."
 
 	REMOTE_EXIST=$(git ls-remote --heads $REMOTE $CURRENT_BRANCH | grep -e "$CURRENT_BRANCH" | wc -l)
 	if [[ "$REMOTE_EXIST" ]]; then
@@ -49,7 +49,7 @@ function switch_branch {
 		echo "$i -> ${BRANCHES[i]}"
 	done
 
-	read -rp "What branch do you want to switch to ?" BRANCH_INDEX
+	read -rp "What branch do you want to switch to? " BRANCH_INDEX
 
 	git checkout ${BRANCHES[$BRANCH_INDEX]}
 }
