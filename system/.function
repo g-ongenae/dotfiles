@@ -1,5 +1,44 @@
 # Functions
 
+## List dotfiles Help
+function dot_help {
+	# TODO make it a little bit pretty, just a little...
+	DOT_HELP="Print list of functions and aliases in the dotfiles:\n"
+	DOT_HELP="$DOT_HELP	ga - git aliases\n"
+	DOT_HELP="$DOT_HELP	gs - git personal functions\n"
+	DOT_HELP="$DOT_HELP	a|aliases - aliases\n"
+	DOT_HELP="$DOT_HELP	f|functions - functions"
+
+	if [ "$#" == 0 ]; then
+		echo -e "$DOT_HELP"
+		return
+	fi
+
+	case "$1" in
+		ga)
+			echo "Git aliases:"
+			git config --list | grep --color "alias.*="
+			;;
+		gf)
+			echo "Git personal functions:"
+			grep --color "function .*{" $DOTFILES_DIR/git/.function
+			;;
+		a|aliases)
+			echo "Aliases:"
+			grep --color "alias .*=" $DOTFILES_DIR/system/.alias
+			grep --color "alias .*=" $DOTFILES_DIR/git/.alias
+			;;
+		f|functions)
+			echo "Functions:"
+			grep --color "function .*{" $DOTFILES_DIR/system/.function
+			;;
+		*)
+			echo "Error! Unrecognized argument"
+			echo -e "$DOT_HELP"
+			;;
+	esac
+}
+
 ## Open
 function atom {
 	if [ "$#" == 0 ]; then
