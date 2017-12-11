@@ -9,9 +9,9 @@ alias code="cd ~/Documents/code"
 alias days="cd ~/Documents/code/days/"
 alias dotfiles="cd ~/Documents/code/dotfiles/"
 alias other="cd ~/Documents/other"
-alias study="cd ~/Documents/study"
+# alias study="cd ~/Documents/study"
 alias work="cd ~/Documents/work"
-alias write="cd ~/Documents/write"
+# alias write="cd ~/Documents/write"
 
 ## List
 alias ls..="ls .."
@@ -23,7 +23,7 @@ alias lf="ls $LS_OPTIONS -GRAhF | grep ':$' | sed -e 's/:$//' -e 's/[^-][^\/]*\/
 
 ## Program
 alias vscode="open -a 'visual studio code'"
-alias typora="open -a typora"
+# alias typora="open -a typora"
 alias j="jrnl" # see https://github.com/maebert/jrnl | http://jrnl.sh
 alias h="open http://127.0.0.1:8080 & http-server"
 

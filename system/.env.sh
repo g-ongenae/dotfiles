@@ -54,14 +54,14 @@ IN="\[\033[0m\]"
 
 function ___ps1 {
 	# Only print host if different than (\h)
-	if [[ "$HOSTNAME" == 'on.local' || "$HOSTNAME" == 'on.home' || "$HOSTNAME" == 'on' ]]; then
+	if [[ "$HOSTNAME" == 'iMac-de-Petit.local' || "$HOSTNAME" == 'iMac-de-Petit.home' || "$HOSTNAME" == 'iMac-de-Petit' ]]; then
 		h=''
 	else
 		h='$HOSTNAME'
 	fi
 
 	# Only print username if different than (\u)
-	if [[ "$USER" == 'go' ]]; then
+	if [[ "$USER" == 'guillaumeongenae' ]]; then
 		u='•'
 	else
 		u='$USER'
