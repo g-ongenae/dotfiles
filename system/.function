@@ -102,6 +102,11 @@ function json {
 ## Journal
 function new_day {
 	trap 'echo "" && return' SIGINT
+	if [ !`jrnl -v` ]; then
+		echo "Journal is not installed. Run `brew install jrnl`";
+		return
+	fi
+
 	jrnl_today=`jrnl -on today`
 	if [ "$jrnl_today" == "" ]; then
 		echo "What are you working on today?"
