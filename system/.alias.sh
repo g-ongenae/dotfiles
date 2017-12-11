@@ -56,3 +56,6 @@ alias yr="yarn run"
 
 # Kubernetes
 alias ks="kubectl"
+
+# Secret aliases
+alias lyl="node $HOME/Documents/work/scripts/lyl-yelloan-launcher/lyl.js"

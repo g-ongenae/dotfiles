@@ -26,13 +26,13 @@ export DERBY_HOME="/Users/go/Documents/code/derby/bin"
 export PATH="$DERBY_HOME/bin:$PATH"
 
 ### Python
-export PYTHONPATH="/Library/Python/2.7/site-packages/:$PYTHONPATH"
+# export PYTHONPATH="/Library/Python/2.7/site-packages/:$PYTHONPATH"
 
 ## Version Manager
 
 ### Node
 ### => AVN
-[[ -s "$HOME/.avn/bin/avn.sh" ]] && source "$HOME/.avn/bin/avn.sh"
+# [[ -s "$HOME/.avn/bin/avn.sh" ]] && source "$HOME/.avn/bin/avn.sh"
 ### => NVM
 export NVM_DIR="$HOME/.nvm"
 [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
@@ -40,7 +40,7 @@ export NVM_DIR="$HOME/.nvm"
 export PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
 
 ### RVM
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+# [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
 
 ## Shell
 
