@@ -30,9 +30,8 @@ alias j="jrnl" # see https://github.com/maebert/jrnl | http://jrnl.sh
 
 ## Remove
 alias ri="rm -I"
-alias rf="rm -vf"
-alias rr="rm -vR"
-alias rm="rm -v"
+alias rf="rm -f"
+alias rr="rm -R"
 
 ## Tree
 alias tree..="tree .."
