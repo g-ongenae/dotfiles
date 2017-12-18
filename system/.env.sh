@@ -39,6 +39,9 @@ export NVM_DIR="$HOME/.nvm"
 ### Yarn Global Modules
 export PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
 
+### Yarn
+export PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
+
 ### RVM
 # [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
 
@@ -86,3 +89,4 @@ function ___ps1 {
 }
 
 export PROMPT_COMMAND=___ps1
+# export PS4="\! : \d \t > "
