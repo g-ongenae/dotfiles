@@ -1,0 +1,12 @@
+# Git ignore
+
+## System
+.DS_Store
+# Git ignore
+
+## Dependencies
+node_modules
+
+## Log
+yarn-error.log
+npm-debug.log
