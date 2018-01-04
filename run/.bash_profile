@@ -11,15 +11,15 @@ else
 fi
 
 # source the dotfiles
-for DOTFILE in "$DOTFILES_DIR"/system/.{function,env,alias}; do
+for DOTFILE in "$DOTFILES_DIR"/system/.{function,env,alias}.sh; do
 	[ -f "$DOTFILE" ] && source "$DOTFILE"
 done
 
-for DOTFILE in "$DOTFILES_DIR"/git/.{function,alias}; do
+for DOTFILE in "$DOTFILES_DIR"/git/.{function,alias}.sh; do
 	[ -f "$DOTFILE" ] && source "$DOTFILE"
 done
 
-for DOTFILE in "$DOTFILES_DIR"/secret/.{alias}; do
+for DOTFILE in "$DOTFILES_DIR"/secret/.{alias}.sh; do
 	[ -f "$DOTFILE" ] && source "$DOTFILE"
 done
 
