@@ -2,11 +2,23 @@
 
 ## System
 .DS_Store
-# Git ignore
+.Rhistory
 
 ## Dependencies
 node_modules
 
-## Log
+## Logs
 yarn-error.log
 npm-debug.log
+
+## Compilation
+*.pyc
+*.out
+*.o
+
+## Cache
+.npm
+.sass-cache
+
+## Temporary files
+*.tmp
