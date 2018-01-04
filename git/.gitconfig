@@ -1,6 +1,6 @@
 [user]
 	name = Guillaume Ongenae
-	email = guillaume.ongenae@gmail.com
+	email = guillaume.ongenae@yelloan.com
 
 [github]
 	user = g-ongenae
@@ -71,3 +71,7 @@
 [mergetool "sourcetree"]
 	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
 	trustExitCode = true
+[core]
+	excludesfile = /Users/guillaumeongenae/.gitignore_global
+[commit]
+	template = /Users/guillaumeongenae/.stCommitMsg
