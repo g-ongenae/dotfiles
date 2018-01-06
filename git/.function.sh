@@ -28,7 +28,7 @@ function push {
 	fi
 }
 
-function switch_branch {
+function prompt_branches {
 	echo "Listing branches of the git repository."
 	BRANCHES=$(git branch) || echo "Error while getting branches"
 
@@ -48,10 +48,27 @@ function switch_branch {
 	for i in "${!BRANCHES[@]}"; do
 		echo "$i -> ${BRANCHES[i]}"
 	done
+}
+
+function switch_branch {
+	prompt_branches
 
 	read -rp "What branch do you want to switch to? " BRANCH_INDEX
 
 	git checkout ${BRANCHES[$BRANCH_INDEX]}
+}
+
+function delete_branch {
+	prompt_branches
+
+	read -rp "What branch do you want to delete? " BRANCH_INDEX
+
+	if [ "$#" -gt 0 ] && [ "$1" == "-f" ]; then
+		# Force Delete
+		git branch -D ${BRANCHES[$BRANCH_INDEX]}
+	else
+		git branch -d ${BRANCHES[$BRANCH_INDEX]}
+	fi
 }
 
 ## Some checks before committing
