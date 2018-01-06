@@ -6,6 +6,7 @@ alias c="clear"
 ## Change Directory
 alias cd..="cd .."
 alias code="cd ~/Documents/code"
+alias days="cd ~/Documents/code/days/"
 alias dotfiles="cd ~/Documents/code/dotfiles/"
 alias other="cd ~/Documents/other"
 alias study="cd ~/Documents/study"
