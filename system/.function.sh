@@ -53,7 +53,7 @@ function atom {
 # or cd up back from down
 function up {
 	if [ "$#" == 0 ]; then
-		! [[ "$UP" == "" ]] && UPS=$UP || (echo "No up" && exit)
+		! [[ "$UP" == "" ]] && UPS=$UP || (echo "No up" && return)
 	else
 		UPS=""
 		for i in $(seq 1 $1); do
@@ -62,14 +62,14 @@ function up {
 	fi
 
 	DOWN=`pwd`
-	cd $UPS || exit
+	cd $UPS || return
 }
 
 # cd back from up
 function down {
-	! [[ "$DOWN" == "" ]] || (echo "No down" && exit)
+	! [[ "$DOWN" == "" ]] || (echo "No down" && return)
 	UP=`pwd`
-	cd $DOWN || exit
+	cd $DOWN || return
 }
 
 # Move to a folder and get a recap
@@ -80,17 +80,17 @@ function recap {
 		DIR="$@"
 	fi
 
-	cd "$DIR" || exit;
+	cd "$DIR" || return
 	echo $DIR " containing:"
-	ls -GhF;
+	ls -GhF
 	echo "$DIR" " is:"
-	[[ -d "$DIR/.git" ]] && git status || echo "Not a repository.";
+	[[ -d "$DIR/.git" ]] && git status || echo "Not a repository."
 }
 
 ## Mkdir
 # Move to folder created
 function nd {
-	[[ -d "$1" ]] || mkdir "$1" && cd "$1" || exit;
+	[[ -d "$1" ]] || mkdir "$1" && cd "$1" || return
 }
 
 ## Move
@@ -114,7 +114,7 @@ function json {
 function new_day {
 	trap 'echo "" && return' SIGINT
 	if [ "$(jrnl -v)" == "" ]; then
-		echo "Journal is not installed. Run `brew install jrnl`";
+		echo "Journal is not installed. Run `brew install jrnl`"
 		return
 	fi
 
@@ -165,7 +165,7 @@ function til {
 			;;
 		cmp)
 			read -rp "Going to commit with message: $2 Press enter to confirm."
-			cd ~/Documents/code/til/ || exit
+			cd ~/Documents/code/til/ || return
 			git commit -am "$2"
 			push
 			;;
@@ -191,7 +191,7 @@ function try {
 			read -r NAME
 			FOLDER="$HOME/Documents/try/$NAME"
 			mkdir "$FOLDER"
-			cd "$FOLDER" || exit
+			cd "$FOLDER" || return
 			echo "$FOLDER created."
 			if [ "$2" == "node" ]; then
 				yarn init
