@@ -49,16 +49,27 @@ function atom {
 }
 
 ## CD functions
-# cd .. n-times
-# Source: https://unix.stackexchange.com/a/13101
-# (c) 2007 stefan w. GPLv3
+# cd .. n-times 
+# or cd up back from down
 function up {
-	UPS=""
-	for i in $(seq 1 $1)
-	do
-		UPS=$UPS"../"
-	done
+	if [ "$#" == 0 ]; then
+		! [[ "$UP" == "" ]] && UPS=$UP || (echo "No up" && exit)
+	else
+		UPS=""
+		for i in $(seq 1 $1); do
+			UPS=$UPS"../"
+		done
+	fi
+
+	DOWN=`pwd`
 	cd $UPS || exit
+}
+
+# cd back from up
+function down {
+	! [[ "$DOWN" == "" ]] || (echo "No down" && exit)
+	UP=`pwd`
+	cd $DOWN || exit
 }
 
 # Move to a folder and get a recap
