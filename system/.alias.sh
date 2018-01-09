@@ -28,6 +28,7 @@ alias secret="atom ~/Documents/code/dotfiles/secret"
 alias vscode="open -a 'visual studio code'"
 alias typora="open -a typora"
 alias j="jrnl" # see https://github.com/maebert/jrnl | http://jrnl.sh
+alias h="http-server"
 
 ## Remove
 alias ri="rm -I"
