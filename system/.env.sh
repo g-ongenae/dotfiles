@@ -17,6 +17,8 @@ export PYTHONPATH="/Library/Python/2.7/site-packages/:$PYTHONPATH"
 ### => NVM
 export NVM_DIR="$HOME/.nvm"
 [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
+### Yarn Global Modules
+export PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
 
 ### RVM
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
