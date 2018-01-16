@@ -86,3 +86,18 @@ function commit {
 ## - Soft: if modifications ignore
 ## - Hard: Stash and force
 # }
+
+function add_my_remote {
+	remote=`git remote -v`
+	regex="(git@[a-z0-9]+.[a-z]{2,4}):[a-z0-9\-]+/([a-z0-9\-_]+.git)"
+	username=`git config --global github.user`
+
+	if [[ $remote =~ $regex ]]; then
+		remoteUrl="${BASH_REMATCH[1]}:$username/${BASH_REMATCH[2]}"
+		git remote add mine $remoteUrl
+		echo "New remote mine added:"
+		git remote -v show mine
+	else
+		echo "Not remote origin matching."
+	fi
+}
