@@ -230,3 +230,22 @@ function github {
 			;;
 	esac
 }
+
+function day {
+	# Create a new folder for the days in days repo
+	# See https://github.com/g-ongenae/days/
+
+	echo "What's your today project's name? "
+	read -r NAME
+
+	TODAY=$(date -u +"%m/%d")
+	TODAY="$HOME/Documents/code/days/src/$TODAY-$NAME"
+	mkdir -p $TODAY
+
+	cd $TODAY || return
+	[[ -f "index.html" ]] || touch index.html;
+	[[ -f "app.js" ]] || touch app.js;
+
+	cd "$HOME/Documents/code/days/src/" || return
+	open http://127.0.0.1:8080/ & http-server
+}
