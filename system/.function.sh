@@ -21,16 +21,16 @@ function dot_help {
 			;;
 		gf)
 			echo "Git personal functions:"
-			grep --color "function .*{" $DOTFILES_DIR/git/.function
+			grep --color "function .*{" $DOTFILES_DIR/git/.function.sh
 			;;
 		a|aliases)
 			echo "Aliases:"
-			grep --color "alias .*=" $DOTFILES_DIR/system/.alias
-			grep --color "alias .*=" $DOTFILES_DIR/git/.alias
+			grep --color "alias .*=" $DOTFILES_DIR/system/.alias.sh
+			grep --color "alias .*=" $DOTFILES_DIR/git/.alias.sh
 			;;
 		f|functions)
 			echo "Functions:"
-			grep --color "function .*{" $DOTFILES_DIR/system/.function
+			grep --color "function .*{" $DOTFILES_DIR/system/.function.sh
 			;;
 		*)
 			echo "Error! Unrecognized argument"
