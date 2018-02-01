@@ -1,7 +1,14 @@
 language: bash
-os: osx
+
+# Use container-based infrastructure for quicker build start-up
+sudo: false
+
 addons:
-  - brew install shellcheck
+  apt:
+    sources:
+      - debian-sid    # Grab shellcheck from the Debian repo (o_O)
+    packages:
+      - shellcheck
+
 script:
-  # - shellcheck **/.*.sh *.sh -e SC2039
-  - sh **/.*.sh *.sh -e SC2039
+  - shellcheck **/.*.sh *
