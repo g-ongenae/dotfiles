@@ -240,11 +240,15 @@ function day {
 
 	TODAY=$(date -u +"%m/%d")
 	TODAY="$HOME/Documents/code/days/src/$TODAY-$NAME"
+	MONTH=$(date -u +"%m")
+	MONTH_FIRST="$HOME/Documents/code/days/src/$MONTH/01"
 	mkdir -p $TODAY
 
 	cd $TODAY || return
-	[[ -f "index.html" ]] || touch index.html;
-	[[ -f "app.js" ]] || touch app.js;
+	if [[ -f "index.html" ]]; then
+		[[ -f "$MONTH_FIRST/index.html" ]] && cp "$MONTH_FIRST/index.html" ./ || touch index.html;
+	fi
+	[[ -f "style.css" ]] || touch style.css;
 
 	cd "$HOME/Documents/code/days/src/" || return
 	open http://127.0.0.1:8080/ & http-server
