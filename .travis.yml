@@ -1,7 +1,7 @@
 language: bash
+os: osx
 addons:
-  apt:
-    sources:
-    - debian-sid    # Grab ShellCheck from the Debian repo
-    packages:
-    - shellcheck
+  - brew install shellcheck
+script:
+  - shellcheck mac -e SC2039
+  - sh mac
