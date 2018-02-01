@@ -3,5 +3,5 @@ os: osx
 addons:
   - brew install shellcheck
 script:
-  - shellcheck mac -e SC2039
-  - sh mac
+  # - shellcheck **/.*.sh *.sh -e SC2039
+  - sh **/.*.sh *.sh -e SC2039
