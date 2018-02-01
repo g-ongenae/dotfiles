@@ -21,9 +21,6 @@ alias la="ls $LS_OPTIONS -GaAhF"
 alias lr="ls $LS_OPTIONS -GRAhF"
 alias lf="ls $LS_OPTIONS -GRAhF | grep ':$' | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's/-/|/'"
 
-## Open
-alias secret="atom ~/Documents/code/dotfiles/secret"
-
 ## Program
 alias vscode="open -a 'visual studio code'"
 alias typora="open -a typora"
