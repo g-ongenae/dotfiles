@@ -101,3 +101,13 @@ function add_my_remote {
 		echo "Not remote origin matching."
 	fi
 }
+
+function fetch_mine_br {
+	if [[ $# -eq 0 ]]; then
+		echo 'Missing branch argument'
+		return
+	fi
+
+	git fetch mine $1
+	git checkout $1 
+}
