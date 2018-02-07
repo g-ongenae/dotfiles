@@ -63,6 +63,8 @@ function up {
 
 	DOWN=`pwd`
 	cd $UPS || return
+
+	export DOWN
 }
 
 # cd back from up
@@ -70,6 +72,8 @@ function down {
 	! [[ "$DOWN" == "" ]] || (echo "No down" && return)
 	UP=`pwd`
 	cd $DOWN || return
+
+	export UP
 }
 
 # Move to a folder and get a recap
