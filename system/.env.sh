@@ -1,5 +1,17 @@
 # Env
 
+## GCloud
+
+# The next lines updates PATH for the Google Cloud SDK.
+if [ -f "$HOME/.gcloud/google-cloud-sdk/path.bash.inc" ]; then
+	source "$HOME/.gcloud/google-cloud-sdk/path.bash.inc";
+fi
+
+# The next lines enables shell command completion for gcloud.
+if [ -f "$HOME/.gcloud/google-cloud-sdk/completion.bash.inc" ]; then
+	source "$HOME/.gcloud/google-cloud-sdk/completion.bash.inc";
+fi
+
 ## Lang
 
 ### Go Lang
