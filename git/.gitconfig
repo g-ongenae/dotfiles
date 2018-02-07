@@ -8,6 +8,7 @@
 [alias]
 	a = add
 	amend = commit --amend
+	apply = stash apply
 	b = branch
 	br = checkout -b
 	c = commit
@@ -17,6 +18,8 @@
 	d = "!f() { open -a 'github desktop'; }; f"
 	df = diff --word-diff
 	f = flow
+	ff = flow feature
+	fh = flow hotfix
 	h = help
 	i = init
 	l = log --oneline -n 10
@@ -24,7 +27,7 @@
 	log = log -n 10
 	ls = stash list
 	p = push
-	pop = stash apply
+	pop = stash pop
 	pr = "!f() { git fetch -fu ${2:-origin} refs/pull/$1/head:pr/$1 && git checkout pr/$1; }; f"
 	ri = "!f() { mv .git ~/.Trash && git init; }; f"
 	show-ignored = "! git clean -ndX | perl -pe 's/Would remove/Ignored:/'"
