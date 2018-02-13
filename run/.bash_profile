@@ -19,7 +19,7 @@ for DOTFILE in "$DOTFILES_DIR"/git/.{function,alias}.sh; do
 	[ -f "$DOTFILE" ] && source "$DOTFILE"
 done
 
-for DOTFILE in "$DOTFILES_DIR"/secret/.{alias}.sh; do
+for DOTFILE in "$DOTFILES_DIR"/secret/.{function,alias}.sh; do
 	[ -f "$DOTFILE" ] && source "$DOTFILE"
 done
 
