@@ -243,12 +243,14 @@ function day {
 	read -r NAME
 
 	TODAY=$(date -u +"%m/%d")
-	TODAY="$HOME/Documents/code/days/src/$TODAY-$NAME"
-	MONTH=$(date -u +"%m")
-	MONTH_FIRST="$HOME/Documents/code/days/src/$MONTH/01"
-	mkdir -p "$TODAY"
+	TODAY_DIR="$HOME/Documents/code/days/src/$TODAY-$NAME"
+	if [ "$(date -u +"%d")" -eq "01" ]; then
+		MONTH_FIRST="$HOME/Documents/code/days/src/$TODAY-$NAME"
+		export MONTH_FIRST
+	fi
+	mkdir -p "$TODAY_DIR"
 
-	cd "$TODAY" || return
+	cd "$TODAY_DIR" || return
 	if [ ! -f "index.html" ]; then
 		if [ -f "$MONTH_FIRST/index.html" ]; then
 			cp "$MONTH_FIRST/index.html" ./
