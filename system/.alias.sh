@@ -53,3 +53,6 @@ alias n="npm"
 alias nr="npm run"
 alias y="yarn"
 alias yr="yarn run"
+
+# Kubernetes
+alias ks="kubectl"
