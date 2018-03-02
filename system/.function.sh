@@ -1,4 +1,9 @@
+#! /bin/bash
+# shellcheck disable=SC1117
+
+###
 # Functions
+###
 
 ## List dotfiles Help
 function dot_help {
@@ -21,16 +26,16 @@ function dot_help {
 			;;
 		gf)
 			echo "Git personal functions:"
-			grep --color "function .*{" $DOTFILES_DIR/git/.function.sh
+			grep --color "function .*{" "$DOTFILES_DIR/git/.function.sh"
 			;;
 		a|aliases)
 			echo "Aliases:"
-			grep --color "alias .*=" $DOTFILES_DIR/system/.alias.sh
-			grep --color "alias .*=" $DOTFILES_DIR/git/.alias.sh
+			grep --color "alias .*=" "$DOTFILES_DIR/system/.alias.sh"
+			grep --color "alias .*=" "$DOTFILES_DIR/git/.alias.sh"
 			;;
 		f|functions)
 			echo "Functions:"
-			grep --color "function .*{" $DOTFILES_DIR/system/.function.sh
+			grep --color "function .*{" "$DOTFILES_DIR/system/.function.sh"
 			;;
 		*)
 			echo "Error! Unrecognized argument"
@@ -53,16 +58,21 @@ function atom {
 # or cd up back from down
 function up {
 	if [ "$#" == 0 ]; then
-		! [[ "$UP" == "" ]] && UPS=$UP || (echo "No up" && return)
+		if ! [[ "$UP" == "" ]]; then
+			UPS=$UP
+		else 
+			echo "No up" && return
+		fi
 	else
 		UPS=""
-		for i in $(seq 1 $1); do
+		# shellcheck disable=SC2034
+		for i in $(seq 1 "$1"); do
 			UPS=$UPS"../"
 		done
 	fi
 
-	DOWN=`pwd`
-	cd $UPS || return
+	DOWN=$(pwd)
+	cd "$UPS" || return
 
 	export DOWN
 }
@@ -70,8 +80,8 @@ function up {
 # cd back from up
 function down {
 	! [[ "$DOWN" == "" ]] || (echo "No down" && return)
-	UP=`pwd`
-	cd $DOWN || return
+	UP=$(pwd)
+	cd "$DOWN" || return
 
 	export UP
 }
@@ -81,13 +91,13 @@ function recap {
 	if [ "$#" == 0 ]; then
 		DIR="."
 	else
-		DIR="$@"
+		DIR="$*"
 	fi
 
 	cd "$DIR" || return
-	echo $DIR " containing:"
+	echo "$DIR containing:"
 	ls -GhF
-	echo "$DIR" " is:"
+	echo "$DIR is:"
 	[[ -d "$DIR/.git" ]] && git status || echo "Not a repository."
 }
 
@@ -104,7 +114,7 @@ function trash { mv "$@" ~/.Trash; }
 function json {
 	if [ "$#" == 1 ]; then
 		if [ -f "$1" ]; then
-			cat $1 | python -m json.tool
+			python -m json.tool < "$1"
 		else
 			# TODO: Check is a valid link
 			curl -s "$1" | python -m json.tool
@@ -118,15 +128,15 @@ function json {
 function new_day {
 	trap 'echo "" && return' SIGINT
 	if [ "$(jrnl -v)" == "" ]; then
-		echo "Journal is not installed. Run `brew install jrnl`"
+		echo "Journal is not installed. Run 'brew install jrnl'"
 		return
 	fi
 
 	if [ "$(jrnl -on today)" == "" ]; then
 		echo "What are you working on today?"
-		read -p "Open Journal? (Yes/No) => " answer
-		case "$answer" in
-			[Yy]* )
+		read -rp "Open Journal? (Yes/No) => " ANSWER
+		case "$ANSWER" in
+			[Yy]*)
 				jrnl
 				;;
 			*)
@@ -151,7 +161,7 @@ comments: true
 
 function til {
 	if [ "$#" == 0 ]; then
-		cd ~/Documents/code/til/
+		cd ~/Documents/code/til/ || echo "CD failed" && return
 		return
 	fi
 
@@ -185,7 +195,7 @@ function til {
 ### Try
 function try {
 	if [ "$#" == 0 ]; then
-		cd ~/Documents/try/
+		cd ~/Documents/try/ || echo "CD failed" && return
 		return
 	fi
 
@@ -211,14 +221,14 @@ function try {
 ## GitHub
 function github {
 	if [ "$#" == 0 ]; then
-		cd ~/Documents/code/github
+		cd ~/Documents/code/github || echo "CD failed" && return
 		return
 	fi
 
 	case "$1" in
 		io)
-			cd ~/Documents/code/g-ongenae.github.io
-			atom .
+			cd ~/Documents/code/g-ongenae.github.io || return
+			vscode .
 			;;
 		d|desktop)
 			# Use git d instead
@@ -239,8 +249,7 @@ function day {
 	# Create a new folder for the days in days repo
 	# See https://github.com/g-ongenae/days/
 
-	echo "What's your today project's name? "
-	read -r NAME
+	read -rp "What's your today project's name? " NAME
 
 	TODAY=$(date -u +"%m/%d")
 	TODAY_DIR="$HOME/Documents/code/days/src/$TODAY-$NAME"
