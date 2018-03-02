@@ -244,6 +244,7 @@ function day {
 
 	TODAY=$(date -u +"%m/%d")
 	TODAY_DIR="$HOME/Documents/code/days/src/$TODAY-$NAME"
+	# TODO Read folder instead
 	if [ "$(date -u +"%d")" -eq "01" ]; then
 		MONTH_FIRST="$HOME/Documents/code/days/src/$TODAY-$NAME"
 		export MONTH_FIRST
@@ -258,7 +259,8 @@ function day {
 			touch index.html;
 		fi
 	fi
-	[[ -f "style.css" ]] || touch style.css;
+	# [[ -f "style.css" ]] || touch style.css;
+	[[ -f "app.js" ]] || touch app.js;
 
 	cd "$HOME/Documents/code/days/src/" || return
 	open http://127.0.0.1:8080/ & http-server
