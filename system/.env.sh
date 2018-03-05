@@ -45,6 +45,10 @@ export PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
 ### RVM
 # [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
 
+### Kubernetes
+# https://github.com/jonmosco/kube-ps1
+source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
+
 ## Shell
 
 # Terminal prefix colors
@@ -85,7 +89,7 @@ function ___ps1 {
 		g='⨯'
 	fi
 
-	export PS1="$NM[ $HI$u $HII$h $SI$w $TI$g$NM ] $IN"
+	export PS1="$NM[ $HI$u $HII$h $SI$w $TI$g$NM $(kube_ps1)] $IN"
 }
 
 export PROMPT_COMMAND=___ps1
