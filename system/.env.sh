@@ -48,6 +48,7 @@ export PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
 ### Kubernetes
 # https://github.com/jonmosco/kube-ps1
 source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
+kubeoff # Only enable it when necessary
 
 ## Shell
 
