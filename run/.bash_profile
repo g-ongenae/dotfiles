@@ -30,4 +30,4 @@ unset READLINK CURRENT_SCRIPT SCRIPT_PATH DOTFILE
 export DOTFILES_DIR DOTFILES_EXTRA_DIR
 
 # Ask for today work
-new_day
+# new_day
