@@ -274,3 +274,60 @@ function day {
 	cd "$HOME/Documents/code/days/src/" || return
 	open http://127.0.0.1:8080/ & http-server
 }
+
+function ks_list {
+	PODS=$(kubectl get pods) || echo "Error getting list pods" && return
+	# Transform string into array
+	# shellcheck disable=SC2086
+	read -ar PODS <<<$PODS
+
+	echo "Choose a pod in the list by it's number:"
+	# Print list of pods with their index
+	for i in "${!PODS[@]}"; do
+		echo "$i -> ${PODS[i]}"
+	done
+
+	read -rp "What pod do you want to use? " POD_INDEX
+	echo "$POD_INDEX" # TODO
+}
+
+function ks_exec {
+	# Exec on a specific Kubernetes pod
+	echo "Going to exec on a pod..."
+	ks_list
+
+	if [[ "$1" -eq "-b" ]]; then
+		# Exec bash on POD
+		kubectl exec -ti "$POD_NAME" /bin/bash
+	else
+		if [[ "$#" -eq '2' ]]; then
+			kubectl exec "$1" "$POD_NAME" "$2"
+		else
+			echo "Wrong params. Missing options and command"
+		fi 
+	fi
+}
+
+function ks_logs {
+	# Get logs of a specific Kubernetes pod
+	echo "Going to log a pod..."
+	ks_list
+
+	kubectl logs "$POD_NAME"
+}
+
+function ks_up {
+	# Watch Kubernetes pods change through time
+	PODS=$(kubectl get pods) || echo "Error getting list pods" && return
+
+	# Change the effect of SIGINT (^C) to exit the infinite loop
+	trap 'break' SIGINT 
+	while true; do
+		echo -ne "$PODS\r"
+		sleep 1
+	done
+
+	# Clean
+	trap 'exit' SIGINT
+	printf "\n"
+}
