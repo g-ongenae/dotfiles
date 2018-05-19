@@ -28,9 +28,8 @@ function push {
 	fi
 }
 
-function prompt_branches {
-	echo "Listing branches of the git repository."
-	BRANCHES=$(git branch) || echo "Error while getting branches"
+function getBranches {
+	BRANCHES=$(git branch) || (>&2 echo "Error while getting branches")
 
 	# Transform the string result into an array
 	read -a BRANCHES <<<$BRANCHES
@@ -43,32 +42,40 @@ function prompt_branches {
 	done
 
 	unset "BRANCHES[$TO_REMOVE]"
-
-	# Print list of branch with their index
-	for i in "${!BRANCHES[@]}"; do
-		echo "$i -> ${BRANCHES[i]}"
-	done
 }
 
 function switch_branch {
-	prompt_branches
+	getBranches
 
-	read -rp "What branch do you want to switch to? " BRANCH_INDEX
+	echo "What branch do you want to switch to? "
 
-	git checkout ${BRANCHES[$BRANCH_INDEX]}
+	select BRANCH in "${BRANCHES[@]}"; do
+		git checkout ${BRANCH}
+
+		break;
+	done
 }
 
 function delete_branch {
-	prompt_branches
+	getBranches
 
-	read -rp "What branch do you want to delete? " BRANCH_INDEX
+	echo "What branch do you want to delete? "
 
-	if [ "$#" -gt 0 ] && [ "$1" == "-f" ]; then
-		# Force Delete
-		git branch -D ${BRANCHES[$BRANCH_INDEX]}
-	else
-		git branch -d ${BRANCHES[$BRANCH_INDEX]}
-	fi
+	select BRANCH in "${BRANCHES[@]}" "cancel"; do
+		case "$BRANCH" in
+			"cancel")
+				break;
+				;;
+			*)
+				if [ "$1" == "-f" ]; then
+					# Force Delete
+					git branch -D ${BRANCH}
+				else
+					git branch -d ${BRANCH}
+				fi
+				;;
+		esac
+	done
 }
 
 ## Some checks before committing
