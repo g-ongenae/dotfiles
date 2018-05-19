@@ -18,6 +18,13 @@ fi
 export GOPATH="$HOME/Documents/code/go"
 export GOBIN="$HOME/Documents/code/go/bin"
 
+### Java
+export JAVA_HOME=$(/usr/libexec/java_home)
+
+#### Derby
+export DERBY_HOME="/Users/go/Documents/code/derby/bin"
+export PATH="$DERBY_HOME/bin:$PATH"
+
 ### Python
 export PYTHONPATH="/Library/Python/2.7/site-packages/:$PYTHONPATH"
 
