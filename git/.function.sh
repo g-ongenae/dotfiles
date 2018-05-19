@@ -117,5 +117,5 @@ function fetch_mine_br {
 	fi
 
 	git fetch mine $1
-	git checkout $1 
+	git checkout $1
 }
