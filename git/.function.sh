@@ -88,13 +88,14 @@ function commit {
 # }
 
 function add_my_remote {
-	remote=`git remote -v`
-	regex="(git@[a-z0-9]+.[a-z]{2,4}):[a-z0-9\-]+/([a-z0-9\-_]+.git)"
-	username=`git config --global github.user`
+	REMOTES=$(git remote -v)
+	REGEX="(git@[a-z0-9]+.[a-z]{2,4}):[a-z0-9\-]+\/([a-z0-9\-_]+.git)"
+	USERNAME=$(git config --global github.user)
 
-	if [[ $remote =~ $regex ]]; then
-		remoteUrl="${BASH_REMATCH[1]}:$username/${BASH_REMATCH[2]}"
-		git remote add mine $remoteUrl
+	if [[ $REMOTES =~ $REGEX ]]; then
+		REMOTE_URL="${BASH_REMATCH[1]}:$USERNAME/${BASH_REMATCH[2]}"
+		# shellcheck disable=SC2086
+		git remote add mine $REMOTE_URL
 		echo "New remote mine added:"
 		git remote -v show mine
 	else
