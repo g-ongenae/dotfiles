@@ -54,7 +54,9 @@ alias nr="npm run"
 alias y="yarn"
 alias yr="yarn run"
 
-# Kubernetes
+# Ops
+alias c="circleci"
+alias d="docker"
 alias ks="kubectl"
 
 # Secret aliases

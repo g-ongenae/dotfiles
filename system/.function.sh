@@ -54,13 +54,13 @@ function atom {
 }
 
 ## CD functions
-# cd .. n-times 
+# cd .. n-times
 # or cd up back from down
 function up {
 	if [ "$#" == 0 ]; then
 		if ! [[ "$UP" == "" ]]; then
 			UPS=$UP
-		else 
+		else
 			echo "No up" && return
 		fi
 	else
@@ -264,7 +264,7 @@ function day {
 	if [ ! -f "index.html" ]; then
 		if [ -f "$MONTH_FIRST/index.html" ]; then
 			cp "$MONTH_FIRST/index.html" ./
-		else 
+		else
 			touch index.html;
 		fi
 	fi
@@ -304,7 +304,7 @@ function ks_exec {
 			kubectl exec "$1" "$POD_NAME" "$2"
 		else
 			echo "Wrong params. Missing options and command"
-		fi 
+		fi
 	fi
 }
 
@@ -321,7 +321,7 @@ function ks_up {
 	PODS=$(kubectl get pods) || echo "Error getting list pods" && return
 
 	# Change the effect of SIGINT (^C) to exit the infinite loop
-	trap 'break' SIGINT 
+	trap 'break' SIGINT
 	while true; do
 		echo -ne "$PODS\r"
 		sleep 1
@@ -330,4 +330,15 @@ function ks_up {
 	# Clean
 	trap 'exit' SIGINT
 	printf "\n"
+}
+
+function lint {
+	# TODO: Make a wrapper for all my linters
+	# Based on the file extension and name
+	if [ "$#" -lt "2" ]; then
+		echo "Missing filename";
+		return;
+	fi
+
+	# FILENAME=$1
 }

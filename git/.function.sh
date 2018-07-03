@@ -7,7 +7,14 @@ function getCurrentBranch {
 
 function pull {
 	getCurrentBranch
-	git pull origin $CURRENT_BRANCH
+
+	if [ "$#" -gt 0 ]; then
+		REMOTE=$1
+	else
+		REMOTE="origin"
+	fi
+
+	git pull $REMOTE $CURRENT_BRANCH
 }
 
 function push {
@@ -20,12 +27,17 @@ function push {
 	fi
 	read -rp "Are you sure you want to use $REMOTE as remote? Press ^C to exit."
 
+	if [ "$#" -eq 2 ]; then
+		OPTIONS=$2
+		read -rp "Are you sure you want to use these options? Press ^C to exit.\n$OPTIONS"
+	fi
+
 	REMOTE_EXIST=$(git ls-remote --heads $REMOTE $CURRENT_BRANCH | grep -e "$CURRENT_BRANCH" | wc -l)
 	if [[ "$REMOTE_EXIST" ]]; then
-		git push $REMOTE $CURRENT_BRANCH
-	else
-		git push --set-upstream $REMOTE $CURRENT_BRANCH
+		OPTIONS="$OPTIONS --set-upstream"
 	fi
+
+	git push $OPTIONS $REMOTE $CURRENT_BRANCH
 }
 
 function getBranches {
@@ -49,8 +61,11 @@ function switch_branch {
 
 	echo "What branch do you want to switch to? "
 
-	select BRANCH in "${BRANCHES[@]}"; do
-		git checkout ${BRANCH}
+	CANCEL="cancel"
+	select BRANCH in "${BRANCHES[@]}" "$CANCEL"; do
+		if [ "$BRANCH" != "$CANCEL" ]; then
+			git checkout ${BRANCH}
+		fi
 
 		break;
 	done
@@ -61,9 +76,10 @@ function delete_branch {
 
 	echo "What branch do you want to delete? "
 
-	select BRANCH in "${BRANCHES[@]}" "cancel"; do
+	CANCEL="cancel"
+	select BRANCH in "${BRANCHES[@]}" "$CANCEL"; do
 		case "$BRANCH" in
-			"cancel")
+			"$CANCEL")
 				break;
 				;;
 			*)
@@ -76,6 +92,34 @@ function delete_branch {
 				;;
 		esac
 	done
+}
+
+function br {
+	ERROR_MESSAGE="\
+Unknown options: $1
+Usage: br [-s|-d]
+
+   => git branch
+-s => switch branch easily
+-d => delete branches easily \
+	";
+
+	if [ "$#" -eq "0" ]; then
+		git branch
+		return;
+	fi
+
+	case "$1" in
+		-s|s)
+			switch_branch
+			;;
+		-d|d)
+			delete_branch "$2"
+			;;
+		*)
+			echo "$ERROR_MESSAGE";
+			;;
+	esac
 }
 
 ## Some checks before committing
