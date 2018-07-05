@@ -1,3 +1,4 @@
+#! /bin/bash
 # Aliases
 
 ## Clear
@@ -15,11 +16,11 @@ alias work="cd ~/Documents/work"
 
 ## List
 alias ls..="ls .."
-alias ls="ls $LS_OPTIONS -GhF"
-alias ll="ls $LS_OPTIONS -GlAhF"
-alias la="ls $LS_OPTIONS -GaAhF"
-alias lr="ls $LS_OPTIONS -GRAhF"
-alias lf="ls $LS_OPTIONS -GRAhF | grep ':$' | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's/-/|/'"
+alias ls="ls \${LS_OPTIONS} -GhF"
+alias ll="ls \${LS_OPTIONS} -GlAhF"
+alias la="ls \${LS_OPTIONS} -GaAhF"
+alias lr="ls \${LS_OPTIONS} -GRAhF"
+alias lf="ls \${LS_OPTIONS} -GRAhF | grep ':$' | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's/-/|/'"
 
 ## Program
 alias vscode="open -a 'visual studio code'"
@@ -46,7 +47,7 @@ alias tret="tree -CF -tp"
 ## Shell
 alias _="sudo"
 alias q="osascript -e 'tell application \"Terminal\" to quit'"
-alias reload="exec $SHELL -l"
+alias reload="exec \${SHELL} -l"
 
 ## Yarn & NPM
 alias n="npm"
@@ -55,9 +56,9 @@ alias y="yarn"
 alias yr="yarn run"
 
 # Ops
-alias c="circleci"
+alias ci="circleci"
 alias d="docker"
 alias ks="kubectl"
 
 # Secret aliases
-alias lyl="node $HOME/Documents/work/scripts/lyl-yelloan-launcher/lyl.js"
+alias lyl="node \${HOME}/Documents/work/scripts/lyl-yelloan-launcher/lyl.js"

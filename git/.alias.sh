@@ -1,3 +1,4 @@
+#! /bin/bash
 # Alias
 
 # This is only to use github/hub functionnalities over Git

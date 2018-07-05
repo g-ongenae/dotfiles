@@ -1,3 +1,4 @@
+#! /bin/bash
 ## Git functions
 function getCurrentBranch {
 	# https://stackoverflow.com/questions/6245570/how-to-get-the-current-branch-name-in-git
@@ -94,34 +95,6 @@ function delete_branch {
 	done
 }
 
-function br {
-	ERROR_MESSAGE="\
-Unknown options: $1
-Usage: br [-s|-d]
-
-   => git branch
--s => switch branch easily
--d => delete branches easily \
-	";
-
-	if [ "$#" -eq "0" ]; then
-		git branch
-		return;
-	fi
-
-	case "$1" in
-		-s|s)
-			switch_branch
-			;;
-		-d|d)
-			delete_branch "$2"
-			;;
-		*)
-			echo "$ERROR_MESSAGE";
-			;;
-	esac
-}
-
 ## Some checks before committing
 # TODO: Use git-hooks instead, maybe => http://githooks.com/
 # Maybe add a prompt for better commits
@@ -155,11 +128,43 @@ function add_my_remote {
 }
 
 function fetch_mine_br {
-	if [[ $# -eq 0 ]]; then
+	if [[ "$#" -eq "0" ]]; then
 		echo 'Missing branch argument'
 		return
 	fi
 
 	git fetch mine $1
 	git checkout $1
+}
+
+function br {
+	ERROR_MESSAGE="\
+Unknown options: $1
+Usage: br -[d|f|s]
+
+   => git branch
+-s => switch branch easily
+-d => delete branches easily
+-f => fetch branch from 'mine' remote\
+	";
+
+	if [ "$#" -eq "0" ]; then
+		git branch
+		return;
+	fi
+
+	case "$1" in
+		-s|s)
+			switch_branch
+			;;
+		-d|d)
+			delete_branch "$2"
+			;;
+		-f|f)
+			fetch_mine_br "$2"
+			;;
+		*)
+			echo "$ERROR_MESSAGE";
+			;;
+	esac
 }

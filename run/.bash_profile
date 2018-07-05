@@ -1,3 +1,4 @@
+#! /bin/bash
 # Resolve DOTFILES_DIR
 READLINK=$(which greadlink || which readlink)
 CURRENT_SCRIPT=$BASH_SOURCE

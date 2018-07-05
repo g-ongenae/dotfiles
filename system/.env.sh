@@ -1,3 +1,4 @@
+#! /bin/bash
 # Env
 
 ## GCloud
@@ -19,7 +20,8 @@ export GOPATH="$HOME/Documents/code/go"
 export GOBIN="$HOME/Documents/code/go/bin"
 
 ### Java
-export JAVA_HOME=$(/usr/libexec/java_home)
+JAVA_HOME=$(/usr/libexec/java_home)
+export JAVA_HOME
 
 #### Derby
 export DERBY_HOME="/Users/go/Documents/code/derby/bin"
@@ -90,7 +92,8 @@ function ___ps1 {
 		g='⨯'
 	fi
 
-	export PS1="$NM[ $HI$u $HII$h $SI$w $TI$g$NM $(kube_ps1)] $IN"
+	PS1="${NM}[ $HI$u $HII$h $SI$w $TI$g$NM $(kube_ps1)] $IN"
+	export PS1
 }
 
 export PROMPT_COMMAND=___ps1
