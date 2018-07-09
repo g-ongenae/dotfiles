@@ -130,20 +130,25 @@ function add_my_remote {
 	fi
 }
 
+function choose_remote_branch {
+	REMOTES_BRANCHES=$(git ls-remote -q --heads $1 | sed -nE 's/^.{30,}refs\/heads\/(.+)$/\1/p')
+
+	echo "What is the name of the branch you want to clone?"
+
+	CANCEL="cancel"
+
+	select CHOICE in $REMOTES_BRANCHES "$CANCEL"; do
+		FETCHING_BRANCH="$CHOICE"
+		return
+	done
+}
+
 function fetch_mine_br {
 	if [[ "$#" -eq "0" ]] || [[ "$1" -eq "" ]]; then
-		REMOTES_BRANCHES=$(git ls-remote -q --heads | sed -nE 's/^.{30,}refs\/heads\/(.+)$/\1/p')
-
-		echo "What is the name of the branch you want to clone?"
-
-		CANCEL="cancel"
-
-		select CHOICE in $REMOTES_BRANCHES "$CANCEL"; do
-			if [[ "$CHOICE" == "$CANCEL" ]]; then
-				return
-			fi
-			FETCHING_BRANCH="$CHOICE"
-		done
+		choose_remote_branch "mine"
+		if [[ "$CHOICE" == "$CANCEL" ]]; then
+			return
+		fi
 	else
 		FETCHING_BRANCH="$1"
 	fi
