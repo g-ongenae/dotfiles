@@ -131,9 +131,19 @@ function add_my_remote {
 }
 
 function fetch_mine_br {
-	# TODO: Load remote branch and choose with a select
 	if [[ "$#" -eq "0" ]] || [[ "$1" -eq "" ]]; then
-		read -rp "What is the name of the branch you want to clone? " FETCHING_BRANCH
+		REMOTES_BRANCHES=$(git ls-remote -q --heads | sed -nE 's/^.{30,}refs\/heads\/(.+)$/\1/p')
+
+		echo "What is the name of the branch you want to clone?"
+
+		CANCEL="cancel"
+
+		select CHOICE in $REMOTES_BRANCHES "$CANCEL"; do
+			if [[ "$CHOICE" == "$CANCEL" ]]; then
+				return
+			fi
+			FETCHING_BRANCH="$CHOICE"
+		done
 	else
 		FETCHING_BRANCH="$1"
 	fi
