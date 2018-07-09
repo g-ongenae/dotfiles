@@ -1,4 +1,7 @@
 #! /bin/bash
+
+# shellcheck disable=SC1117,SC2086,SC2126,SC2162
+
 ## Git functions
 function getCurrentBranch {
 	# https://stackoverflow.com/questions/6245570/how-to-get-the-current-branch-name-in-git

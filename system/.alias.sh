@@ -1,4 +1,7 @@
 #! /bin/bash
+
+# shellcheck disable=SC1117
+
 # Aliases
 
 ## Clear

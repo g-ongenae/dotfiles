@@ -1,4 +1,7 @@
 #! /bin/bash
+
+# shellcheck disable=SC1090,SC1091,SC1117,SC2016
+
 # Env
 
 ## GCloud
