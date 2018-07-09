@@ -128,13 +128,15 @@ function add_my_remote {
 }
 
 function fetch_mine_br {
-	if [[ "$#" -eq "0" ]]; then
-		echo 'Missing branch argument'
-		return
+	# TODO: Load remote branch and choose with a select
+	if [[ "$#" -eq "0" ]] || [[ "$1" -eq "" ]]; then
+		read -rp "What is the name of the branch you want to clone? " FETCHING_BRANCH
+	else
+		FETCHING_BRANCH="$1"
 	fi
 
-	git fetch mine $1
-	git checkout $1
+	git fetch mine ${FETCHING_BRANCH}
+	git checkout ${FETCHING_BRANCH}
 }
 
 function br {
@@ -142,10 +144,10 @@ function br {
 Unknown options: $1
 Usage: br -[d|f|s]
 
-   => git branch
--s => switch branch easily
--d => delete branches easily
--f => fetch branch from 'mine' remote\
+   			=> git branch
+-s 			=> switch branch easily
+-d [-f] 	=> delete branches easily [option to force]
+-f [name]	=> fetch branch from 'mine' remote\
 	";
 
 	if [ "$#" -eq "0" ]; then
