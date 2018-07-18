@@ -19,16 +19,16 @@ fi
 ## Lang
 
 ### Go Lang
-export GOPATH="$HOME/Documents/code/go"
-export GOBIN="$HOME/Documents/code/go/bin"
+# export GOPATH="$HOME/Documents/code/go"
+# export GOBIN="$HOME/Documents/code/go/bin"
 
 ### Java
-JAVA_HOME=$(/usr/libexec/java_home)
-export JAVA_HOME
+# JAVA_HOME=$(/usr/libexec/java_home)
+# export JAVA_HOME
 
 #### Derby
-export DERBY_HOME="/Users/go/Documents/code/derby/bin"
-export PATH="$DERBY_HOME/bin:$PATH"
+# export DERBY_HOME="/Users/go/Documents/code/derby/bin"
+# export PATH="$DERBY_HOME/bin:$PATH"
 
 ### Python
 # export PYTHONPATH="/Library/Python/2.7/site-packages/:$PYTHONPATH"

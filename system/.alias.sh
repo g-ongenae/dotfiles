@@ -56,7 +56,7 @@ alias reload="exec \${SHELL} -l"
 alias n="npm"
 alias nr="npm run"
 alias y="yarn"
-alias yr="yarn run"
+# alias yr="yarn run"
 
 # Ops
 alias ci="circleci"
