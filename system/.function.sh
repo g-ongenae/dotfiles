@@ -332,13 +332,65 @@ function ks_up {
 	printf "\n"
 }
 
-function lint {
+function lintFile {
 	# TODO: Make a wrapper for all my linters
 	# Based on the file extension and name
-	if [ "$#" -lt "2" ]; then
-		echo "Missing filename";
-		return;
+	if [ "${FILENAME}" -eq "" ]; then
+		if [ "$#" -lt "2" ]; then
+			echo "Missing filename";
+			return;
+		else
+			FILENAME=$1
+		fi
 	fi
 
-	# FILENAME=$1
+	if [ "${FILENAME##*/}" == "config.yml" ]; then
+		EXTENSION="ci";
+	fi
+
+	case "${EXTENSION}" in
+		# Code
+		js) npx eslint "${FILENAME}";;
+		ts) npx tslint "${FILENAME}";;
+
+		# Ops
+		Dockerfile) hadolint "${FILENAME}";;
+		ci) circleci validate "${FILENAME}";;
+
+		# Template
+		pug) npx pug-lint "${FILENAME}";;
+		hbs) npx ember-template-lint "${FILENAME}";;
+		# ejs) ;;
+
+		# Front
+		# html) ;;
+		# react) ;;
+
+		# - Style
+		# css) ;;
+		# less) ;;
+		sass|scss) sass-lint "${FILENAME}";;
+
+		# Data
+		# json) ;;
+		# yaml|yml) ;;
+
+		# Bash
+		sh) shellcheck "${FILENAME}";;
+
+		# Doc
+		md) markdownlint "${FILENAME}";; # mdl
+	esac
+}
+
+function lintDir {
+	if [ "$#" -lt "2" ]; then
+		DIR="$(pwd)"
+	else
+		DIR="$1"
+	fi
+
+	for FILE in $DIR; do
+		lintFile "$FILE"
+	done
 }
