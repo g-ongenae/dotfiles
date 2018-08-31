@@ -5,15 +5,17 @@
 # Functions
 ###
 
+DOT_HELP=<<END
+Print list of functions and aliases in the dotfiles:
+
+ ga - git aliases\n"
+ gs - git personal functions\n"
+ a|aliases - aliases\n"
+ f|functions - functions"
+END
+
 ## List dotfiles Help
 function dot_help {
-	# TODO make it a little bit pretty, just a little...
-	DOT_HELP="Print list of functions and aliases in the dotfiles:\n"
-	DOT_HELP="$DOT_HELP	ga - git aliases\n"
-	DOT_HELP="$DOT_HELP	gs - git personal functions\n"
-	DOT_HELP="$DOT_HELP	a|aliases - aliases\n"
-	DOT_HELP="$DOT_HELP	f|functions - functions"
-
 	if [ "$#" == 0 ]; then
 		echo -e "$DOT_HELP"
 		return
