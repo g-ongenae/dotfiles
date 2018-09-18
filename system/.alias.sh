@@ -57,6 +57,7 @@ alias n="npm"
 alias nr="npm run"
 alias y="yarn"
 # alias yr="yarn run"
+alias sw="swagger-editor-live"
 
 # Ops
 alias ci="circleci"
