@@ -3,6 +3,7 @@
 My small setup.
 
 I'm taking ideas from:
+
 - [@webpro](https://github.com/webpro/dotfiles), see also his great article on [Medium](https://medium.com/@webprolific/getting-started-with-dotfiles-43c3602fd789);
 - [@mathiasbynens](https://github.com/mathiasbynens/dotfiles);
 - [@holman](https://github.com/holman/dotfiles);
@@ -14,6 +15,7 @@ Still learning and building, though.
 ## Install
 
 Run:
+
 ```bash
 bash install.sh
 ```
@@ -21,6 +23,7 @@ bash install.sh
 ## Help
 
 Run:
+
 ```bash
 dot_help
 ```
