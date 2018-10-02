@@ -1,5 +1,7 @@
 #! /bin/bash
 
+# shellcheck disable=SC1090,SC2128
+
 # Resolve DOTFILES_DIR
 READLINK=$(which greadlink || which readlink)
 CURRENT_SCRIPT=$BASH_SOURCE

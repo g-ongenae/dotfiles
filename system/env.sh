@@ -1,5 +1,7 @@
 #! /bin/bash
 
+# shellcheck disable=SC1117,SC2016,SC1090,SC1091
+
 # Env
 
 ## GCloud
@@ -17,18 +19,22 @@ fi
 ## Lang
 
 ### Go Lang
-export GOPATH="$HOME/Documents/code/go"
-export GOBIN="$HOME/Documents/code/go/bin"
+GOPATH="$HOME/Documents/code/go"
+GOBIN="$HOME/Documents/code/go/bin"
+export GOPATH GOBIN
 
 ### Java
-export JAVA_HOME=$(/usr/libexec/java_home)
+JAVA_HOME=$(/usr/libexec/java_home)
+export JAVA_HOME
 
 #### Derby
-export DERBY_HOME="/Users/go/Documents/code/derby/bin"
-export PATH="$DERBY_HOME/bin:$PATH"
+DERBY_HOME="/Users/go/Documents/code/derby/bin"
+PATH="$PATH:$DERBY_HOME/bin"
+export DERBY_HOME
 
 ### Python
-export PYTHONPATH="/Library/Python/2.7/site-packages/:$PYTHONPATH"
+PYTHONPATH="/Library/Python/2.7/site-packages/:$PYTHONPATH"
+export PYTHONPATH
 
 ## Version Manager
 
@@ -36,13 +42,19 @@ export PYTHONPATH="/Library/Python/2.7/site-packages/:$PYTHONPATH"
 ### => AVN
 [[ -s "$HOME/.avn/bin/avn.sh" ]] && source "$HOME/.avn/bin/avn.sh"
 ### => NVM
-export NVM_DIR="$HOME/.nvm"
+NVM_DIR="$HOME/.nvm"
+export NVM_DIR
 [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 ### Yarn Global Modules
-export PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
+PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
 
 ### RVM
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+
+### Kubernetes
+# https://github.com/jonmosco/kube-ps1
+source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
+kubeoff # Only enable it when necessary
 
 ## Shell
 
@@ -54,7 +66,8 @@ SI="\[\033[0;33m\]"
 TI="\[\033[1;31m\]"
 IN="\[\033[0m\]"
 
-function ___ps1 {
+function ___ps1
+{
 	# Only print host if different than (\h)
 	if [[ "$HOSTNAME" == 'on.local' || "$HOSTNAME" == 'on.home' || "$HOSTNAME" == 'on' ]]; then
 		h=''
@@ -84,7 +97,11 @@ function ___ps1 {
 		g='⨯'
 	fi
 
-	export PS1="$NM[ $HI$u $HII$h $SI$w $TI$g$NM ] $IN"
+	PS1="$NM[ $HI$u $HII$h $SI$w $TI$g$NM ] $IN"
+  export PS1
 }
 
-export PROMPT_COMMAND=___ps1
+PROMPT_COMMAND=___ps1
+export PROMPT_COMMAND
+
+export PATH

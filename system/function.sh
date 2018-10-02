@@ -1,4 +1,5 @@
 #! /bin/bash
+
 # shellcheck disable=SC1117
 
 ###
@@ -6,14 +7,17 @@
 ###
 
 ## List dotfiles Help
-function dot_help {
-	# TODO make it a little bit pretty, just a little...
-	DOT_HELP="Print list of functions and aliases in the dotfiles:\n"
-	DOT_HELP="$DOT_HELP	ga - git aliases\n"
-	DOT_HELP="$DOT_HELP	gs - git personal functions\n"
-	DOT_HELP="$DOT_HELP	a|aliases - aliases\n"
-	DOT_HELP="$DOT_HELP	f|functions - functions"
+DOT_HELP=<<END
+Print list of functions and aliases in the dotfiles:
 
+  - ga           git aliases
+  - gs           git personal functions
+  - a|aliases    aliases
+  - f|functions  functions
+END
+
+function dot_help
+{
 	if [ "$#" == 0 ]; then
 		echo -e "$DOT_HELP"
 		return
@@ -44,30 +48,22 @@ function dot_help {
 	esac
 }
 
-## Open
-function atom {
-	if [ "$#" == 0 ]; then
-		open -a atom .
-	else
-		open -a atom "$1"
-	fi
-}
-
 ## CD functions
-# cd .. n-times 
+# cd .. n-times
 # or cd up back from down
-function up {
+function up
+{
 	if [ "$#" == 0 ]; then
 		if ! [[ "$UP" == "" ]]; then
-			UPS=$UP
-		else 
+			UPS="$UP"
+		else
 			echo "No up" && return
 		fi
 	else
 		UPS=""
 		# shellcheck disable=SC2034
 		for i in $(seq 1 "$1"); do
-			UPS=$UPS"../"
+			UPS="$UPS../"
 		done
 	fi
 
@@ -78,7 +74,8 @@ function up {
 }
 
 # cd back from up
-function down {
+function down
+{
 	! [[ "$DOWN" == "" ]] || (echo "No down" && return)
 	UP=$(pwd)
 	cd "$DOWN" || return
@@ -87,7 +84,8 @@ function down {
 }
 
 # Move to a folder and get a recap
-function recap {
+function recap
+{
 	if [ "$#" == 0 ]; then
 		DIR="."
 	else
@@ -103,15 +101,20 @@ function recap {
 
 ## Mkdir
 # Move to folder created
-function nd {
+function nd
+{
 	[[ -d "$1" ]] || mkdir "$1" && cd "$1" || return
 }
 
 ## Move
-function trash { mv "$@" ~/.Trash; }
+function trash
+{
+  mv "$@" ~/.Trash;
+}
 
 ## JSON Output
-function json {
+function json
+{
 	if [ "$#" == 1 ]; then
 		if [ -f "$1" ]; then
 			python -m json.tool < "$1"
@@ -125,7 +128,8 @@ function json {
 }
 
 ## Journal
-function new_day {
+function new_day
+{
 	trap 'echo "" && return' SIGINT
 	if [ "$(jrnl -v)" == "" ]; then
 		echo "Journal is not installed. Run 'brew install jrnl'"
@@ -149,7 +153,8 @@ function new_day {
 ## Project functions
 
 ### Today I learned
-function firstLineTilPost {
+function firstLineTilPost
+{
 	echo "---
 layout: post
 title: \"$1\"
@@ -159,7 +164,16 @@ comments: true
 ---" > "$NEWFILE"
 }
 
-function til {
+USAGE_TIL=<<END
+Usage: Ease TIL gestion.
+
+  - new NAME      initialize a til post
+  - open DATE     open til post of a specify date | now
+  - cmp MESSAGE   commit and push til modifications
+END
+
+function til
+{
 	if [ "$#" == 0 ]; then
 		cd ~/Documents/code/til/ || echo "CD failed" && return
 		return
@@ -184,16 +198,20 @@ function til {
 			push
 			;;
 		*)
-			echo "Usage: Ease TIL gestion."
-			echo "new NAME initialize a til post"
-			echo "open DATE open til post of a specify date | now"
-			echo "cmp MESSAGE commit and push til modifications"
+      echo -e "${USAGE_TIL}"
 			;;
 	esac
 }
 
 ### Try
-function try {
+USAGE_TRY=<<END
+Usage: Create new project easily.
+
+  - new PROJECTLANG   initialize a project folder
+END
+
+function try
+{
 	if [ "$#" == 0 ]; then
 		cd ~/Documents/try/ || echo "CD failed" && return
 		return
@@ -212,40 +230,13 @@ function try {
 			fi
 			;;
 		*)
-			echo "Usage: Create new project easily."
-			echo "new PROJECTLANG initialize a project folder"
+      echo -e "${USAGE_TRY}"
 			;;
 	esac
 }
 
-## GitHub
-function github {
-	if [ "$#" == 0 ]; then
-		cd ~/Documents/code/github || echo "CD failed" && return
-		return
-	fi
-
-	case "$1" in
-		io)
-			cd ~/Documents/code/g-ongenae.github.io || return
-			vscode .
-			;;
-		d|desktop)
-			# Use git d instead
-			open -a 'github desktop'
-			;;
-		w|web)
-			open https://github.com/
-			;;
-		h|help)
-			echo "		- Open github folder"
-			echo "io	- Open g-ongenae.github.io folder"
-			echo "w		- Open Github in the browser"
-			;;
-	esac
-}
-
-function day {
+function day
+{
 	# Create a new folder for the days in days repo
 	# See https://github.com/g-ongenae/days/
 
@@ -264,7 +255,7 @@ function day {
 	if [ ! -f "index.html" ]; then
 		if [ -f "$MONTH_FIRST/index.html" ]; then
 			cp "$MONTH_FIRST/index.html" ./
-		else 
+		else
 			touch index.html;
 		fi
 	fi
@@ -275,7 +266,8 @@ function day {
 	open http://127.0.0.1:8080/ & http-server
 }
 
-function ks_list {
+function ks_list
+{
 	PODS=$(kubectl get pods) || echo "Error getting list pods" && return
 	# Transform string into array
 	# shellcheck disable=SC2086
@@ -291,7 +283,8 @@ function ks_list {
 	echo "$POD_INDEX" # TODO
 }
 
-function ks_exec {
+function ks_exec
+{
 	# Exec on a specific Kubernetes pod
 	echo "Going to exec on a pod..."
 	ks_list
@@ -304,11 +297,12 @@ function ks_exec {
 			kubectl exec "$1" "$POD_NAME" "$2"
 		else
 			echo "Wrong params. Missing options and command"
-		fi 
+		fi
 	fi
 }
 
-function ks_logs {
+function ks_logs
+{
 	# Get logs of a specific Kubernetes pod
 	echo "Going to log a pod..."
 	ks_list
@@ -316,12 +310,13 @@ function ks_logs {
 	kubectl logs "$POD_NAME"
 }
 
-function ks_up {
+function ks_up
+{
 	# Watch Kubernetes pods change through time
 	PODS=$(kubectl get pods) || echo "Error getting list pods" && return
 
 	# Change the effect of SIGINT (^C) to exit the infinite loop
-	trap 'break' SIGINT 
+	trap 'break' SIGINT
 	while true; do
 		echo -ne "$PODS\r"
 		sleep 1
@@ -330,4 +325,69 @@ function ks_up {
 	# Clean
 	trap 'exit' SIGINT
 	printf "\n"
+}
+
+
+function lint_file {
+	# TODO: Make a wrapper for all my linters
+	# Based on the file extension and name
+	if [ "${FILENAME}" -eq "" ]; then
+		if [ "$#" -lt "2" ]; then
+			echo "Missing filename";
+			return;
+		else
+			FILENAME=$1
+		fi
+	fi
+
+	if [ "${FILENAME##*/}" == "config.yml" ]; then
+		EXTENSION="ci";
+	fi
+
+	case "${EXTENSION}" in
+		# Code
+		js) npx eslint "${FILENAME}";;
+		ts) npx tslint "${FILENAME}";;
+
+		# Ops
+		Dockerfile) hadolint "${FILENAME}";;
+		ci) circleci validate "${FILENAME}";;
+
+		# Template
+		pug) npx pug-lint "${FILENAME}";;
+		hbs) npx ember-template-lint "${FILENAME}";;
+		# ejs) ;;
+
+		# Front
+		# html) ;;
+		# react) ;;
+
+		# - Style
+		# css) ;;
+		# less) ;;
+		sass|scss) sass-lint "${FILENAME}";;
+
+		# Data
+		# json) ;;
+		# yaml|yml) ;;
+
+		# Bash
+		sh) shellcheck "${FILENAME}";;
+
+		# Doc
+		md) markdownlint "${FILENAME}";; # mdl
+	esac
+}
+
+function lint_dir
+{
+	if [ "$#" -lt "2" ]; then
+		DIR="$(pwd)"
+	else
+		DIR="$1"
+	fi
+
+	for FILE in $DIR; do
+		lintFile "$FILE"
+	done
 }

@@ -1,5 +1,7 @@
 #! /bin/bash
 
+# shellcheck disable=SC1117
+
 # Aliases
 
 ## Clear
@@ -10,6 +12,7 @@ alias cd..="cd .."
 alias code="cd ~/Documents/code"
 alias days="cd ~/Documents/code/days/"
 alias dotfiles="cd ~/Documents/code/dotfiles/"
+alias io="cd ~/Documents/code/g-ongenae.github.io"
 alias other="cd ~/Documents/other"
 alias study="cd ~/Documents/study"
 alias work="cd ~/Documents/work"
@@ -17,11 +20,11 @@ alias write="cd ~/Documents/write"
 
 ## List
 alias ls..="ls .."
-alias ls="ls $LS_OPTIONS -GhF"
-alias ll="ls $LS_OPTIONS -GlAhF"
-alias la="ls $LS_OPTIONS -GaAhF"
-alias lr="ls $LS_OPTIONS -GRAhF"
-alias lf="ls $LS_OPTIONS -GRAhF | grep ':$' | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's/-/|/'"
+alias ls="ls \${LS_OPTIONS} -GhF"
+alias ll="ls \${LS_OPTIONS} -GlAhF"
+alias la="ls \${LS_OPTIONS} -GaAhF"
+alias lr="ls \${LS_OPTIONS} -GRAhF"
+alias lf="ls \${LS_OPTIONS} -GRAhF | grep ':$' | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's/-/|/'"
 
 ## Program
 alias vscode="open -a 'visual studio code'"
@@ -48,13 +51,18 @@ alias tret="tree -CF -tp"
 ## Shell
 alias _="sudo"
 alias q="osascript -e 'tell application \"Terminal\" to quit'"
-alias reload="exec $SHELL -l"
+alias reload="exec \${SHELL} -l"
 
 ## Yarn & NPM
 alias n="npm"
 alias nr="npm run"
 alias y="yarn"
-alias yr="yarn run"
+alias sw="swagger-editor-live"
 
-# Kubernetes
+# Ops
+alias ci="circleci"
+alias d="docker"
 alias ks="kubectl"
+
+# DB
+alias m="mongod"

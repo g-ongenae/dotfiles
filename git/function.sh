@@ -1,36 +1,54 @@
 #! /bin/bash
 
+# shellcheck disable=SC1117,SC2086,SC2162
+
 ## Git functions
-function getCurrentBranch {
+function get_current_branch
+{
 	# https://stackoverflow.com/questions/6245570/how-to-get-the-current-branch-name-in-git
 	CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 	echo "This is the current branch: $CURRENT_BRANCH"
 }
 
-function pull {
-	getCurrentBranch
-	git pull origin $CURRENT_BRANCH
-}
-
-function push {
-	getCurrentBranch
+function pull
+{
+	get_current_branch
 
 	if [ "$#" -gt 0 ]; then
-		REMOTE=$1
+		REMOTE="$1"
+	else
+		REMOTE="origin"
+	fi
+
+	git pull "$REMOTE" "$CURRENT_BRANCH"
+}
+
+function push
+{
+	get_current_branch
+
+	if [ "$#" -gt 0 ]; then
+		REMOTE="$1"
 	else
 		REMOTE="origin"
 	fi
 	read -rp "Are you sure you want to use $REMOTE as remote? Press ^C to exit."
 
-	REMOTE_EXIST=$(git ls-remote --heads $REMOTE $CURRENT_BRANCH | grep -e "$CURRENT_BRANCH" | wc -l)
-	if [[ "$REMOTE_EXIST" ]]; then
-		git push $REMOTE $CURRENT_BRANCH
-	else
-		git push --set-upstream $REMOTE $CURRENT_BRANCH
+	if [ "$#" -eq 2 ]; then
+		OPTIONS="$2"
+		read -rp "Are you sure you want to use these options? Press ^C to exit.\n$OPTIONS"
 	fi
+
+	REMOTE_EXIST=$(git ls-remote --heads $REMOTE $CURRENT_BRANCH | grep -c -e "$CURRENT_BRANCH")
+	if [[ "$REMOTE_EXIST" ]]; then
+		OPTIONS="$OPTIONS --set-upstream"
+	fi
+
+	git push "$OPTIONS" "$REMOTE" "$CURRENT_BRANCH"
 }
 
-function getBranches {
+function get_branches
+{
 	BRANCHES=$(git branch) || (>&2 echo "Error while getting branches")
 
 	# Transform the string result into an array
@@ -46,46 +64,44 @@ function getBranches {
 	unset "BRANCHES[$TO_REMOVE]"
 }
 
-function switch_branch {
-	getBranches
+function switch_branch
+{
+	get_branches
 
 	echo "What branch do you want to switch to? "
 
-	select BRANCH in "${BRANCHES[@]}"; do
-		git checkout ${BRANCH}
+	CANCEL="cancel"
+	select BRANCH in "${BRANCHES[@]}" "$CANCEL"; do
+		if [ "$BRANCH" != "$CANCEL" ]; then
+			git checkout "${BRANCH}"
+		fi
 
 		break;
 	done
 }
 
-function delete_branch {
-	getBranches
+function delete_branch
+{
+	get_branches
 
 	echo "What branch do you want to delete? "
 
-	select BRANCH in "${BRANCHES[@]}" "cancel"; do
+	CANCEL="cancel"
+	select BRANCH in "${BRANCHES[@]}" "$CANCEL"; do
 		case "$BRANCH" in
-			"cancel")
+			"$CANCEL")
 				break;
 				;;
 			*)
 				if [ "$1" == "-f" ]; then
 					# Force Delete
-					git branch -D ${BRANCH}
+					git branch -D "${BRANCH}"
 				else
-					git branch -d ${BRANCH}
+					git branch -d "${BRANCH}"
 				fi
 				;;
 		esac
 	done
-}
-
-## Some checks before committing
-# TODO: Use git-hooks instead, maybe => http://githooks.com/
-# Maybe add a prompt for better commits
-function commit {
-	[ -f "$CWD/package.json" ] && yarn test
-	git commit -m "$1"
 }
 
 ## TODO:
@@ -96,7 +112,8 @@ function commit {
 ## - Hard: Stash and force
 # }
 
-function add_my_remote {
+function add_my_remote
+{
 	REMOTES=$(git remote -v)
 	REGEX="(git@[a-z0-9]+.[a-z]{2,4}):[a-z0-9\-]+\/([a-z0-9\-_]+.git)"
 	USERNAME=$(git config --global github.user)
@@ -104,7 +121,7 @@ function add_my_remote {
 	if [[ $REMOTES =~ $REGEX ]]; then
 		REMOTE_URL="${BASH_REMATCH[1]}:$USERNAME/${BASH_REMATCH[2]}"
 		# shellcheck disable=SC2086
-		git remote add mine $REMOTE_URL
+		git remote add mine "$REMOTE_URL"
 		echo "New remote mine added:"
 		git remote -v show mine
 	else
@@ -112,12 +129,65 @@ function add_my_remote {
 	fi
 }
 
-function fetch_mine_br {
-	if [[ $# -eq 0 ]]; then
-		echo 'Missing branch argument'
+function choose_remote_branch
+{
+	REMOTES_BRANCHES=$(git ls-remote -q --heads $1 | sed -nE 's/^.{30,}refs\/heads\/(.+)$/\1/p')
+
+	echo "What is the name of the branch you want to clone?"
+
+	CANCEL="cancel"
+	select CHOICE in $REMOTES_BRANCHES "$CANCEL"; do
+		FETCHING_BRANCH="$CHOICE"
 		return
+	done
+}
+
+function fetch_mine_br
+{
+	if [[ "$#" -eq "0" ]] || [[ "$1" -eq "" ]]; then
+		choose_remote_branch "mine"
+		if [[ "$CHOICE" == "$CANCEL" ]]; then
+			return
+		fi
+	else
+		FETCHING_BRANCH="$1"
 	fi
 
-	git fetch mine $1
-	git checkout $1
+	git fetch mine "${FETCHING_BRANCH}"
+	git checkout "${FETCHING_BRANCH}"
+}
+
+USAGE_BR=<<END
+  Usage: br -[d|f|s]
+
+            => git branch
+  -s 			  => switch branch easily
+  -d [-f] 	=> delete branches easily [option to force]
+  -f [name]	=> fetch branch from 'mine' remote
+END
+
+function br
+{
+	if [ "$#" -eq "0" ]; then
+		git branch
+		return;
+	fi
+
+	case "$1" in
+		-s|s)
+			switch_branch
+			;;
+		-d|d)
+			delete_branch "$2"
+			;;
+		-f|f)
+			fetch_mine_br "$2"
+			;;
+    -h|h)
+      echo -e "${USAGE_BR}";
+      ;;
+		*)
+			printf "Unknown options: %s\n%s" "$1" "${USAGE_BR}";
+			;;
+	esac
 }
