@@ -1,3 +1,5 @@
+#! /bin/bash
+
 ## Git functions
 function getCurrentBranch {
 	# https://stackoverflow.com/questions/6245570/how-to-get-the-current-branch-name-in-git

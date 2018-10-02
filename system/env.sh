@@ -1,3 +1,5 @@
+#! /bin/bash
+
 # Env
 
 ## GCloud
@@ -72,7 +74,7 @@ function ___ps1 {
 		w='~'
 	else
 		w=${PWD##*/}
-		! [[ $w == "" ]] || w='/' 
+		! [[ $w == "" ]] || w='/'
 	fi
 
 	# Print branch name if in a repository, otherwise print ⨯
