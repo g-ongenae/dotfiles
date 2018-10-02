@@ -36,7 +36,7 @@ function push
 
 	if [ "$#" -eq 2 ]; then
 		OPTIONS="$2"
-		read -rp "Are you sure you want to use these options? Press ^C to exit.\n$OPTIONS"
+		read -rp "Are you sure you want to use this option: $OPTIONS? Press ^C to exit."
 	fi
 
 	REMOTE_EXIST=$(git ls-remote --heads $REMOTE $CURRENT_BRANCH | grep -c -e "$CURRENT_BRANCH")
@@ -44,7 +44,7 @@ function push
 		OPTIONS="$OPTIONS --set-upstream"
 	fi
 
-	git push "$OPTIONS" "$REMOTE" "$CURRENT_BRANCH"
+	git push $OPTIONS "$REMOTE" "$CURRENT_BRANCH"
 }
 
 function get_branches
