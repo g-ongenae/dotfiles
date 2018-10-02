@@ -16,14 +16,44 @@
 # Uncomment the following lines to make the configuration take effect.
 
 PreCommit:
+  ALL:
+    parallelize: true
+    problem_on_unmodified_line: warn
+
   ShellCheck:
     enabled: true
-    description: 'Analysing with Shellcheck'
-    required_executable: 'shellcheck'
-    requires_files:
-      - '**/*.sh'
-      - '*.sh'
+    requires_files: true
     include:
       - '**/*.sh'
       - '*.sh'
-    on_fail: warn # I have too much warning yet to solve
+
+  FixMe:
+    enabled: true
+    required: false
+
+  Vint:
+    enabled: true
+    required: true
+    requires_files: true
+    include:
+      - '**/*.vim'
+      - '**/*.vimrc'
+
+  Mdl:
+    enabled: true
+    required: true
+    requires_files: true
+    include: '*.md'
+
+  TrailingWhitespace:
+    enabled: true
+    required: true
+
+  TravisLint:
+    enabled: true
+
+  YamlLint:
+    enabled: true
+
+  YamlSyntax:
+    enabled: true
