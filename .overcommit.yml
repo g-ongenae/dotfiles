@@ -21,9 +21,9 @@ PreCommit:
     description: 'Analysing with Shellcheck'
     required_executable: 'shellcheck'
     requires_files:
-      - '**/.*.sh'
+      - '**/*.sh'
       - '*.sh'
-    include: 
-      - '**/.*.sh'
+    include:
+      - '**/*.sh'
       - '*.sh'
     on_fail: warn # I have too much warning yet to solve
