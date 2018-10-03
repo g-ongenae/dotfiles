@@ -18,6 +18,10 @@ fi
 
 ## Lang
 
+### Haskell
+PATH="$PATH:$HOME/Library/Haskell/bin"
+PATH="$PATH:$HOME/.local/bin"
+
 ### Go Lang
 GOPATH="$HOME/Documents/code/go"
 GOBIN="$HOME/Documents/code/go/bin"

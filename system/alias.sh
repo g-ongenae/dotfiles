@@ -59,6 +59,10 @@ alias nr="npm run"
 alias y="yarn"
 alias sw="swagger-editor-live"
 
+## Haskell
+alias hs="ghc"
+alias hs_doc="open \${HOME}/Library/Haskell/doc/index.html"
+
 # Ops
 alias ci="circleci"
 alias d="docker"
