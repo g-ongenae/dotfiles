@@ -184,11 +184,11 @@ function til
 		new)
 			NEWFILE="$HOME/Documents/code/til/_posts/$DATE-$2.markdown"
 			firstLineTilPost "$2"
-			atom "$NEWFILE"
+			vscode "$NEWFILE"
 			;;
 		open)
 			if [ "$2" == "now" ]; then
-				atom "$HOME/Documents/code/til/_posts/$DATE-*.markdown"
+				vscode "$HOME/Documents/code/til/_posts/$DATE-*.markdown"
 			fi
 			;;
 		cmp)
@@ -226,7 +226,7 @@ function try
 			cd "$FOLDER" || return
 			echo "$FOLDER created."
 			if [ "$2" == "node" ]; then
-				yarn init
+				npm init
 			fi
 			;;
 		*)
@@ -375,7 +375,7 @@ function lint_file {
 		sh) shellcheck "${FILENAME}";;
 
 		# Doc
-		md) markdownlint "${FILENAME}";; # mdl
+		md) mdl "${FILENAME}";;
 	esac
 }
 

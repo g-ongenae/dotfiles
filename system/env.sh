@@ -39,8 +39,6 @@ export PYTHONPATH
 ## Version Manager
 
 ### Node
-### => AVN
-[[ -s "$HOME/.avn/bin/avn.sh" ]] && source "$HOME/.avn/bin/avn.sh"
 ### => NVM
 NVM_DIR="$HOME/.nvm"
 export NVM_DIR
@@ -97,7 +95,7 @@ function ___ps1
 		g='⨯'
 	fi
 
-	PS1="$NM[ $HI$u $HII$h $SI$w $TI$g$NM ] $IN"
+	PS1="$NM[ $HI$u $HII$h $SI$w $TI$g$NM $(kube_ps1) ] $IN"
   export PS1
 }
 
