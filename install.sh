@@ -69,4 +69,4 @@ ln -sfv "$DOTFILES_DIR/git/.gitconfig" ~
 
 # Reload
 bold "Finished, reset shell session"
-exec ${SHELL} -l
+exec "${SHELL}" -l
