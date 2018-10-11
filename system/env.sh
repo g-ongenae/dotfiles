@@ -99,7 +99,14 @@ function ___ps1
 		g='⨯'
 	fi
 
-	PS1="$NM[ $HI$u $HII$h $SI$w $TI$g$NM $(kube_ps1) ] $IN"
+  # Print the K8s namespace or nothing (this is to remove unwanted space)
+  if [[ "$(kube_ps1)" == "" ]]; then
+    k=''
+  else
+    k='$(kube_ps1) '
+  fi
+
+	PS1="$NM[ $HI$u $HII$h $SI$w $TI$g$NM $k]$IN "
   export PS1
 }
 
