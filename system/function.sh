@@ -331,27 +331,22 @@ function ks_up
 function lint_file {
 	# TODO: Make a wrapper for all my linters
 	# Based on the file extension and name
-	if [ "${FILENAME}" -eq "" ]; then
-		if [ "$#" -lt "2" ]; then
+	if [[ "${FILENAME}" -eq "" ]]; then
+		if [[ "$#" -lt "1" ]]; then
 			echo "Missing filename";
 			return;
 		else
-			FILENAME=$1
+			FILENAME="$1"
 		fi
 	fi
 
-	if [ "${FILENAME##*/}" == "config.yml" ]; then
-		EXTENSION="ci";
-	fi
-
-	case "${EXTENSION}" in
+	case "${FILENAME##*.}" in
 		# Code
 		js) npx eslint "${FILENAME}";;
 		ts) npx tslint "${FILENAME}";;
 
 		# Ops
 		Dockerfile) hadolint "${FILENAME}";;
-		ci) circleci validate "${FILENAME}";;
 
 		# Template
 		pug) npx pug-lint "${FILENAME}";;
@@ -369,7 +364,13 @@ function lint_file {
 
 		# Data
 		# json) ;;
-		# yaml|yml) ;;
+		yaml|yml)
+      case "${FILENAME##*/}" in
+        "config.yml") circleci config validate "${FILENAME}";;
+        ".travis.yml") travis lint "${FILENAME}";;
+        # *) TO ADD YAML Linter ;;
+      esac
+    ;;
 
 		# Bash
 		sh) shellcheck "${FILENAME}";;
@@ -377,11 +378,13 @@ function lint_file {
 		# Doc
 		md) mdl "${FILENAME}";;
 	esac
+
+  unset FILENAME;
 }
 
 function lint_dir
 {
-	if [ "$#" -lt "2" ]; then
+	if [[ "$#" -lt "1" ]]; then
 		DIR="$(pwd)"
 	else
 		DIR="$1"
