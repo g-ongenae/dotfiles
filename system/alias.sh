@@ -6,6 +6,7 @@
 
 ## Clear
 alias c="clear"
+alias kill_dashboard="defaults write com.apple.dashboard mcx-disabled -boolean YES; killall Dock"
 
 ## Change Directory
 alias cd..="cd .."
