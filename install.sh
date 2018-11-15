@@ -55,7 +55,7 @@ if [ "$(uname)" == "Darwin" ]; then
   ! [ "$(mdl --version 2>/dev/zero)" == "" ] || gem install mdl
 
   bold "Install or update globally NPM modules"
-  npm i -g pug-lint ember-template-lint eslint tslint prettier sass-lint http-server swagger-editor-live typescript
+  npm i -g pug-lint ember-template-lint eslint tslint prettier sass-lint http-server swagger-editor-live typescript fx
 fi
 
 # Get current dir (so run this script from anywhere)

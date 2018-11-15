@@ -117,10 +117,10 @@ function json
 {
 	if [ "$#" == 1 ]; then
 		if [ -f "$1" ]; then
-			python -m json.tool < "$1"
+			fx < "$1"
 		else
 			# TODO: Check is a valid link
-			curl -s "$1" | python -m json.tool
+			curl -s "$1" | fx
 		fi
 	else
 		echo "Usage: json <file/url>"
