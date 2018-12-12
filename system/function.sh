@@ -1,4 +1,5 @@
 #! /bin/bash
+
 # shellcheck disable=SC1117
 
 ###
@@ -46,22 +47,14 @@ function dot_help {
 	esac
 }
 
-## Open
-function atom {
-	if [ "$#" == 0 ]; then
-		open -a atom .
-	else
-		open -a atom "$1"
-	fi
-}
-
 ## CD functions
 # cd .. n-times
 # or cd up back from down
-function up {
+function up
+{
 	if [ "$#" == 0 ]; then
 		if ! [[ "$UP" == "" ]]; then
-			UPS=$UP
+			UPS="$UP"
 		else
 			echo "No up" && return
 		fi
@@ -69,7 +62,7 @@ function up {
 		UPS=""
 		# shellcheck disable=SC2034
 		for i in $(seq 1 "$1"); do
-			UPS=$UPS"../"
+			UPS="$UPS../"
 		done
 	fi
 
@@ -80,7 +73,8 @@ function up {
 }
 
 # cd back from up
-function down {
+function down
+{
 	! [[ "$DOWN" == "" ]] || (echo "No down" && return)
 	UP=$(pwd)
 	cd "$DOWN" || return
@@ -89,7 +83,8 @@ function down {
 }
 
 # Move to a folder and get a recap
-function recap {
+function recap
+{
 	if [ "$#" == 0 ]; then
 		DIR="."
 	else
@@ -105,21 +100,26 @@ function recap {
 
 ## Mkdir
 # Move to folder created
-function nd {
+function nd
+{
 	[[ -d "$1" ]] || mkdir "$1" && cd "$1" || return
 }
 
 ## Move
-function trash { mv "$@" ~/.Trash; }
+function trash
+{
+  mv "$@" ~/.Trash;
+}
 
 ## JSON Output
-function json {
+function json
+{
 	if [ "$#" == 1 ]; then
 		if [ -f "$1" ]; then
-			python -m json.tool < "$1"
+			fx < "$1"
 		else
 			# TODO: Check is a valid link
-			curl -s "$1" | python -m json.tool
+			curl -s "$1" | fx
 		fi
 	else
 		echo "Usage: json <file/url>"
@@ -127,7 +127,8 @@ function json {
 }
 
 ## Journal
-function new_day {
+function new_day
+{
 	trap 'echo "" && return' SIGINT
 	if [ "$(jrnl -v)" == "" ]; then
 		echo "Journal is not installed. Run 'brew install jrnl'"
@@ -151,7 +152,8 @@ function new_day {
 ## Project functions
 
 ### Today I learned
-function firstLineTilPost {
+function firstLineTilPost
+{
 	echo "---
 layout: post
 title: \"$1\"
@@ -161,7 +163,16 @@ comments: true
 ---" > "$NEWFILE"
 }
 
-function til {
+USAGE_TIL=<<END
+Usage: Ease TIL gestion.
+
+  - new NAME      initialize a til post
+  - open DATE     open til post of a specify date | now
+  - cmp MESSAGE   commit and push til modifications
+END
+
+function til
+{
 	if [ "$#" == 0 ]; then
 		cd ~/Documents/code/til/ || echo "CD failed" && return
 		return
@@ -172,11 +183,11 @@ function til {
 		new)
 			NEWFILE="$HOME/Documents/code/til/_posts/$DATE-$2.markdown"
 			firstLineTilPost "$2"
-			atom "$NEWFILE"
+			vscode "$NEWFILE"
 			;;
 		open)
 			if [ "$2" == "now" ]; then
-				atom "$HOME/Documents/code/til/_posts/$DATE-*.markdown"
+				vscode "$HOME/Documents/code/til/_posts/$DATE-*.markdown"
 			fi
 			;;
 		cmp)
@@ -186,16 +197,20 @@ function til {
 			push
 			;;
 		*)
-			echo "Usage: Ease TIL gestion."
-			echo "new NAME initialize a til post"
-			echo "open DATE open til post of a specify date | now"
-			echo "cmp MESSAGE commit and push til modifications"
+      echo -e "${USAGE_TIL}"
 			;;
 	esac
 }
 
 ### Try
-function try {
+USAGE_TRY=<<END
+Usage: Create new project easily.
+
+  - new PROJECTLANG   initialize a project folder
+END
+
+function try
+{
 	if [ "$#" == 0 ]; then
 		cd ~/Documents/try/ || echo "CD failed" && return
 		return
@@ -210,44 +225,17 @@ function try {
 			cd "$FOLDER" || return
 			echo "$FOLDER created."
 			if [ "$2" == "node" ]; then
-				yarn init
+				npm init
 			fi
 			;;
 		*)
-			echo "Usage: Create new project easily."
-			echo "new PROJECTLANG initialize a project folder"
+      echo -e "${USAGE_TRY}"
 			;;
 	esac
 }
 
-## GitHub
-function github {
-	if [ "$#" == 0 ]; then
-		cd ~/Documents/code/github || echo "CD failed" && return
-		return
-	fi
-
-	case "$1" in
-		io)
-			cd ~/Documents/code/g-ongenae.github.io || return
-			vscode .
-			;;
-		d|desktop)
-			# Use git d instead
-			open -a 'github desktop'
-			;;
-		w|web)
-			open https://github.com/
-			;;
-		h|help)
-			echo "		- Open github folder"
-			echo "io	- Open g-ongenae.github.io folder"
-			echo "w		- Open Github in the browser"
-			;;
-	esac
-}
-
-function day {
+function day
+{
 	# Create a new folder for the days in days repo
 	# See https://github.com/g-ongenae/days/
 
@@ -277,7 +265,8 @@ function day {
 	open http://127.0.0.1:8080/ & http-server
 }
 
-function ks_list {
+function ks_list
+{
 	PODS=$(kubectl get pods) || echo "Error getting list pods" && return
 	# Transform string into array
 	# shellcheck disable=SC2086
@@ -293,7 +282,8 @@ function ks_list {
 	echo "$POD_INDEX" # TODO
 }
 
-function ks_exec {
+function ks_exec
+{
 	# Exec on a specific Kubernetes pod
 	echo "Going to exec on a pod..."
 	ks_list
@@ -310,7 +300,8 @@ function ks_exec {
 	fi
 }
 
-function ks_logs {
+function ks_logs
+{
 	# Get logs of a specific Kubernetes pod
 	echo "Going to log a pod..."
 	ks_list
@@ -318,7 +309,8 @@ function ks_logs {
 	kubectl logs "$POD_NAME"
 }
 
-function ks_up {
+function ks_up
+{
 	# Watch Kubernetes pods change through time
 	PODS=$(kubectl get pods) || echo "Error getting list pods" && return
 
@@ -334,30 +326,26 @@ function ks_up {
 	printf "\n"
 }
 
-function lintFile {
+
+function lint_file {
 	# TODO: Make a wrapper for all my linters
 	# Based on the file extension and name
-	if [ "${FILENAME}" -eq "" ]; then
-		if [ "$#" -lt "2" ]; then
+	if [[ "${FILENAME}" -eq "" ]]; then
+		if [[ "$#" -lt "1" ]]; then
 			echo "Missing filename";
 			return;
 		else
-			FILENAME=$1
+			FILENAME="$1"
 		fi
 	fi
 
-	if [ "${FILENAME##*/}" == "config.yml" ]; then
-		EXTENSION="ci";
-	fi
-
-	case "${EXTENSION}" in
+	case "${FILENAME##*.}" in
 		# Code
 		js) npx eslint "${FILENAME}";;
 		ts) npx tslint "${FILENAME}";;
 
 		# Ops
 		Dockerfile) hadolint "${FILENAME}";;
-		ci) circleci validate "${FILENAME}";;
 
 		# Template
 		pug) npx pug-lint "${FILENAME}";;
@@ -375,18 +363,27 @@ function lintFile {
 
 		# Data
 		# json) ;;
-		# yaml|yml) ;;
+		yaml|yml)
+      case "${FILENAME##*/}" in
+        "config.yml") circleci config validate "${FILENAME}";;
+        ".travis.yml") travis lint "${FILENAME}";;
+        # *) TO ADD YAML Linter ;;
+      esac
+    ;;
 
 		# Bash
 		sh) shellcheck "${FILENAME}";;
 
 		# Doc
-		md) markdownlint "${FILENAME}";; # mdl
+		md) mdl "${FILENAME}";;
 	esac
+
+  unset FILENAME;
 }
 
-function lintDir {
-	if [ "$#" -lt "2" ]; then
+function lint_dir
+{
+	if [[ "$#" -lt "1" ]]; then
 		DIR="$(pwd)"
 	else
 		DIR="$1"
@@ -395,4 +392,23 @@ function lintDir {
 	for FILE in $DIR; do
 		lintFile "$FILE"
 	done
+}
+
+# Echo with colours
+# Corrected for MacOS from: https://stackoverflow.com/a/46331700/6086598
+# Example: say @b@green[[Success]]@reset
+function say
+{
+  echo "$@" | sed -E \
+    -e "s/((@(red|green|yellow|blue|magenta|cyan|white|reset|b|u))+)\[{2}([^]]+)\]{2}/\1\4@reset/g" \
+    -e "s/@red/$(tput setaf 1)/g" \
+    -e "s/@green/$(tput setaf 2)/g" \
+    -e "s/@yellow/$(tput setaf 3)/g" \
+    -e "s/@blue/$(tput setaf 4)/g" \
+    -e "s/@magenta/$(tput setaf 5)/g" \
+    -e "s/@cyan/$(tput setaf 6)/g" \
+    -e "s/@white/$(tput setaf 7)/g" \
+    -e "s/@reset/$(tput sgr0)/g" \
+    -e "s/@b/$(tput bold)/g" \
+    -e "s/@u/$(tput sgr 0 1)/g";
 }

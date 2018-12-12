@@ -1,6 +1,10 @@
 #! /bin/bash
 
+<<<<<<< HEAD:system/.env.sh
 # shellcheck disable=SC1090,SC1091,SC1117,SC2016
+=======
+# shellcheck disable=SC1117,SC2016,SC1090,SC1091
+>>>>>>> master:system/env.sh
 
 # Env
 
@@ -17,6 +21,10 @@ if [ -f "$HOME/.gcloud/google-cloud-sdk/completion.bash.inc" ]; then
 fi
 
 ## Lang
+
+### Haskell
+PATH="$PATH:$HOME/Library/Haskell/bin"
+PATH="$PATH:$HOME/.local/bin"
 
 ### Go Lang
 # export GOPATH="$HOME/Documents/code/go"
@@ -39,16 +47,22 @@ fi
 ### => AVN
 # [[ -s "$HOME/.avn/bin/avn.sh" ]] && source "$HOME/.avn/bin/avn.sh"
 ### => NVM
-export NVM_DIR="$HOME/.nvm"
+NVM_DIR="$HOME/.nvm"
+export NVM_DIR
 [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 ### Yarn Global Modules
-export PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
+PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
 
 ### Yarn
 export PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
 
 ### RVM
 # [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+
+### Kubernetes
+# https://github.com/jonmosco/kube-ps1
+source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
+kubeoff # Only enable it when necessary
 
 ### Kubernetes
 # https://github.com/jonmosco/kube-ps1
@@ -65,7 +79,8 @@ SI="\[\033[0;33m\]"
 TI="\[\033[1;31m\]"
 IN="\[\033[0m\]"
 
-function ___ps1 {
+function ___ps1
+{
 	# Only print host if different than (\h)
 	if [[ "$HOSTNAME" == 'iMac-de-Petit.local' || "$HOSTNAME" == 'iMac-de-Petit.home' || "$HOSTNAME" == 'iMac-de-Petit' ]]; then
 		h=''
@@ -95,9 +110,27 @@ function ___ps1 {
 		g='⨯'
 	fi
 
+<<<<<<< HEAD:system/.env.sh
 	PS1="${NM}[ $HI$u $HII$h $SI$w $TI$g$NM $(kube_ps1)] $IN"
 	export PS1
 }
 
 export PROMPT_COMMAND=___ps1
 # export PS4="\! : \d \t > "
+=======
+  # Print the K8s namespace or nothing (this is to remove unwanted space)
+  if [[ "$(kube_ps1)" == "" ]]; then
+    k=''
+  else
+    k='$(kube_ps1) '
+  fi
+
+	PS1="$NM[ $HI$u $HII$h $SI$w $TI$g$NM $k]$IN "
+  export PS1
+}
+
+PROMPT_COMMAND=___ps1
+export PROMPT_COMMAND
+
+export PATH
+>>>>>>> master:system/env.sh

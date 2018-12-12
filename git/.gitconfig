@@ -21,6 +21,7 @@
 	f = flow
 	ff = flow feature
 	fh = flow hotfix
+	fix = commit --amend --reuse-message HEAD
 	h = help
 	i = init
 	l = log --oneline -n 10

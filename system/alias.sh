@@ -6,12 +6,14 @@
 
 ## Clear
 alias c="clear"
+alias kill_dashboard="defaults write com.apple.dashboard mcx-disabled -boolean YES; killall Dock"
 
 ## Change Directory
 alias cd..="cd .."
 alias code="cd ~/Documents/code"
 alias days="cd ~/Documents/code/days/"
 alias dotfiles="cd ~/Documents/code/dotfiles/"
+alias io="cd ~/Documents/code/g-ongenae.github.io"
 alias other="cd ~/Documents/other"
 # alias study="cd ~/Documents/study"
 alias work="cd ~/Documents/work"
