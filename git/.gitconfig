@@ -17,11 +17,11 @@
 	contrib = shortlog --summary --numbered
 	de = "!f() { open -a 'github desktop'; }; f"
 	df = diff --word-diff
-  dl = "!sh -c \"git reset HEAD~'$1'\" -" # To delete last commit
+	dl = "!sh -c \"git reset HEAD~'$1'\" -" # To delete last commit
 	f = flow
 	ff = flow feature
 	fh = flow hotfix
-  fix = commit --amend --reuse-message HEAD
+	fix = commit --amend --reuse-message HEAD
 	h = help
 	i = init
 	l = log --oneline -n 10
