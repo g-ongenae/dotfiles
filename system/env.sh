@@ -1,10 +1,6 @@
 #! /bin/bash
 
-<<<<<<< HEAD:system/.env.sh
 # shellcheck disable=SC1090,SC1091,SC1117,SC2016
-=======
-# shellcheck disable=SC1117,SC2016,SC1090,SC1091
->>>>>>> master:system/env.sh
 
 # Env
 
@@ -110,14 +106,6 @@ function ___ps1
 		g='⨯'
 	fi
 
-<<<<<<< HEAD:system/.env.sh
-	PS1="${NM}[ $HI$u $HII$h $SI$w $TI$g$NM $(kube_ps1)] $IN"
-	export PS1
-}
-
-export PROMPT_COMMAND=___ps1
-# export PS4="\! : \d \t > "
-=======
   # Print the K8s namespace or nothing (this is to remove unwanted space)
   if [[ "$(kube_ps1)" == "" ]]; then
     k=''
@@ -133,4 +121,3 @@ PROMPT_COMMAND=___ps1
 export PROMPT_COMMAND
 
 export PATH
->>>>>>> master:system/env.sh
