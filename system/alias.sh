@@ -66,8 +66,5 @@ alias ci="circleci"
 alias d="docker"
 alias ks="kubectl"
 
-# Secret aliases
-alias lyl="node \${HOME}/Documents/work/scripts/lyl-yelloan-launcher/lyl.js"
-
 # DB
 alias m="mongod"

@@ -49,11 +49,14 @@ export NVM_DIR
 ### Yarn Global Modules
 PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
 
-### Yarn
-export PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
-
 ### RVM
-# [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+# Load RVM into a shell session *as a function*
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+GEM_HOME="$HOME/.gem"
+export GEM_HOME
+
+# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
+PATH="$PATH:$HOME/.rvm/bin"
 
 ### Kubernetes
 # https://github.com/jonmosco/kube-ps1
@@ -113,7 +116,7 @@ function ___ps1
     k='$(kube_ps1) '
   fi
 
-	PS1="$NM[ $HI$u $HII$h $SI$w $TI$g$NM $k]$IN "
+	PS1="${NM}[ $HI$u $HII$h $SI$w $TI$g$NM $k]$IN "
   export PS1
 }
 
