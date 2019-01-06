@@ -187,7 +187,8 @@ function br
       echo -e "${USAGE_BR}";
       ;;
 		*)
-			printf "Unknown options: %s\n%s" "$1" "${USAGE_BR}";
+			print_colourful "@b@red[[Unknown options: $1]]@reset\
+      @b@green[[See help with -h]]@reset";
 			;;
 	esac
 }
