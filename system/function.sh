@@ -397,8 +397,8 @@ function lint_dir
 
 # Echo with colours
 # Corrected for MacOS from: https://stackoverflow.com/a/46331700/6086598
-# Example: say @b@green[[Success]]@reset
-function say
+# Example: print_colourful @b@green[[Success]]@reset
+function print_colourful
 {
   echo "$@" | sed -E \
     -e "s/((@(red|green|yellow|blue|magenta|cyan|white|reset|b|u))+)\[{2}([^]]+)\]{2}/\1\4@reset/g" \
