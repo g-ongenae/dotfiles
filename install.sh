@@ -10,7 +10,7 @@ function bold
 
 # Check soft deps installed
 if [ "$(uname)" == "Darwin" ]; then
-  if [ "$(brew --version 2>/dev/zero)" == "" ] ; then
+  if [ "$(brew --version 2>/dev/zero)" == "" ]; then
     bold "Installing Homebrew";
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
   else
