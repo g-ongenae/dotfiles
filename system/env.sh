@@ -37,8 +37,8 @@ PATH="$PATH:$DERBY_HOME/bin"
 export DERBY_HOME
 
 ### Python
-PYTHONPATH="/Library/Python/2.7/site-packages/:$PYTHONPATH"
-export PYTHONPATH
+# PYTHONPATH="/Library/Python/2.7/site-packages/:$PYTHONPATH"
+# export PYTHONPATH
 
 ## Version Manager
 
@@ -52,6 +52,12 @@ PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
 
 ### RVM
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+
+## Other
+PATH="/usr/local/opt/sqlite/bin:$PATH"
+PATH="/usr/local/opt/openssl/bin:$PATH"
+PATH="/usr/local/opt/sphinx-doc/bin:$PATH"
+PATH="/usr/local/opt/nss/bin:$PATH"
 
 ### Kubernetes
 # https://github.com/jonmosco/kube-ps1
@@ -113,4 +119,4 @@ function ___ps1
 PROMPT_COMMAND=___ps1
 export PROMPT_COMMAND
 
-export PATH
+export PATH MANPATH
