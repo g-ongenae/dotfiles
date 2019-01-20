@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# shellcheck disable=SC1117,SC2086,SC2162
+# shellcheck disable=SC1117,SC2086,SC2162,SC2210
 
 ## Git functions
 function get_current_branch
@@ -191,6 +191,46 @@ function br
       @b@green[[See help with -h]]@reset";
 			;;
 	esac
+}
+
+function update_repository
+{
+  cd "${1}" || return
+  local folder
+  folder="$(pwd)"
+
+  if ! [ -d "${folder}/.git" ]; then
+    echo "${folder}.git"
+    print_colourful "@blue[[Ignoring ${folder}: not a repository]]@reset"
+    cd - 2&>1 || return
+    return
+  fi
+
+  print_colourful "@green@b[[Updating repository ${folder}]]@reset"
+  get_branches
+
+  for b in "${BRANCHES[@]}"; do
+    if git diff-index --quiet HEAD -- ; then
+      print_colourful "@green[[Pulling branch ${b} changes]]@reset"
+      git pull
+    else
+      print_colourful "@red[[Uncommitted changes on branch ${b}]]@reset"
+    fi
+  done
+
+  cd - 2&>1 || return
+}
+
+function update_all_repositories
+{
+  cd "${1}" || return
+
+  # Update each folder here
+  for i in ./*; do
+    if [ -d "${i}" ]; then
+      update_repository "${i}"
+    fi
+  done
 }
 
 export -f add_my_remote br get_branches get_current_branch pull push
