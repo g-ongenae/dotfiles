@@ -413,3 +413,5 @@ function print_colourful
     -e "s/@b/$(tput bold)/g" \
     -e "s/@u/$(tput sgr 0 1)/g";
 }
+
+export -f down nd print_colourful trash up

@@ -192,3 +192,5 @@ function br
 			;;
 	esac
 }
+
+export -f add_my_remote br get_branches get_current_branch pull push
