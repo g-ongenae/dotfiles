@@ -39,7 +39,7 @@ function push
 		read -rp "Are you sure you want to use this option: $OPTIONS? Press ^C to exit."
 	fi
 
-	REMOTE_EXIST=$(git ls-remote --heads $REMOTE $CURRENT_BRANCH | grep -c -e "$CURRENT_BRANCH")
+	REMOTE_EXIST=$(git ls-remote --heads "$REMOTE" "$CURRENT_BRANCH" | grep -c -e "$CURRENT_BRANCH")
 	if [[ "$REMOTE_EXIST" ]]; then
 		OPTIONS="$OPTIONS --set-upstream"
 	fi
@@ -131,7 +131,7 @@ function add_my_remote
 
 function choose_remote_branch
 {
-	REMOTES_BRANCHES=$(git ls-remote -q --heads $1 | sed -nE 's/^.{30,}refs\/heads\/(.+)$/\1/p')
+	REMOTES_BRANCHES=$(git ls-remote -q --heads "$1" | sed -nE 's/^.{30,}refs\/heads\/(.+)$/\1/p')
 
 	echo "What is the name of the branch you want to clone?"
 
