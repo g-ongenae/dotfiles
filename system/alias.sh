@@ -71,3 +71,7 @@ alias ks="kubectl"
 
 # DB
 alias m="mongod"
+
+# Jupyter & Python
+alias ju="jupyter"
+alias py="python3"
