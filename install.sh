@@ -15,16 +15,16 @@ fi
 
 # Create Documents architecture
 
-mkdir ~/Documents/code
+mkdir ~/Documents/prog
 mkdir ~/Documents/study
 mkdir ~/Documents/try
 mkdir ~/Documents/write
 mkdir ~/Documents/work
 
 # Download dotfiles
-if [ ! -d "${HOME}/Documents/code/dotfiles" ] ; then
+if [ ! -d "${HOME}/Documents/prog/dotfiles" ] ; then
   bold "Downloading dotfiles";
-  cd ~/Documents/code || echo "Unable to open code folder." && exit
+  cd ~/Documents/prog || echo "Unable to open prog folder." && exit
   git clone git@github.com:g-ongenae/dotfiles.git dotfiles
 fi
 

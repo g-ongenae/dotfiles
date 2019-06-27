@@ -14,6 +14,7 @@
 	c = commit
 	cm = commit -m
 	co = checkout
+	ci = ci-status HEAD
 	contrib = shortlog --summary --numbered
 	de = "!f() { open -a 'github desktop'; }; f"
 	df = diff --word-diff
@@ -21,7 +22,7 @@
 	f = flow
 	ff = flow feature
 	fh = flow hotfix
-	fix = commit --amend --reuse-message HEAD
+	fix = commit --amend --no-edit
 	h = help
 	i = init
 	l = log --oneline -n 10
@@ -66,4 +67,4 @@
 	process = git-lfs filter-process
 	required = true
 [core]
-	excludesfile = ~/Documents/code/dotfiles/git/.gitignore_global
+	excludesfile = ~/Documents/prog/dotfiles/git/.gitignore_global

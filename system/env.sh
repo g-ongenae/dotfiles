@@ -23,8 +23,8 @@ PATH="$PATH:$HOME/Library/Haskell/bin"
 PATH="$PATH:$HOME/.local/bin"
 
 ### Go Lang
-GOPATH="$HOME/Documents/code/go"
-GOBIN="$HOME/Documents/code/go/bin"
+GOPATH="$HOME/Documents/prog/go"
+GOBIN="$HOME/Documents/prog/go/bin"
 export GOPATH GOBIN
 
 ### Java
@@ -32,7 +32,7 @@ JAVA_HOME=$(/usr/libexec/java_home)
 export JAVA_HOME
 
 #### Derby
-DERBY_HOME="/Users/go/Documents/code/derby/bin"
+DERBY_HOME="/Users/go/Documents/prog/derby/bin"
 PATH="$PATH:$DERBY_HOME/bin"
 export DERBY_HOME
 

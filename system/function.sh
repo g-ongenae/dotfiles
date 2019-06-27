@@ -175,25 +175,25 @@ END
 function til
 {
 	if [ "$#" == 0 ]; then
-		cd ~/Documents/code/til/ || echo "CD failed" && return
+		cd ~/Documents/prog/til/ || echo "CD failed" && return
 		return
 	fi
 
 	DATE=$(date +%Y-%m-%d)
 	case "$1" in
 		new)
-			NEWFILE="$HOME/Documents/code/til/_posts/$DATE-$2.markdown"
+			NEWFILE="$HOME/Documents/prog/til/_posts/$DATE-$2.markdown"
 			firstLineTilPost "$2"
 			vscode "$NEWFILE"
 			;;
 		open)
 			if [ "$2" == "now" ]; then
-				vscode "$HOME/Documents/code/til/_posts/$DATE-*.markdown"
+				vscode "$HOME/Documents/prog/til/_posts/$DATE-*.markdown"
 			fi
 			;;
 		cmp)
 			read -rp "Going to commit with message: $2 Press enter to confirm."
-			cd ~/Documents/code/til/ || return
+			cd ~/Documents/prog/til/ || return
 			git commit -am "$2"
 			push
 			;;
@@ -243,10 +243,10 @@ function day
 	read -rp "What's your today project's name? " NAME
 
 	TODAY=$(date -u +"%m/%d")
-	TODAY_DIR="$HOME/Documents/code/days/src/$TODAY-$NAME"
+	TODAY_DIR="$HOME/Documents/prog/days/src/$TODAY-$NAME"
 	# TODO Read folder instead
 	if [ "$(date -u +"%d")" -eq "01" ]; then
-		MONTH_FIRST="$HOME/Documents/code/days/src/$TODAY-$NAME"
+		MONTH_FIRST="$HOME/Documents/prog/days/src/$TODAY-$NAME"
 		export MONTH_FIRST
 	fi
 	mkdir -p "$TODAY_DIR"
@@ -262,7 +262,7 @@ function day
 	# [[ -f "style.css" ]] || touch style.css;
 	[[ -f "app.js" ]] || touch app.js;
 
-	cd "$HOME/Documents/code/days/src/" || return
+	cd "$HOME/Documents/prog/days/src/" || return
 	open http://127.0.0.1:8080/ & http-server
 }
 
