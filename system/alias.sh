@@ -10,7 +10,7 @@ alias kill_dashboard="defaults write com.apple.dashboard mcx-disabled -boolean Y
 
 ## Change Directory
 alias cd..="cd .."
-alias code="cd ~/Documents/code"
+alias prog="cd ~/Documents/code"
 alias days="cd ~/Documents/code/days/"
 alias dotfiles="cd ~/Documents/code/dotfiles/"
 alias io="cd ~/Documents/code/g-ongenae.github.io"
