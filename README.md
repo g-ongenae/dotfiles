@@ -17,7 +17,7 @@ Still learning and building, though.
 Run:
 
 ```bash
-curl https://github.com/g-ongenae/dotfiles/blob/master/install.sh | bash
+curl https://raw.githubusercontent.com/g-ongenae/dotfiles/master/install.sh | bash
 ```
 
 ## Help
