@@ -6,7 +6,7 @@ function bold
   echo "$(tput bold)${1}$(tput sgr0)"
 }
 
-if [ "$(uname)" == "Darwin" ]; then
+if [ "$(uname)" != "Darwin" ]; then
   # TODO handle linux
   bold "Unable to install programs: need MacOS";
 
@@ -15,11 +15,11 @@ fi
 
 # Create Documents architecture
 
-mkdir ~/Documents/prog
-mkdir ~/Documents/study
-mkdir ~/Documents/try
-mkdir ~/Documents/write
-mkdir ~/Documents/work
+! [ -f "${HOME}/Documents/prog" ] || mkdir ~/Documents/prog
+! [ -f "${HOME}/Documents/study" ] || mkdir ~/Documents/study
+! [ -f "${HOME}/Documents/try" ] || mkdir ~/Documents/try
+! [ -f "${HOME}/Documents/write" ] || mkdir ~/Documents/write
+! [ -f "${HOME}/Documents/work" ] || mkdir ~/Documents/work
 
 # Download dotfiles
 if [ ! -d "${HOME}/Documents/prog/dotfiles" ] ; then
@@ -31,7 +31,7 @@ fi
 # Piping stderr to /dev/zero (2>/dev/zero) to ignore error
 
 # Check soft deps installed
-xcode-select --install
+xcode-select --install 2>/dev/zero
 
 if [ "$(brew --version 2>/dev/zero)" == "" ] ; then
   bold "Installing Homebrew";
@@ -44,11 +44,11 @@ fi
 bold "Check or install useful softwares";
 # Shell useful command
 ! [ "$(tree --version 2>/dev/zero)" == "" ] || brew install tree
+! [ "$(gpg --version 2>/dev/zero)" == "" ] || brew install gpg
 
 # Lang
 ! [ "$(go version 2>/dev/zero)" == "" ] || open https://golang.org/doc/install
 ! [ "$(brew list | grep nvm)" == "" ] || brew install nvm
-# ! [ "$(yarn --version 2>/dev/zero)" == "" ] || brew install yarn --without-node
 ! [ "$(ghc --version 2>/dev/zero)" == "" ] || open https://www.haskell.org/downloads
 
 if [ "$(rvm --version 2>/dev/zero)" == "" ]; then
@@ -78,21 +78,24 @@ fi
 ! [ "$(mdl --version 2>/dev/zero)" == "" ] || gem install mdl
 
 # Cask installs
-! [ "$(brew info insomnia 2>/dev/zero)" == "" ] || brew cask install insomnia
-! [ "$(brew info postman 2>/dev/zero)" == "" ] || brew cask install postman
-! [ "$(brew info vectr 2>/dev/zero)" == "" ] || brew cask install vectr
-! [ "$(brew info 1Clipboard 2>/dev/zero)" == "" ] || brew cask install 1Clipboard
-! [ "$(brew info Dashlane 2>/dev/zero)" == "" ] || brew cask install Dashlane
-! [ "$(brew info hyper 2>/dev/zero)" == "" ] || brew cask install hyper
-! [ "$(brew info typora 2>/dev/zero)" == "" ] || brew cask install typora
-! [ "$(brew info studio-3t 2>/dev/zero)" == "" ] || brew cask install studio-3t
-! [ "$(brew info github-desktop 2>/dev/zero)" == "" ] || brew cask install github-desktop
-! [ "$(brew info google-chrome 2>/dev/zero)" == "" ] || brew cask install google-chrome
+! [ -f "/Applications/Insomnia.app" ] || brew cask install insomnia
+! [ -f "/Applications/Postman.app" ] || brew cask install postman
+! [ -f "/Applications/Vectr.app" ] || brew cask install vectr
+! [ -f "/Applications/1Clipboard.app" ] || brew cask install 1Clipboard
+! [ -f "/Applications/Dashlane.app" ] || brew cask install Dashlane
+! [ -f "/Applications/Hyper.app" ] || brew cask install hyper
+! [ -f "/Applications/Typora.app" ] || brew cask install typora
+! [ -f "/Applications/Studio\ 3T.app" ] || brew cask install studio-3t
+! [ -f "/Applications/GitHub\ Desktop.app" ] || brew cask install github-desktop
+! [ -f "/Applications/Google\ Chrome.app" ] || brew cask install google-chrome
 ! [ -f "/Applications/Station.app" ] || open https://dl.getstation.com/download/osx
 ! [ -f "/Applications/Cliqz.app" ] || open https://cdn.cliqz.com/browser-f/download/web0001/CLIQZ.en-US.mac.dmg
-! [ "$(brew info visual-studio-code 2>/dev/zero)" == "" ] || brew cask install visual-studio-code
+! [ -f "/Applications/Visual\ Studio\ Code.app" ] || brew cask install visual-studio-code
 
 # TODO install vscode & hyper plugins
+
+bold "Update NPM"
+npm i -g npm
 
 bold "Install or update globally NPM modules"
 npm i -g pug-lint ember-template-lint eslint tslint prettier sass-lint \
