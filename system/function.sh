@@ -7,14 +7,14 @@
 ###
 
 ## List dotfiles Help
-DOT_HELP=<<END
+DOT_HELP="\
 Print list of functions and aliases in the dotfiles:
 
   - ga           git aliases
   - gs           git personal functions
   - a|aliases    aliases
-  - f|functions  functions
-END
+  - f|functions  functions\
+";
 
 function dot_help
 {

@@ -16,8 +16,8 @@
 	co = checkout
 	ci = ci-status HEAD
 	contrib = shortlog --summary --numbered
-	de = "!f() { open -a 'github desktop'; }; f"
-	df = diff --word-diff
+	de = "!f() { open -a 'github desktop'; }; f" # To open GitHub Desktop
+	df = diff --word-diff # To show diff by words
 	dl = "!sh -c \"git reset HEAD~'$1'\" -" # To delete last commit
 	f = flow
 	ff = flow feature

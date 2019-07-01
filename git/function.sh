@@ -32,7 +32,9 @@ function push
 	else
 		REMOTE="origin"
 	fi
-	read -rp "Are you sure you want to use $REMOTE as remote? Press ^C to exit."
+
+  REMOTE_URL=$(git remote get-url "${REMOTE}")
+	read -rp "Are you sure you want to use ${REMOTE_URL} as remote? Press ^C to exit."
 
 	if [ "$#" -eq 2 ]; then
 		OPTIONS="$2"
