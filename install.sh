@@ -6,6 +6,15 @@ function bold
   echo "$(tput bold)${1}$(tput sgr0)"
 }
 
+# Ensure a directory is created
+function ensure_dir
+{
+  local NAME="${1}"
+  if ! [ -d "${HOME}/Documents/${NAME}" ] ; then
+    mkdir "${HOME}/Documents/${NAME}"
+  fi
+}
+
 if [ "$(uname)" != "Darwin" ]; then
   # TODO handle linux
   bold "Unable to install programs: need MacOS";
@@ -14,17 +23,16 @@ if [ "$(uname)" != "Darwin" ]; then
 fi
 
 # Create Documents architecture
-
-! [ -f "${HOME}/Documents/prog" ] || mkdir ~/Documents/prog
-! [ -f "${HOME}/Documents/study" ] || mkdir ~/Documents/study
-! [ -f "${HOME}/Documents/try" ] || mkdir ~/Documents/try
-! [ -f "${HOME}/Documents/write" ] || mkdir ~/Documents/write
-! [ -f "${HOME}/Documents/work" ] || mkdir ~/Documents/work
+ensure_dir "prog"
+ensure_dir "study"
+ensure_dir "try"
+ensure_dir "write"
+ensure_dir "work"
 
 # Download dotfiles
-if [ ! -d "${HOME}/Documents/prog/dotfiles" ] ; then
+if ! [ -d "${HOME}/Documents/prog/dotfiles" ] ; then
   bold "Downloading dotfiles";
-  cd ~/Documents/prog || echo "Unable to open prog folder." && exit
+  cd "${HOME}/Documents/prog" || { echo "Unable to open prog folder." ; exit ; }
   git clone git@github.com:g-ongenae/dotfiles.git dotfiles
 fi
 
