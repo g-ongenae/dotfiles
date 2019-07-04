@@ -21,7 +21,7 @@ function install_cask
   local CASK_NAME="${1}"
   local CASK_INSTALL="${2}"
 
-  if [ "${CASK_INSTALL}" -eq "" ] ; then
+  if [ "${CASK_INSTALL}" == "" ] ; then
     CASK_INSTALL="${CASK_NAME}"
   fi
 
@@ -57,7 +57,7 @@ ensure_dir "work"
 if ! [ -d "${HOME}/Documents/prog/dotfiles" ] ; then
   bold "Downloading dotfiles";
   cd "${HOME}/Documents/prog" || { echo "Unable to open prog folder." ; exit ; }
-  git clone git@github.com:g-ongenae/dotfiles.git dotfiles
+  git clone https://github.com/g-ongenae/dotfiles.git dotfiles
 fi
 
 # Piping stderr to /dev/zero (2>/dev/zero) to ignore error
@@ -75,14 +75,14 @@ fi
 
 bold "Check or install useful softwares";
 # Shell useful command
-! [ "$(tree --version 2>/dev/zero)" == "" ] || brew install tree
-! [ "$(gpg --version 2>/dev/zero)" == "" ] || brew install gpg
+install_brew "tree"
+install_brew "gpg"
 
 # Lang
 ! [ "$(go version 2>/dev/zero)" == "" ] || open https://golang.org/doc/install
-! [ "$(brew list | grep node)" == "" ] || brew install node
-! [ "$(brew list | grep nvm)" == "" ] || brew install nvm
 ! [ "$(ghc --version 2>/dev/zero)" == "" ] || open https://www.haskell.org/downloads
+install_brew "node"
+install_brew "nvm"
 
 if [ "$(rvm --version 2>/dev/zero)" == "" ]; then
   gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
