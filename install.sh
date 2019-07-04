@@ -15,6 +15,30 @@ function ensure_dir
   fi
 }
 
+# Install a cask software
+function install_cask
+{
+  local CASK_NAME="${1}"
+  local CASK_INSTALL="${2}"
+
+  if [ "${CASK_INSTALL}" -eq "" ] ; then
+    CASK_INSTALL="${CASK_NAME}"
+  fi
+
+  if ! [ -f "/Applications/${CASK_NAME}.app" ] ; then
+    brew cask install "${CASK_INSTALL}"
+  fi
+}
+
+function install_brew
+{
+  local NAME="${1}"
+
+  if ! [ "$(brew list | grep "${NAME}")" == "" ] ; then
+    brew install "${NAME}"
+  fi
+}
+
 if [ "$(uname)" != "Darwin" ]; then
   # TODO handle linux
   bold "Unable to install programs: need MacOS";
@@ -56,6 +80,7 @@ bold "Check or install useful softwares";
 
 # Lang
 ! [ "$(go version 2>/dev/zero)" == "" ] || open https://golang.org/doc/install
+! [ "$(brew list | grep node)" == "" ] || brew install node
 ! [ "$(brew list | grep nvm)" == "" ] || brew install nvm
 ! [ "$(ghc --version 2>/dev/zero)" == "" ] || open https://www.haskell.org/downloads
 
@@ -65,40 +90,42 @@ if [ "$(rvm --version 2>/dev/zero)" == "" ]; then
 fi
 
 # Journal
-! [ "$(jrnl --version 2>/dev/zero)" == "" ] || brew install jrnl
+install_brew "jrnl"
 
 # Git
-! [ "$(hub --version 2>/dev/zero)" == "" ] || brew install hub
-! [ "$(git flow version 2>/dev/zero)" == "" ] || brew install git-flow
+install_brew "hub"
+install_brew "git-flow"
 ! [ "$(overcommit --version 2>/dev/zero)" == "" ] || gem install overcommit
 
 # Ops
-! [ "$(mongod --version 2>/dev/zero)" == "" ] || brew install mongodb
+install_brew "mongodb"
 ! [ "$(docker version 2>/dev/zero)" == "" ] || open https://store.docker.com/editions/community/docker-ce-desktop-mac
-! [ "$(kubectl version 2>/dev/zero)" == "" ] || brew install kubectl
-! [ "$(brew list | grep kube-ps1)" == "" ] || brew install kube-ps1
+install_brew "kubectl"
+install_brew "kube-ps1"
 
 # Linters / validators
 ! [ "$(circleci version 2>/dev/zero)" == "" ] || curl https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh --fail --show-error | bash
 ! [ "$(travis version 2>/dev/zero)" == "" ] || gem install travis
-! [ "$(shellcheck --version 2>/dev/zero)" == "" ] || brew install shellcheck
-! [ "$(hadolint --version 2>/dev/zero)" == "" ] || brew install hadolint
+install_brew "shellcheck"
+install_brew "hadolint"
 ! [ "$(mdl --version 2>/dev/zero)" == "" ] || gem install mdl
 
 # Cask installs
-! [ -f "/Applications/Insomnia.app" ] || brew cask install insomnia
-! [ -f "/Applications/Postman.app" ] || brew cask install postman
-! [ -f "/Applications/Vectr.app" ] || brew cask install vectr
-! [ -f "/Applications/1Clipboard.app" ] || brew cask install 1Clipboard
-! [ -f "/Applications/Dashlane.app" ] || brew cask install Dashlane
-! [ -f "/Applications/Hyper.app" ] || brew cask install hyper
-! [ -f "/Applications/Typora.app" ] || brew cask install typora
-! [ -f "/Applications/Studio\ 3T.app" ] || brew cask install studio-3t
-! [ -f "/Applications/GitHub\ Desktop.app" ] || brew cask install github-desktop
-! [ -f "/Applications/Google\ Chrome.app" ] || brew cask install google-chrome
+bold "Install Cask"
+install_brew "cask"
+
+install_cask "insomnia"
+install_cask "postman"
+install_cask "vectr"
+install_cask "1Clipboard"
+install_cask "Dashlane"
+install_cask "hyper"
+install_cask "Studio\ 3T" "studio-3t"
+install_cask "Github\ Desktop" "github-desktop"
+install_cask "Visual\ Studio\ Code" "visual-studio-code"
+install_cask "Google\ Chrome" "google-chrome"
 ! [ -f "/Applications/Station.app" ] || open https://dl.getstation.com/download/osx
 ! [ -f "/Applications/Cliqz.app" ] || open https://cdn.cliqz.com/browser-f/download/web0001/CLIQZ.en-US.mac.dmg
-! [ -f "/Applications/Visual\ Studio\ Code.app" ] || brew cask install visual-studio-code
 
 # TODO install vscode & hyper plugins
 
