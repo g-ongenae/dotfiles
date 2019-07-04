@@ -57,6 +57,7 @@ export GEM_HOME
 
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
 PATH="$PATH:$HOME/.rvm/bin"
+PATH="$PATH:$HOME/.gem/ruby/2.3.0/bin"
 
 ### Kubernetes
 # https://github.com/jonmosco/kube-ps1
