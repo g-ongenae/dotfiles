@@ -75,3 +75,7 @@ alias m="mongod"
 # Jupyter & Python
 alias ju="jupyter"
 alias py="python3"
+
+# Scripts
+alias release="bash ../scripts/openRelease.sh"
+alias upade_node="bash updateNodeVersion.sh"
