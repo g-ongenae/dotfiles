@@ -18,7 +18,7 @@ Print list of functions and aliases in the dotfiles:
 
 function dot_help
 {
-	if [ "$#" == 0 ]; then
+	if [ "$#" == 0 ] ; then
 		echo -e "$DOT_HELP"
 		return
 	fi
@@ -30,20 +30,20 @@ function dot_help
 			;;
 		gf)
 			echo "Git personal functions:"
-			grep --color "function .*{" "$DOTFILES_DIR/git/.function.sh"
+			grep --color "^function .*$" "${DOTFILES_DIR}/git/function.sh"
 			;;
 		a|aliases)
 			echo "Aliases:"
-			grep --color "alias .*=" "$DOTFILES_DIR/system/.alias.sh"
-			grep --color "alias .*=" "$DOTFILES_DIR/git/.alias.sh"
+			grep --color "alias .*=" "${DOTFILES_DIR}/system/alias.sh"
+			grep --color "alias .*=" "${DOTFILES_DIR}/git/alias.sh"
 			;;
 		f|functions)
 			echo "Functions:"
-			grep --color "function .*{" "$DOTFILES_DIR/system/.function.sh"
+			grep --color "^function .*$" "${DOTFILES_DIR}/system/function.sh"
 			;;
 		*)
 			echo "Error! Unrecognized argument"
-			echo -e "$DOT_HELP"
+			echo -e "${DOT_HELP}"
 			;;
 	esac
 }
@@ -53,8 +53,8 @@ function dot_help
 # or cd up back from down
 function up
 {
-	if [ "$#" == 0 ]; then
-		if ! [[ "$UP" == "" ]]; then
+	if [ "$#" == 0 ] ; then
+		if ! [[ "$UP" == "" ]] ; then
 			UPS="$UP"
 		else
 			echo "No up" && return
@@ -62,7 +62,7 @@ function up
 	else
 		UPS=""
 		# shellcheck disable=SC2034
-		for i in $(seq 1 "$1"); do
+		for i in $(seq 1 "$1") ; do
 			UPS="$UPS../"
 		done
 	fi
@@ -86,7 +86,7 @@ function down
 # Move to a folder and get a recap
 function recap
 {
-	if [ "$#" == 0 ]; then
+	if [ "$#" == 0 ] ; then
 		DIR="."
 	else
 		DIR="$*"
@@ -109,14 +109,14 @@ function nd
 ## Move
 function trash
 {
-  mv "$@" ~/.Trash;
+  mv "$@" ~/.Trash
 }
 
 ## JSON Output
 function json
 {
-	if [ "$#" == 1 ]; then
-		if [ -f "$1" ]; then
+	if [ "$#" == 1 ] ; then
+		if [ -f "$1" ] ; then
 			fx < "$1"
 		else
 			# TODO: Check is a valid link
@@ -131,7 +131,7 @@ function json
 function new_day
 {
 	trap 'echo "" && return' SIGINT
-	if [ "$(jrnl -v)" == "" ]; then
+	if [ "$(jrnl -v)" == "" ] ; then
 		echo "Journal is not installed. Run 'brew install jrnl'"
 		return
 	fi
@@ -140,12 +140,8 @@ function new_day
 		echo "What are you working on today?"
 		read -rp "Open Journal? (Yes/No) => " ANSWER
 		case "$ANSWER" in
-			[Yy]*)
-				jrnl
-				;;
-			*)
-				echo "Ok! Have a good day!"
-				;;
+			[Yy]*) jrnl ;;
+			*) echo "Ok! Have a good day!" ;;
 		esac
 	fi
 }
@@ -174,7 +170,7 @@ END
 
 function til
 {
-	if [ "$#" == 0 ]; then
+	if [ "$#" == 0 ] ; then
 		cd ~/Documents/prog/til/ || echo "CD failed" && return
 		return
 	fi
@@ -197,9 +193,7 @@ function til
 			git commit -am "$2"
 			push
 			;;
-		*)
-      echo -e "${USAGE_TIL}"
-			;;
+		*) echo -e "${USAGE_TIL}" ;;
 	esac
 }
 
@@ -212,7 +206,7 @@ END
 
 function try
 {
-	if [ "$#" == 0 ]; then
+	if [ "$#" == 0 ] ; then
 		cd ~/Documents/try/ || echo "CD failed" && return
 		return
 	fi
@@ -229,9 +223,7 @@ function try
 				npm init
 			fi
 			;;
-		*)
-      echo -e "${USAGE_TRY}"
-			;;
+		*) echo -e "${USAGE_TRY}" ;;
 	esac
 }
 
@@ -245,22 +237,22 @@ function day
 	TODAY=$(date -u +"%m/%d")
 	TODAY_DIR="$HOME/Documents/prog/days/src/$TODAY-$NAME"
 	# TODO Read folder instead
-	if [ "$(date -u +"%d")" -eq "01" ]; then
+	if [ "$(date -u +"%d")" -eq "01" ] ; then
 		MONTH_FIRST="$HOME/Documents/prog/days/src/$TODAY-$NAME"
 		export MONTH_FIRST
 	fi
 	mkdir -p "$TODAY_DIR"
 
 	cd "$TODAY_DIR" || return
-	if [ ! -f "index.html" ]; then
-		if [ -f "$MONTH_FIRST/index.html" ]; then
+	if [ ! -f "index.html" ] ; then
+		if [ -f "$MONTH_FIRST/index.html" ] ; then
 			cp "$MONTH_FIRST/index.html" ./
 		else
-			touch index.html;
+			touch index.html
 		fi
 	fi
 	# [[ -f "style.css" ]] || touch style.css;
-	[[ -f "app.js" ]] || touch app.js;
+	[[ -f "app.js" ]] || touch app.js
 
 	cd "$HOME/Documents/prog/days/src/" || return
 	open http://127.0.0.1:8080/ & http-server
@@ -275,7 +267,7 @@ function ks_list
 
 	echo "Choose a pod in the list by it's number:"
 	# Print list of pods with their index
-	for i in "${!PODS[@]}"; do
+	for i in "${!PODS[@]}" ; do
 		echo "$i -> ${PODS[i]}"
 	done
 
@@ -328,13 +320,14 @@ function ks_up
 }
 
 
-function lint_file {
+function lint_file
+{
 	# TODO: Make a wrapper for all my linters
 	# Based on the file extension and name
-	if [[ "${FILENAME}" -eq "" ]]; then
-		if [[ "$#" -lt "1" ]]; then
-			echo "Missing filename";
-			return;
+	if [[ "${FILENAME}" -eq "" ]] ; then
+		if [[ "$#" -lt "1" ]] ; then
+			echo "Missing filename"
+			return
 		else
 			FILENAME="$1"
 		fi
@@ -342,15 +335,15 @@ function lint_file {
 
 	case "${FILENAME##*.}" in
 		# Code
-		js) npx eslint "${FILENAME}";;
-		ts) npx tslint "${FILENAME}";;
+		js) npx eslint "${FILENAME}" ;;
+		ts) npx tslint "${FILENAME}" ;;
 
 		# Ops
-		Dockerfile) hadolint "${FILENAME}";;
+		Dockerfile) hadolint "${FILENAME}" ;;
 
 		# Template
-		pug) npx pug-lint "${FILENAME}";;
-		hbs) npx ember-template-lint "${FILENAME}";;
+		pug) npx pug-lint "${FILENAME}" ;;
+		hbs) npx ember-template-lint "${FILENAME}" ;;
 		# ejs) ;;
 
 		# Front
@@ -360,37 +353,37 @@ function lint_file {
 		# - Style
 		# css) ;;
 		# less) ;;
-		sass|scss) sass-lint "${FILENAME}";;
+		sass|scss) sass-lint "${FILENAME}" ;;
 
 		# Data
 		# json) ;;
 		yaml|yml)
       case "${FILENAME##*/}" in
-        "config.yml") circleci config validate "${FILENAME}";;
-        ".travis.yml") travis lint "${FILENAME}";;
+        "config.yml") circleci config validate "${FILENAME}" ;;
+        ".travis.yml") travis lint "${FILENAME}" ;;
         # *) TO ADD YAML Linter ;;
       esac
     ;;
 
 		# Bash
-		sh) shellcheck "${FILENAME}";;
+		sh) shellcheck "${FILENAME}" ;;
 
 		# Doc
-		md) mdl "${FILENAME}";;
+		md) mdl "${FILENAME}" ;;
 	esac
 
-  unset FILENAME;
+  unset FILENAME
 }
 
 function lint_dir
 {
-	if [[ "$#" -lt "1" ]]; then
+	if [[ "$#" -lt "1" ]] ; then
 		DIR="$(pwd)"
 	else
 		DIR="$1"
 	fi
 
-	for FILE in $DIR; do
+	for FILE in $DIR ; do
 		lintFile "$FILE"
 	done
 }
@@ -411,7 +404,27 @@ function print_colourful
     -e "s/@white/$(tput setaf 7)/g" \
     -e "s/@reset/$(tput sgr0)/g" \
     -e "s/@b/$(tput bold)/g" \
-    -e "s/@u/$(tput sgr 0 1)/g";
+    -e "s/@u/$(tput sgr 0 1)/g"
 }
+
+# Copy a folder content into a safe place and clean it afterwards
+function save_and_clean
+{
+    local TO_REMOVE="${1}"
+    local TO_SAVE="${2}"
+
+    mv "${TO_REMOVE}" "${TO_SAVE}/${TO_REMOVE##*/}"
+    mkdir "${TO_REMOVE}"
+}
+
+# Save Scratches content & make it work again
+function fix_scratches
+{
+	local SCRATCHES="${HOME}/Library/Application Support/Scratches/Local Storage"
+
+	mv "${SCRATCHES}/file__0.localstorage" "${HOME}/Documents/try/"
+	rm "${SCRATCHES}/file__0.localstorage-journal"
+}
+
 
 export -f down nd print_colourful trash up

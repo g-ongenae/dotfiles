@@ -39,9 +39,9 @@ function install_brew
   fi
 }
 
-if [ "$(uname)" != "Darwin" ]; then
+if [ "$(uname)" != "Darwin" ] ; then
   # TODO handle linux
-  bold "Unable to install programs: need MacOS";
+  bold "Unable to install programs: need MacOS"
 
   exit
 fi

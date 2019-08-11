@@ -14,7 +14,7 @@ function pull
 {
 	get_current_branch
 
-	if [ "$#" -gt 0 ]; then
+	if [ "$#" -gt 0 ] ; then
 		REMOTE="$1"
 	else
 		REMOTE="origin"
@@ -27,7 +27,7 @@ function push
 {
 	get_current_branch
 
-	if [ "$#" -gt 0 ]; then
+	if [ "$#" -gt 0 ] ; then
 		REMOTE="$1"
 	else
 		REMOTE="origin"
@@ -36,13 +36,13 @@ function push
   REMOTE_URL=$(git remote get-url "${REMOTE}")
 	read -rp "Are you sure you want to use ${REMOTE_URL} as remote? Press ^C to exit."
 
-	if [ "$#" -eq 2 ]; then
+	if [ "$#" -eq 2 ] ; then
 		OPTIONS="$2"
 		read -rp "Are you sure you want to use this option: $OPTIONS? Press ^C to exit."
 	fi
 
 	REMOTE_EXIST=$(git ls-remote --heads "$REMOTE" "$CURRENT_BRANCH" | grep -c -e "$CURRENT_BRANCH")
-	if [[ "$REMOTE_EXIST" ]]; then
+	if [[ "$REMOTE_EXIST" ]] ; then
 		OPTIONS="$OPTIONS --set-upstream"
 	fi
 
@@ -57,8 +57,8 @@ function get_branches
 	read -a BRANCHES <<<$BRANCHES
 
 	# Remove character * that indicates the current branch
-	for i in "${!BRANCHES[@]}"; do
-		if [[ "${BRANCHES[$i]}" = "*" ]]; then
+	for i in "${!BRANCHES[@]}" ; do
+		if [[ "${BRANCHES[$i]}" = "*" ]] ; then
 			TO_REMOVE=$i
 		fi
 	done
@@ -73,12 +73,12 @@ function switch_branch
 	echo "What branch do you want to switch to? "
 
 	CANCEL="cancel"
-	select BRANCH in "${BRANCHES[@]}" "$CANCEL"; do
-		if [ "$BRANCH" != "$CANCEL" ]; then
+	select BRANCH in "${BRANCHES[@]}" "$CANCEL" ; do
+		if [ "$BRANCH" != "$CANCEL" ] ; then
 			git checkout "${BRANCH}"
 		fi
 
-		break;
+		break
 	done
 }
 
@@ -89,13 +89,11 @@ function delete_branch
 	echo "What branch do you want to delete? "
 
 	CANCEL="cancel"
-	select BRANCH in "${BRANCHES[@]}" "$CANCEL"; do
+	select BRANCH in "${BRANCHES[@]}" "$CANCEL" ; do
 		case "$BRANCH" in
-			"$CANCEL")
-				break;
-				;;
+			"$CANCEL") break ;;
 			*)
-				if [ "$1" == "-f" ]; then
+				if [ "$1" == "-f" ] ; then
 					# Force Delete
 					git branch -D "${BRANCH}"
 				else
@@ -107,7 +105,8 @@ function delete_branch
 }
 
 ## TODO:
-# function update {
+# function update
+# {
 ## Update all repositories on computer with git pull
 ## Two options:
 ## - Soft: if modifications ignore
@@ -138,34 +137,38 @@ function choose_remote_branch
 	echo "What is the name of the branch you want to clone?"
 
 	CANCEL="cancel"
-	select CHOICE in $REMOTES_BRANCHES "$CANCEL"; do
+	select CHOICE in $REMOTES_BRANCHES "$CANCEL" ; do
 		FETCHING_BRANCH="$CHOICE"
 		return
 	done
 }
 
-function fetch_mine_br
+function fetch_br
 {
-	if [[ "$#" -eq "0" ]] || [[ "$1" -eq "" ]]; then
-		choose_remote_branch "mine"
-		if [[ "$CHOICE" == "$CANCEL" ]]; then
-			return
-		fi
+  if [[ "$#" -eq "0" ]] || [[ "${2}" -eq "" ]] ; then
+    REMOTE=mine
+  else
+    REMOTE="${2}"
+  fi
+
+	if [[ "$#" -eq "0" ]] || [[ "${1}" -eq "" ]] ; then
+		choose_remote_branch "${REMOTE}"
+		if [[ "$CHOICE" == "$CANCEL" ]]; then return ; fi
 	else
-		FETCHING_BRANCH="$1"
+		FETCHING_BRANCH="${1}"
 	fi
 
-	git fetch mine "${FETCHING_BRANCH}"
+	git fetch "${REMOTE}" "${FETCHING_BRANCH}"
 	git checkout "${FETCHING_BRANCH}"
 }
 
 USAGE_BR=<<END
   Usage: br -[d|f|s]
 
-            => git branch
-  -s 			  => switch branch easily
-  -d [-f] 	=> delete branches easily [option to force]
-  -f [name]	=> fetch branch from 'mine' remote
+                      => git branch
+  -s 			            => switch branch easily
+  -d [-f] 	          => delete branches easily [option to force]
+  -f [name] [remote]  => fetch branch from 'mine' remote
 END
 
 function br
@@ -176,18 +179,17 @@ function br
 	fi
 
 	case "$1" in
-		-s|s)
-			switch_branch
+		-s|s) switch_branch ;;
+		-d|d) delete_branch "$2" ;;
+		-f|f) fetch_br "$2" "$3" ;;
+		-l|l)
+			if [ "$#" -eq "1" ] ; then
+				choose_remote_branch origin
+			else
+				choose_remote_branch "$2"
+			fi
 			;;
-		-d|d)
-			delete_branch "$2"
-			;;
-		-f|f)
-			fetch_mine_br "$2"
-			;;
-    -h|h)
-      echo -e "${USAGE_BR}";
-      ;;
+		-h|h) echo -e "${USAGE_BR}" ;;
 		*)
 			print_colourful "@b@red[[Unknown options: $1]]@reset\
       @b@green[[See help with -h]]@reset";
@@ -201,7 +203,7 @@ function update_repository
   local folder
   folder="$(pwd)"
 
-  if ! [ -d "${folder}/.git" ]; then
+  if ! [ -d "${folder}/.git" ] ; then
     echo "${folder}.git"
     print_colourful "@blue[[Ignoring ${folder}: not a repository]]@reset"
     cd - 2&>1 || return
@@ -211,7 +213,7 @@ function update_repository
   print_colourful "@green@b[[Updating repository ${folder}]]@reset"
   get_branches
 
-  for b in "${BRANCHES[@]}"; do
+  for b in "${BRANCHES[@]}" ; do
     if git diff-index --quiet HEAD -- ; then
       print_colourful "@green[[Pulling branch ${b} changes]]@reset"
       git pull
@@ -228,8 +230,8 @@ function update_all_repositories
   cd "${1}" || return
 
   # Update each folder here
-  for i in ./*; do
-    if [ -d "${i}" ]; then
+  for i in ./* ; do
+    if [ -d "${i}" ] ; then
       update_repository "${i}"
     fi
   done

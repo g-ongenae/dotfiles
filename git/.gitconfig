@@ -16,9 +16,10 @@
 	co = checkout
 	ci = ci-status HEAD
 	contrib = shortlog --summary --numbered
+	d = "!sh -c \"git rebase --onto '$1^' '$1'\" -" # To delete a commit based on its sha
 	de = "!f() { open -a 'github desktop'; }; f" # To open GitHub Desktop
 	df = diff --word-diff # To show diff by words
-	dl = "!sh -c \"git reset HEAD~'$1'\" -" # To delete last commit
+	dl = "!sh -c \"git reset HEAD~'$1'\" -" # To delete last (n) commit
 	f = flow
 	ff = flow feature
 	fh = flow hotfix

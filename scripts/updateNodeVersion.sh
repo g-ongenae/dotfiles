@@ -6,7 +6,7 @@
 function updateNodeVersion
 {
   local folder="${1}"
-  if ! [ -d "${folder}/.git" ]; then
+  if ! [ -d "${folder}/.git" ] ; then
     return
   fi
 
@@ -19,12 +19,12 @@ function updateNodeVersion
   git checkout -b feature/update-node || return
 
   # In Dockerfile
-  if [ -f "${folder}/Dockerfile" ]; then
+  if [ -f "${folder}/Dockerfile" ] ; then
     sed -e "s/${LAST_VERSION}/${NEW_VERSION}/g"
   fi
 
   # In package.json
-  if [ -f "${folder}/package.json" ]; then
+  if [ -f "${folder}/package.json" ] ; then
     sed -e "s/${LAST_VERSION}/${NEW_VERSION}/"
   fi
 
@@ -36,7 +36,7 @@ function updateNodeVersion
 
 # Main
 
-if ! [ "$#" -eq 3 ]; then
+if ! [ "$#" -eq 3 ] ; then
   echo "Missing Parameters"
   exit 1
 fi
@@ -49,8 +49,8 @@ NEW_VERSION="${3}"
 cd "${DIR}" || exit
 
 # Update each folder here
-for i in ./*; do
-  if [ -d "${i}" ]; then
+for i in ./* ; do
+  if [ -d "${i}" ] ; then
     updateNodeVersion "${i}"
   fi
 done
