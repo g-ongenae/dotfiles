@@ -40,6 +40,11 @@ function bump_app_version
   local FILENAME="${1}"
   local TMP_DIR="$(mktemp)"
   jq ".version = \"${BUMPED_VERSION}\"" "${FILENAME}" > "${TMP_DIR}" && mv "${TMP_DIR}" "${FILENAME}"
+
+  if [ -f "./sonar-project.properties" ] ; then
+    # Replace version in sonar project
+    sed -i '' -E "s/sonar.projectVersion=.*/sonar.projectVersion=${BUMPED_VERSION}/" sonar-project.properties
+  fi
 }
 
 function open_release
