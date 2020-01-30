@@ -162,14 +162,15 @@ function fetch_br
 	git checkout "${FETCHING_BRANCH}"
 }
 
-USAGE_BR=<<END
-  Usage: br -[d|f|s]
+USAGE_BR="\
+Usage: br -[d|f|s|l]
 
                       => git branch
   -s 			            => switch branch easily
   -d [-f] 	          => delete branches easily [option to force]
   -f [name] [remote]  => fetch branch from 'mine' remote
-END
+  -l [remote]         => list branches from 'origin' remote
+";
 
 function br
 {
@@ -189,10 +190,12 @@ function br
 				choose_remote_branch "$2"
 			fi
 			;;
-		-h|h) echo -e "${USAGE_BR}" ;;
+		-h|h) echo "${USAGE_BR}" ;;
 		*)
-			print_colourful "@b@red[[Unknown options: $1]]@reset\
-      @b@green[[See help with -h]]@reset";
+			print_colourful "\
+@b@red[[Unknown options: $1]]@reset
+@b@green[[See help with -h]]@reset\
+      ";
 			;;
 	esac
 }

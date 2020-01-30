@@ -131,7 +131,7 @@ function json
 function new_day
 {
 	trap 'echo "" && return' SIGINT
-	if [ "$(jrnl -v)" == "" ] ; then
+	if [ "$(which jrnl 2>/dev/null)" == "" ] ; then
 		echo "Journal is not installed. Run 'brew install jrnl'"
 		return
 	fi
