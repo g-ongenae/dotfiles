@@ -18,6 +18,8 @@ alias other="cd ~/Documents/other"
 alias study="cd ~/Documents/study"
 alias work="cd ~/Documents/work"
 alias write="cd ~/Documents/write"
+  # Go to the root folder of the repository
+alias root="cd \"\$(git rev-parse --show-toplevel || echo .)\""
 
 ## List
 alias ls..="ls .."

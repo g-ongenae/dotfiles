@@ -5,67 +5,100 @@
 [github]
 	user = g-ongenae
 
+[gitlab]
+  user = g-ongenae
+
+[bitbucket]
+  user = g_ongenae
+
 [alias]
-	a = add
-	amend = commit --amend
-	apply = stash apply
-	b = branch
-	br = checkout -b
-	c = commit
-	cm = commit -m
-	co = checkout
-	ci = ci-status HEAD
-	contrib = shortlog --summary --numbered
-	d = "!sh -c \"git rebase --onto '$1^' '$1'\" -" # To delete a commit based on its sha
-	de = "!f() { open -a 'github desktop'; }; f" # To open GitHub Desktop
-	df = diff --word-diff # To show diff by words
-	dl = "!sh -c \"git reset HEAD~'$1'\" -" # To delete last (n) commit
-	f = flow
-	ff = flow feature
-	fh = flow hotfix
-	fix = commit --amend --no-edit
-	h = help
+  ## Basic
 	i = init
-	l = log --oneline -n 10
-	ld = "!sh -c \"git log --since '${1:-1} days ago' --oneline --author $(git config user.email)\" -"
+  sm = submodules
+  t = tag
+
+  ## Commit...
+	a = add
+	c = commit
+	co = checkout
+  cp = cherry-pick
+  r = rebase
+
+  ## Branch
+	b = branch
+  m = merge
+  sw = switch
+
+  ## Info
+	ci = ci-status HEAD                               # Show the status of the last commit on the CI
+  df = diff --word-diff                             # To show diff by words
+	h = help
+  l = log --oneline -n 10
 	log = log -n 10
-	ls = stash list
-	p = push
-	pop = stash pop
+  s = status
+  sh = show --pretty=""
+
+  ## With remote
+    # List all of the branches on the remote (ex: git br [remote])
+  br = "!f() { git ls-remote -q --heads \"${1:-origin}\" | sed -nE 's/^.{30,}refs\\/heads\\/(.+)$/\\1/p'; }; f"
+  cl = clone --recurse-submodules
+  fe = fetch
+  pl = pull
+  ps = push
+    # Checkout a PR (ex: git pr <pr-number> [remote])
 	pr = "!f() { git fetch -fu ${2:-origin} refs/pull/$1/head:pr/$1 && git checkout pr/$1; }; f"
-	ri = "!f() { mv .git ~/.Trash && git init; }; f"
-	show-ignored = "! git clean -ndX | perl -pe 's/Would remove/Ignored:/'"
-	squash = rebase -i
-	st = status
+  re = remote
+
+  ## Stash commands
+  apply = stash apply
+	ls = stash list
+  pop = stash pop
 	save = stash save
-	unset = checkout --
-	unstage = checkout -- HEAD
-	unstage-hard = reset --hard HEAD
+
+  ## Clean commands
+  amend = commit --amend                            # Correct a commit (need -m for message or -a <file>)
+  d = "!sh -c \"git rebase --onto '$1^' '$1'\" -"   # To delete a commit based on its SHA
+  dl = "!sh -c \"git reset HEAD~'$1'\" -"           # To delete last [n] commits
+  fix = commit --amend --no-edit                    # Make change to the last commit (need git add <file>)
+  rs = restore
+  rv = revert
+	unst = checkout -- HEAD                           # Unstage changes
+	unst-hard = reset --hard HEAD                     # Unstage changes and throw
+
+  ## Miscellaneous
+  f = flow                                          # For gitflow, see: https://github.com/nvie/gitflow
+  k = "!f() { open -a 'github desktop'; }; f"       # To open GitHub Desktop, name k for gitk
 
 [color]
 	ui = auto
+
 [color "branch"]
 	current = yellow reverse
 	local = yellow
 	remote = green
+
 [color "diff"]
 	meta = yellow bold
 	frag = magenta bold
 	old = red bold
 	new = green bold
+
 [color "status"]
 	added = yellow
 	changed = green
 	untracked = cyan
+
 [color "diff-highlight"]
 	oldNormal = red bold
 	oldHighlight = red bold 52
 	newNormal = green bold
 	newHighlight = green bold 22
+
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
 	required = true
+
 [core]
 	excludesfile = ~/Documents/prog/dotfiles/git/.gitignore_global
