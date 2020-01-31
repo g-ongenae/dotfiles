@@ -1,8 +1,23 @@
 #! /bin/bash
 
-# shellcheck disable=SC1117,SC2086,SC2162,SC2210
+# shellcheck disable=SC1117,SC2086,SC2162,SC2210,SC2155
+
+CANCEL="cancel"
 
 ## Git functions
+
+function choose_remote
+{
+  local REMOTES=$(git remote)
+
+  echo "What is the remote you want to use?"
+
+	select CHOICE in $REMOTES "$CANCEL" ; do
+		REMOTE="$CHOICE"
+		return
+	done
+}
+
 function get_current_branch
 {
 	# https://stackoverflow.com/questions/6245570/how-to-get-the-current-branch-name-in-git
@@ -14,11 +29,15 @@ function pull
 {
 	get_current_branch
 
-	if [ "$#" -gt 0 ] ; then
+	if [ "$#" -gt 0 ] && ! [[ ${1} =~ ^- ]] ; then
 		REMOTE="$1"
 	else
-		REMOTE="origin"
+		choose_remote
 	fi
+
+  if [ "${REMOTE}" == "${CANCEL}" ] ; then
+    return;
+  fi
 
 	git pull "$REMOTE" "$CURRENT_BRANCH"
 }
@@ -27,10 +46,10 @@ function push
 {
 	get_current_branch
 
-	if [ "$#" -gt 0 ] ; then
+	if [ "$#" -gt 0 ] && ! [[ ${1} =~ ^- ]] ; then
 		REMOTE="$1"
 	else
-		REMOTE="origin"
+    choose_remote
 	fi
 
   REMOTE_URL=$(git remote get-url "${REMOTE}")
@@ -59,7 +78,9 @@ function get_branches
 	# Remove character * that indicates the current branch
 	for i in "${!BRANCHES[@]}" ; do
 		if [[ "${BRANCHES[$i]}" = "*" ]] ; then
-			TO_REMOVE=$i
+			TO_REMOVE="${i}"
+
+      break
 		fi
 	done
 
@@ -72,7 +93,6 @@ function switch_branch
 
 	echo "What branch do you want to switch to? "
 
-	CANCEL="cancel"
 	select BRANCH in "${BRANCHES[@]}" "$CANCEL" ; do
 		if [ "$BRANCH" != "$CANCEL" ] ; then
 			git checkout "${BRANCH}"
@@ -88,7 +108,6 @@ function delete_branch
 
 	echo "What branch do you want to delete? "
 
-	CANCEL="cancel"
 	select BRANCH in "${BRANCHES[@]}" "$CANCEL" ; do
 		case "$BRANCH" in
 			"$CANCEL") break ;;
@@ -136,7 +155,6 @@ function choose_remote_branch
 
 	echo "What is the name of the branch you want to clone?"
 
-	CANCEL="cancel"
 	select CHOICE in $REMOTES_BRANCHES "$CANCEL" ; do
 		FETCHING_BRANCH="$CHOICE"
 		return
@@ -146,7 +164,7 @@ function choose_remote_branch
 function fetch_br
 {
   if [[ "$#" -eq "0" ]] || [[ "${2}" -eq "" ]] ; then
-    REMOTE=mine
+    choose_remote
   else
     REMOTE="${2}"
   fi

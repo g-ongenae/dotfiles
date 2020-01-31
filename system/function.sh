@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# shellcheck disable=SC1117
+# shellcheck disable=SC1117,SC2015,SC2128,SC2178
 
 ###
 # Functions
@@ -131,7 +131,7 @@ function json
 function new_day
 {
 	trap 'echo "" && return' SIGINT
-	if [ "$(which jrnl 2>/dev/null)" == "" ] ; then
+	if [ "$(command -v jrnl 2>/dev/null)" == "" ] ; then
 		echo "Journal is not installed. Run 'brew install jrnl'"
 		return
 	fi
@@ -305,7 +305,7 @@ function ks_logs
 function ks_up
 {
 	# Watch Kubernetes pods change through time
-	PODS=$(kubectl get pods) || echo "Error getting list pods" && return
+	PODS="$(kubectl get pods)" || echo "Error getting list pods" && return
 
 	# Change the effect of SIGINT (^C) to exit the infinite loop
 	trap 'break' SIGINT
@@ -426,5 +426,17 @@ function fix_scratches
 	rm "${SCRATCHES}/file__0.localstorage-journal"
 }
 
+# Check the help for $1, pass on the next helper if there's no help.
+function helper
+{
+  (tldr "$1") && return 0 || true
+
+  # No need to try something not installed
+  if ! [ "$(command -v "$1")" == "" ] ; then
+    (man "$1" 2>/dev/zero) && return 0 || true
+  fi
+
+  open "https://duckduckgo.com/?q=$1"
+}
 
 export -f down nd print_colourful trash up

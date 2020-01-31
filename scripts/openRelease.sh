@@ -1,17 +1,18 @@
 #! /bin/bash
 
-# shellcheck disable=SC2155,SC2002
+# shellcheck disable=SC2155,SC2002,SC2162
 
-USAGE="$(cat <<EOF
+USAGE="\
 Little script to automatize release creation
 
 Options:
-     | --minor      Create a minor release
-  -m | --major      Create a major release
+     |              Open a release with a prompt for the version
+  -p | --patch      Create a patch release
+  -m | --minor      Create a minor release
+  -M | --major      Create a major release
   -h | --help       Ourput this help message
-  -i | --install    Check/Install needed dependencies
-EOF
-)"
+  -i | --install    Check/Install needed dependencies\
+";
 
 function get_new_version
 {
@@ -26,12 +27,22 @@ function get_new_version
     local MINOR_VERSION="${BASH_REMATCH[1]}"
   fi
 
-  if [[ -z "${MAJOR}" ]] ; then
-    # Update to a new minor version
-    BUMPED_VERSION="${MAJOR_VERSION}.$((MINOR_VERSION + 1)).0"
-  else
+  if [[ "${CURRENT_VERSION}" =~ ^[0-9]+\.[0-9]+\.([0-9]+).*$ ]] ; then
+    local PATCH_VERSION="${BASH_REMATCH[1]}"
+  fi
+
+  # Get the updated version
+  if [[ -n "${MAJOR}" ]] ; then
     # Update to a new major version
     BUMPED_VERSION="$((MAJOR_VERSION + 1)).${MINOR_VERSION}.0"
+  elif [[ -n "${MINOR}" ]] ; then
+    # Update to a new minor version
+    BUMPED_VERSION="${MAJOR_VERSION}.$((MINOR_VERSION + 1)).0"
+  elif [[ -n "${PATCH}" ]] ; then
+    # Update to a new major version
+    BUMPED_VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.$((PATCH_VERSION + 1))"
+  else
+    read -p "What version would you like to bump your app? (should be a valid format) " BUMPED_VERSION
   fi
 }
 
@@ -44,6 +55,12 @@ function bump_app_version
   if [ -f "./sonar-project.properties" ] ; then
     # Replace version in sonar project
     sed -i '' -E "s/sonar.projectVersion=.*/sonar.projectVersion=${BUMPED_VERSION}/" sonar-project.properties
+  fi
+
+  # Replace version in OpenAPI
+  OPEN_API_FILE="$(find . -name openapi.yaml -not -path "./node_modules/*")"
+  if [ -f "${OPEN_API_FILE}" ] ; then
+    sed -i '' -E "s/version:.*/version: ${BUMPED_VERSION}/" "${OPEN_API_FILE}"
   fi
 }
 
@@ -67,22 +84,29 @@ function open_release
 
   # Commit
   git add package*
+  git add sonar-project.properties
+  git add "${OPEN_API_FILE}"
   git commit --message "Bump to version ${BUMPED_VERSION}"
+
+  local REMOTE_URL="$(git remote get-url origin)"
+  read -p "Do you want to push to ${REMOTE_URL} and open PRs? Press ^C to escape. "
 
   # Publish branch
   git push origin "release/${BUMPED_VERSION}"
 
   # Open PR on master and develop
-  hub pull-request --base master --message "Release v${BUMPED_VERSION} - master"
-  hub pull-request --base develop --message "Release v${BUMPED_VERSION} - develop"
+  local MASTER_PR_ID="$(hub pull-request --base master --message "Release v${BUMPED_VERSION} - master")"
+  local PR_MESSAGE="$(echo -e "Release v${BUMPED_VERSION} - develop\n\nFollowing ${MASTER_PR_ID}")"
+  hub pull-request --base develop --message "${PR_MESSAGE}"
+  echo "Do not forget to update the CHANGELOG and PR description of master (${MASTER_PR_ID})"
 }
 
 function check_or_install_deps
 {
   # Check needed dependencies are installed
-  if [ -z "$(git --version 2>/dev/zero)" ] ; then git ; fi
-  if [ -z "$(hub --version 2>/dev/zero)" ] ; then brew install hub ; fi
-  if [ -z "$(jq --version 2>/dev/zero)" ] ; then brew install jq ; fi
+  if [ -z "$(command -v git)" ] ; then git ; fi
+  if [ -z "$(command -v hub)" ] ; then brew install hub ; fi
+  if [ -z "$(command -v jq)" ] ; then brew install jq ; fi
 }
 
 function main
@@ -95,8 +119,9 @@ function main
     case "$OPT" in
       -i|--install) check_or_install_deps ;;
       -h|--help) echo "${USAGE}" ;;
-      -m|--major) MAJOR=true ; open_release ;;
-      --minor) open_release ;;
+      -M|--major) MAJOR=true open_release ;;
+      -m|--minor) MINOR=true open_release ;;
+      -p|--patch) PATCH=true open_release ;;
     esac
   done
 }

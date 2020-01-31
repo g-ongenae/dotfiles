@@ -87,7 +87,13 @@ IN="\[\033[0m\]"
 function ___ps1
 {
 	# Only print host if different than (\h)
-	if [[ "$HOSTNAME" == 'on.local' || "$HOSTNAME" == 'on.home' || "$HOSTNAME" == 'on' ]] ; then
+	local PC_NAME="on"
+
+	if [[
+		"${HOSTNAME}" == "${PC_NAME}.local" ||
+		"${HOSTNAME}" == "${PC_NAME}.home" ||
+		"${HOSTNAME}" == "${PC_NAME}"
+	]]; then
 		h=''
 	else
 		h='$HOSTNAME'

@@ -22,3 +22,7 @@ npm-debug.log
 
 ## Temporary files
 *.tmp
+
+## Terminal and Editor Config
+.vscode/*
+.vscode/settings.json
