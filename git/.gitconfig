@@ -14,7 +14,7 @@
 [alias]
   ## Basic
 	i = init
-  sm = submodules
+  sm = submodule
   t = tag
 
   ## Commit...
