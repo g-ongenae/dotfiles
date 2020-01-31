@@ -78,6 +78,7 @@ ZSH_CUSTOM=/Users/go/Documents/prog/dotfiles/zsh/
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
   node
+  osx
   z
   zsh-autosuggestions
   zsh-syntax-highlighting
@@ -113,3 +114,6 @@ source $ZSH/oh-my-zsh.sh
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# To customize prompt, run `p10k configure` or edit ~/Documents/prog/dotfiles/run/.p10k.zsh.
+[[ ! -f ~/Documents/prog/dotfiles/run/.p10k.zsh ]] || source ~/Documents/prog/dotfiles/run/.p10k.zsh
