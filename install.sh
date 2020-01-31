@@ -155,8 +155,11 @@ export DOTFILES_DIR
 # Bunch of symlinks
 bold "Creating Symlinks to access dotfiles from anywhere in user path";
 ln -sfv "${DOTFILES_DIR}/run/.bash_profile" ~
-ln -sfv "${DOTFILES_DIR}/run/.zshenv" ~
 ln -sfv "${DOTFILES_DIR}/git/.gitconfig" ~
+
+# Move and leave as a symlink
+mv "${DOTFILES_DIR}/run/.zshenv" ~
+ln -sfv ~/.zshenv "${DOTFILES_DIR}/run/"
 
 # Reload
 bold "Finished, reset shell session"
