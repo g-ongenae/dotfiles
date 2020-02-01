@@ -38,6 +38,10 @@ source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
 #----------------------------------------------------------------
 # Update PATH & other variables
 
+# z
+PATH="${HOME}/Documents/prog/dotfiles/scripts/z/z.sh:${PATH}"
+MANPATH="${MANPATH}:${HOME}/Documents/prog/dotfiles/scripts/z/z.1"
+
 ### Go Lang
 GOPATH="$HOME/Documents/prog/go"
 GOBIN="$HOME/Documents/prog/go/bin"
@@ -83,4 +87,4 @@ PATH="$PATH:$HOME/.rvm/bin"
 
 #----------------------------------------------------------------
 # Export PATH
-export PATH
+export PATH MANPATH

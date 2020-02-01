@@ -4,6 +4,10 @@
 
 # Env
 
+# z
+PATH="${HOME}/Documents/prog/dotfiles/scripts/z/z.sh:${PATH}"
+MANPATH="${MANPATH}:${HOME}/Documents/prog/dotfiles/scripts/z/z.1"
+
 ## GCloud
 
 # The next lines updates PATH for the Google Cloud SDK.

@@ -6,6 +6,7 @@ run/.zcompdump*
 
 # Git submodule
 # Bug on my computer?
+scripts/z
 zsh/themes/powerlevel10k
 zsh/plugins/zsh-autosuggestions
 zsh/plugins/zsh-syntax-highlighting
