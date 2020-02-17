@@ -1,9 +1,9 @@
 [user]
-	name = Guillaume Ongenae
-	email = guillaume.ongenae@gmail.com
+  name = Guillaume Ongenae
+  email = guillaume.ongenae@gmail.com
 
 [github]
-	user = g-ongenae
+  user = g-ongenae
 
 [gitlab]
   user = g-ongenae
@@ -13,28 +13,28 @@
 
 [alias]
   ## Basic
-	i = init
+  i = init
   sm = submodule
   t = tag
 
   ## Commit...
-	a = add
-	c = commit
-	co = checkout
+  a = add
+  c = commit
+  co = checkout
   cp = cherry-pick
   r = rebase
 
   ## Branch
-	b = branch
+  b = branch
   m = merge
   sw = switch
 
   ## Info
-	ci = ci-status HEAD                               # Show the status of the last commit on the CI
+  ci = ci-status HEAD                               # Show the status of the last commit on the CI
   df = diff --word-diff                             # To show diff by words
-	h = help
+  h = help
   l = log --oneline -n 10
-	log = log -n 10
+  log = log -n 10
   s = status
   sh = show --pretty=""
 
@@ -46,14 +46,14 @@
   pl = pull
   ps = push
     # Checkout a PR (ex: git pr <pr-number> [remote])
-	pr = "!f() { git fetch -fu ${2:-origin} refs/pull/$1/head:pr/$1 && git checkout pr/$1; }; f"
+  pr = "!f() { git fetch -fu ${2:-origin} refs/pull/$1/head:pr/$1 && git checkout pr/$1; }; f"
   re = remote
 
   ## Stash commands
   apply = stash apply
-	ls = stash list
+  ls = stash list
   pop = stash pop
-	save = stash save
+  save = stash save
 
   ## Clean commands
   amend = commit --amend                            # Correct a commit (need -m for message or -a <file>)
@@ -62,43 +62,43 @@
   fix = commit --amend --no-edit                    # Make change to the last commit (need git add <file>)
   rs = restore
   rv = revert
-	unst = checkout -- HEAD                           # Unstage changes
-	unst-hard = reset --hard HEAD                     # Unstage changes and throw
+  unst = checkout -- HEAD                           # Unstage changes
+  unst-hard = reset --hard HEAD                     # Unstage changes and throw
 
   ## Miscellaneous
   f = flow                                          # For gitflow, see: https://github.com/nvie/gitflow
   k = "!f() { open -a 'github desktop'; }; f"       # To open GitHub Desktop, name k for gitk
 
 [color]
-	ui = auto
+  ui = auto
 
 [color "branch"]
-	current = yellow reverse
-	local = yellow
-	remote = green
+  current = yellow reverse
+  local = yellow
+  remote = green
 
 [color "diff"]
-	meta = yellow bold
-	frag = magenta bold
-	old = red bold
-	new = green bold
+  meta = yellow bold
+  frag = magenta bold
+  old = red bold
+  new = green bold
 
 [color "status"]
-	added = yellow
-	changed = green
-	untracked = cyan
+  added = yellow
+  changed = green
+  untracked = cyan
 
 [color "diff-highlight"]
-	oldNormal = red bold
-	oldHighlight = red bold 52
-	newNormal = green bold
-	newHighlight = green bold 22
+  oldNormal = red bold
+  oldHighlight = red bold 52
+  newNormal = green bold
+  newHighlight = green bold 22
 
 [filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
+  clean = git-lfs clean -- %f
+  smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
+  required = true
 
 [core]
-	excludesfile = /Users/go/Documents/prog/dotfiles/git/.gitignore_global
+  excludesfile = /Users/go/Documents/prog/dotfiles/git/.gitignore_global
