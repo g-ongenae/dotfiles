@@ -65,6 +65,11 @@
   unst = checkout -- HEAD                           # Unstage changes
   unst-hard = reset --hard HEAD                     # Unstage changes and throw
 
+  ## Bisection
+  bi = bisect                                       # Run with start or run
+  bid = bisect bad                                  # Please do not make a "bide"
+  big = bisect good                                 # Man, it's good, that's big!
+
   ## Miscellaneous
   f = flow                                          # For gitflow, see: https://github.com/nvie/gitflow
   k = "!f() { open -a 'github desktop'; }; f"       # To open GitHub Desktop, name k for gitk
