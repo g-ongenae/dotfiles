@@ -20,6 +20,7 @@
   ## Commit...
   a = add
   c = commit
+  cz = "!sh -c \"npm run commit\""                  # Commit with committizen (git-cz)
   co = checkout
   cp = cherry-pick
   r = rebase
@@ -71,8 +72,12 @@
   big = bisect good                                 # Man, it's good, that's big!
 
   ## Miscellaneous
+  fork = "!sh -c \"gh repo --fork "$(git config --get remote.origin.url)"\""
   f = flow                                          # For gitflow, see: https://github.com/nvie/gitflow
   k = "!f() { open -a 'github desktop'; }; f"       # To open GitHub Desktop, name k for gitk
+
+[hub]
+  protocol = ssh
 
 [color]
   ui = auto

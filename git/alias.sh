@@ -6,7 +6,8 @@
 # Website => https://hub.github.com/
 # Source => https://github.com/github/hub
 if ! [ "$(which hub 2>/dev/null)" == "" ]; then
-  alias git="hub"
+  echo "Disabled hub in favor of gh"
+  # alias git="hub"
 fi
 
 ## What a pain

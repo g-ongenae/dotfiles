@@ -78,6 +78,9 @@ alias m="mongod"
 alias ju="jupyter"
 alias py="python3"
 
+# Installer
+alias b="brew"
+
 # Scripts
-alias release="bash ~/Documents/prog/dotfiles/scripts/openRelease.sh"
+alias release="bash /Users/go/Documents/work/scripts/openRelease/index.sh"
 alias upade_node="bash ~/Documents/prog/dotfiles/scripts/updateNodeVersion.sh"

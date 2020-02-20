@@ -10,7 +10,8 @@ alias kill_dashboard="defaults write com.apple.dashboard mcx-disabled -boolean Y
 # Website => https://hub.github.com/
 # Source => https://github.com/github/hub
 if ! [[ "$(command -v hub)" == "" ]]; then
-  alias git="hub"
+  echo "Disabled hub in favor of gh"
+  # alias git="hub"
 fi
 
 alias g="git"
@@ -50,7 +51,10 @@ alias typora="open -a typora"
 alias j="jrnl" # see https://github.com/maebert/jrnl | http://jrnl.sh
 alias h="open http://127.0.0.1:8080 & http-server"
 
+# Installer
+alias b="brew"
+
 # Scripts
-alias release="bash ~/Documents/prog/dotfiles/scripts/openRelease.sh"
+alias release="bash /Users/go/Documents/work/scripts/openRelease/index.sh"
 alias upade_node="bash ~/Documents/prog/dotfiles/scripts/updateNodeVersion.sh"
 
