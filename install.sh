@@ -74,6 +74,7 @@ function install_all_tools
   install_brew "jrnl"
 
   # Git
+  install_brew "github/gh/gh"
   install_brew "hub"
   install_brew "git-flow"
   ! [ "$(overcommit --version 2>/dev/zero)" == "" ] || gem install overcommit
@@ -99,17 +100,16 @@ function install_all_cask
   install_brew "cask"
 
   install_cask "insomnia"
-  install_cask "postman"
-  install_cask "vectr"
   install_cask "1Clipboard"
   install_cask "Dashlane"
-  install_cask "hyper"
+  install_cask "typora" # or open https://typora.io/download/Typora.dmg
   install_cask "Studio\ 3T" "studio-3t"
   install_cask "Github\ Desktop" "github-desktop"
   install_cask "Visual\ Studio\ Code" "visual-studio-code"
   install_cask "Google\ Chrome" "google-chrome"
-  ! [ -f "/Applications/Station.app" ] || open https://dl.getstation.com/download/osx
   ! [ -f "/Applications/Cliqz.app" ] || open https://cdn.cliqz.com/browser-f/download/web0001/CLIQZ.en-US.mac.dmg
+  ! [ -f "/Applications/Perimeter81.app" ] || open https://www.perimeter81.com
+  ! [ -f "/Applications/Scratches.app" ] || open https://github.com/heapwolf/scratches
 }
 
 function install_all_npm
@@ -121,15 +121,19 @@ function install_all_npm
 
   bold "Install or update globally NPM modules"
   npm i -g pug-lint ember-template-lint eslint tslint prettier sass-lint \
-    http-server swagger-editor-live typescript fx
+    http-server swagger-editor-live typescript fx unsplash-wallpaper \
+    cypress
+
+  npx unsplash-wallpaper --daily # update with a new wallpaper image every day
 }
 
 # Create Documents architecture
 ensure_dir "prog"
-ensure_dir "study"
 ensure_dir "try"
 ensure_dir "write"
 ensure_dir "work"
+
+git >/dev/null # install git in silence
 
 # Download dotfiles
 if ! [ -d "${HOME}/Documents/prog/dotfiles" ] ; then
@@ -142,6 +146,8 @@ if [ "$(uname)" != "Darwin" ] ; then
   # TODO handle linux
   bold "Unable to install programs: need MacOS"
 else
+  xcode --select install
+
   bold "Starting to install programs"
   install_all_tools
   install_all_cask
@@ -149,7 +155,7 @@ else
 fi
 
 # Get current dir (so run this script from anywhere)
-DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${HOME}/Documents/prog/dotfiles"
 export DOTFILES_DIR
 
 # Bunch of symlinks
