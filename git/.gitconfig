@@ -20,12 +20,14 @@
   ## Commit...
   a = add
   c = commit
+  cz = "!sh -c \"npm run commit\""                  # Commit with committizen (git-cz)
   co = checkout
   cp = cherry-pick
   r = rebase
 
   ## Branch
   b = branch
+  cu = rev-parse --abbrev-ref HEAD                  # Get the current branch name (cu for current)
   m = merge
   sw = switch
 
@@ -45,6 +47,8 @@
   fe = fetch
   pl = pull
   ps = push
+    # Push and create the current branch to the <remote> (e.g. git pu mine)
+  pu = "!sh -c \"git push --upstream '$1' "$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Checkout a PR (ex: git pr <pr-number> [remote])
   pr = "!f() { git fetch -fu ${2:-origin} refs/pull/$1/head:pr/$1 && git checkout pr/$1; }; f"
   re = remote
@@ -71,8 +75,12 @@
   big = bisect good                                 # Man, it's good, that's big!
 
   ## Miscellaneous
+  fork = "!sh -c \"gh repo --fork "$(git config --get remote.origin.url)"\""
   f = flow                                          # For gitflow, see: https://github.com/nvie/gitflow
   k = "!f() { open -a 'github desktop'; }; f"       # To open GitHub Desktop, name k for gitk
+
+[hub]
+  protocol = ssh
 
 [color]
   ui = auto
