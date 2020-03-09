@@ -6,13 +6,6 @@ alias c="clear"
 alias kill_dashboard="defaults write com.apple.dashboard mcx-disabled -boolean YES; killall Dock"
 
 # Git
-# This is only to use github/hub functionnalities over Git
-# Website => https://hub.github.com/
-# Source => https://github.com/github/hub
-if ! [[ "$(command -v hub)" == "" ]]; then
-  alias git="hub"
-fi
-
 alias g="git"
 # Go to the root folder of the repository
 alias root="cd \"\$(git rev-parse --show-toplevel || echo .)\""
