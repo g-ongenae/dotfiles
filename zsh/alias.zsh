@@ -21,6 +21,7 @@ alias reload="exec \${SHELL} -l"
 ## Yarn & NPM
 alias n="npm"
 alias nr="npm run"
+alias nls='npm list -g --depth=0'
 alias y="yarn"
 alias sw="swagger-editor-live"
 
