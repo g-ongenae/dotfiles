@@ -56,6 +56,9 @@ alias _="sudo"
 alias q="osascript -e 'tell application \"Terminal\" to quit'"
 alias reload="exec \${SHELL} -l"
 
+# Installer
+alias b="brew"
+
 ## Yarn & NPM
 alias n="npm"
 alias nr="npm run"

@@ -10,6 +10,9 @@ alias g="git"
 # Go to the root folder of the repository
 alias root="cd \"\$(git rev-parse --show-toplevel || echo .)\""
 
+# Installer
+alias b="brew"
+
 ## Shell
 alias _="sudo"
 alias q="osascript -e 'tell application \"Terminal\" to quit'"
