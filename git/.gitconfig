@@ -114,4 +114,4 @@
   required = true
 
 [core]
-  excludesfile = /Users/go/Documents/prog/dotfiles/git/.gitignore_global
+  excludesfile = "${HOME}/Documents/prog/dotfiles/git/.gitignore_global"

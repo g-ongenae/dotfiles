@@ -56,7 +56,7 @@ JAVA_HOME=$(/usr/libexec/java_home)
 export JAVA_HOME
 
 #### Derby
-DERBY_HOME="/Users/go/Documents/prog/derby/bin"
+DERBY_HOME="${HOME}/Documents/prog/derby/bin"
 PATH="$PATH:$DERBY_HOME/bin"
 export DERBY_HOME
 
