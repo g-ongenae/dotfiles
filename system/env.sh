@@ -91,7 +91,7 @@ IN="\[\033[0m\]"
 function ___ps1
 {
 	# Only print host if different than (\h)
-	local PC_NAME="on"
+	local PC_NAME="MacBook-Pro-de-Guillaume"
 
 	if [[
 		"${HOSTNAME}" == "${PC_NAME}.local" ||
