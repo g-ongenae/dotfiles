@@ -35,7 +35,7 @@ alias d="docker"
 alias ks="kubectl"
 
 # DB
-alias m="mongod"
+alias m="mongod --dbpath=\"\${HOME}/.data/db\""
 
 # Jupyter & Python
 alias ju="jupyter"
