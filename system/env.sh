@@ -54,6 +54,10 @@ export NVM_DIR
 ### Yarn Global Modules
 PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
 
+# Rust
+source "${HOME}/.cargo/env"
+PATH="$HOME/.cargo/bin:$PATH"
+
 ### RVM
 # Load RVM into a shell session *as a function*
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
