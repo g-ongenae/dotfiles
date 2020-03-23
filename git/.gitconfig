@@ -54,10 +54,11 @@
   re = remote
 
   ## Stash commands
-  apply = stash apply
-  ls = stash list
-  pop = stash pop
-  save = stash save
+  apply = stash apply                               # Apply the stash and keep it in the stash history
+  ls = stash list                                   # List all stash
+  pop = stash pop                                   # Apply and drop the stash
+  sa = stash save                                   # Stash all the files in the repository
+  sf = stash push --                                # Stash file, only those given <files>
 
   ## Clean commands
   amend = commit --amend                            # Correct a commit (need -m for message or -a <file>)
