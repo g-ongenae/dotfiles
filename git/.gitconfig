@@ -47,8 +47,8 @@
   fe = fetch
   pl = pull
   ps = push
-    # Push and create the current branch to the <remote> (e.g. git pu mine)
-  pu = "!sh -c \"git push --upstream '$1' "$(git rev-parse --abbrev-ref HEAD)"\" -"
+    # Push and create the current branch to the [remote] (e.g. git pu mine, default origin)
+  pu = "!sh -c \"git push --set-upstream "${1:-origin}" "$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Checkout a PR (ex: git pr <pr-number> [remote])
   pr = "!f() { git fetch -fu ${2:-origin} refs/pull/$1/head:pr/$1 && git checkout pr/$1; }; f"
   re = remote
