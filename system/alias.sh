@@ -84,3 +84,4 @@ alias py="python3"
 # Scripts
 alias release="bash ~/Documents/prog/dotfiles/scripts/openRelease.sh"
 alias upade_node="bash ~/Documents/prog/dotfiles/scripts/updateNodeVersion.sh"
+alias update_wallpaper="bash ~/Documents/prog/dotfiles/scripts/updateWallpaper.sh"
