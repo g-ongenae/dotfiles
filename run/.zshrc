@@ -66,7 +66,7 @@ ENABLE_CORRECTION="true"
 # HIST_STAMPS="mm/dd/yyyy"
 
 # Would you like to use another custom folder than $ZSH/custom?
-ZSH_CUSTOM=${HOME}/Documents/prog/dotfiles/zsh/
+ZSH_CUSTOM="${HOME}/Documents/prog/dotfiles/zsh/"
 
 # Which plugins would you like to load?
 # Standard plugins can be found in ~/.oh-my-zsh/plugins/*
@@ -87,7 +87,7 @@ plugins=(
   zsh-syntax-highlighting
 )
 
-source $ZSH/oh-my-zsh.sh
+source "${ZSH}/oh-my-zsh.sh"
 
 # User configuration
 
@@ -116,7 +116,7 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
 # Change default starship.toml file location
-export STARSHIP_CONFIG=${HOME}/Documents/prog/dotfiles/run/starship.toml
+export STARSHIP_CONFIG="${HOME}/Documents/prog/dotfiles/run/starship.toml"
 
 # Initialize starship prompting
 eval "$(starship init zsh)"
@@ -135,3 +135,12 @@ eval "$(pyenv init -)"
 
 # Navi - https://github.com/denisidoro/navi
 eval "$(navi widget zsh)"
+
+# Load nvm
+export NVM_DIR="${HOME}/.nvm"
+if [ -s "/usr/local/opt/nvm/nvm.sh" ] ; then
+  source "/usr/local/opt/nvm/nvm.sh"
+fi
+if [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] ; then
+  source "/usr/local/opt/nvm/etc/bash_completion.d/nvm"
+fi

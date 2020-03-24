@@ -95,6 +95,21 @@ function install_specials
   fi
 }
 
+function fix_install
+{
+  # Link openjdk to java
+  sudo ln -sfn /usr/local/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
+
+  # Install git-lfs
+  git lfs install
+
+  # Start mongodb
+  brew services start mongodb-community
+
+  # Add autocomplete to heroku
+  heroku autocomplete
+}
+
 # Create Documents architecture
 ensure_dir "prog"
 ensure_dir "try"

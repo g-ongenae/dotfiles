@@ -14,29 +14,38 @@ eval "$(zoxide init bash)"
 # Navi - https://github.com/denisidoro/navi
 eval "$(navi widget bash)"
 
+# Load nvm
+export NVM_DIR="${HOME}/.nvm"
+if [ -s "/usr/local/opt/nvm/nvm.sh" ] ; then
+  source "/usr/local/opt/nvm/nvm.sh"
+fi
+if [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] ; then
+  source "/usr/local/opt/nvm/etc/bash_completion.d/nvm"
+fi
+
 # Resolve DOTFILES_DIR
 READLINK=$(which greadlink || which readlink)
 CURRENT_SCRIPT=$BASH_SOURCE
 
-if [[ -n $CURRENT_SCRIPT && -x "$READLINK" ]] ; then
-  SCRIPT_PATH=$($READLINK "$CURRENT_SCRIPT")
-  DOTFILES_DIR=$(dirname "$(dirname "$SCRIPT_PATH")")
+if [[ -n ${CURRENT_SCRIPT} && -x "${READLINK}" ]] ; then
+  SCRIPT_PATH=$(${READLINK} "${CURRENT_SCRIPT}")
+  DOTFILES_DIR=$(dirname "$(dirname "${SCRIPT_PATH}")")
 else
   echo "Unable to find dotfiles, exiting."
   return
 fi
 
 # source the dotfiles
-for DOTFILE in "$DOTFILES_DIR"/system/{function,env,alias}.sh ; do
-	[ -f "$DOTFILE" ] && source "$DOTFILE"
+for DOTFILE in "${DOTFILES_DIR}"/system/{function,env,alias}.sh ; do
+	[ -f "${DOTFILE}" ] && source "${DOTFILE}"
 done
 
-for DOTFILE in "$DOTFILES_DIR"/git/{function,alias}.sh ; do
-	[ -f "$DOTFILE" ] && source "$DOTFILE"
+for DOTFILE in "${DOTFILES_DIR}"/git/{function,alias}.sh ; do
+	[ -f "${DOTFILE}" ] && source "${DOTFILE}"
 done
 
-for DOTFILE in "$DOTFILES_DIR"/secret/{function,alias}.sh ; do
-	[ -f "$DOTFILE" ] && source "$DOTFILE"
+for DOTFILE in "${DOTFILES_DIR}"/secret/{function,alias}.sh ; do
+	[ -f "${DOTFILE}" ] && source "${DOTFILE}"
 done
 
 # Clean up
@@ -47,7 +56,7 @@ export DOTFILES_DIR DOTFILES_EXTRA_DIR
 
 # Add autocompletion
 if type brew 2&>/dev/null ; then
-  for completion_file in "$(brew --prefix)/etc/bash_completion.d/"* ; do
-    [ -f "$completion_file" ] && source "$completion_file"
+  for COMPLETION_FILE in "$(brew --prefix)/etc/bash_completion.d/"* ; do
+    [ -f "${COMPLETION_FILE}" ] && source "${COMPLETION_FILE}"
   done
 fi

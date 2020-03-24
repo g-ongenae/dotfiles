@@ -29,13 +29,13 @@ eval "$(zoxide init bash)"
 ## GCloud
 
 # The next lines updates PATH for the Google Cloud SDK.
-if [ -f "$HOME/.gcloud/google-cloud-sdk/path.bash.inc" ] ; then
-	source "$HOME/.gcloud/google-cloud-sdk/path.bash.inc"
+if [ -f "${HOME}/.gcloud/google-cloud-sdk/path.bash.inc" ] ; then
+	source "${HOME}/.gcloud/google-cloud-sdk/path.bash.inc"
 fi
 
 # The next lines enables shell command completion for gcloud.
-if [ -f "$HOME/.gcloud/google-cloud-sdk/completion.bash.inc" ] ; then
-	source "$HOME/.gcloud/google-cloud-sdk/completion.bash.inc"
+if [ -f "${HOME}/.gcloud/google-cloud-sdk/completion.bash.inc" ] ; then
+	source "${HOME}/.gcloud/google-cloud-sdk/completion.bash.inc"
 fi
 
 ## Kubernetes
@@ -52,12 +52,12 @@ source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
 ## Lang
 
 ### Haskell
-PATH="$PATH:$HOME/Library/Haskell/bin"
-PATH="$PATH:$HOME/.local/bin"
+PATH="${PATH}:${HOME}/Library/Haskell/bin"
+PATH="${PATH}:${HOME}/.local/bin"
 
 ### Go Lang
-GOPATH="$HOME/Documents/prog/go"
-GOBIN="$HOME/Documents/prog/go/bin"
+GOPATH="${HOME}/Documents/prog/go"
+GOBIN="${HOME}/Documents/prog/go/bin"
 export GOPATH GOBIN
 
 ### Java
@@ -66,15 +66,15 @@ export JAVA_HOME
 
 #### Derby
 DERBY_HOME="${HOME}/Documents/prog/derby/bin"
-PATH="$PATH:$DERBY_HOME/bin"
+PATH="${PATH}:$DERBY_HOME/bin"
 export DERBY_HOME
 
 ### Python
 # PYTHONPATH="/Library/Python/2.7/site-packages/:$PYTHONPATH"
 # export PYTHONPATH
 # Add Pyenv path
-PYENV_ROOT="$HOME/.pyenv"
-PATH="$PYENV_ROOT/bin:$PATH"
+PYENV_ROOT="${HOME}/.pyenv"
+PATH="${PYENV_ROOT}/bin:${PATH}"
 export PYENV_ROOT
 eval "$(pyenv init --path)"
 
@@ -92,21 +92,21 @@ PATH="$PATH:$HOME/bin"
 
 # Rust
 source "${HOME}/.cargo/env"
-PATH="$HOME/.cargo/bin:$PATH"
+PATH="${HOME}/.cargo/bin:${PATH}"
 
 ### RVM
 # Load RVM into a shell session *as a function*
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
-GEM_HOME="$HOME/.gem"
+[[ -s "${HOME}/.rvm/scripts/rvm" ]] && source "${HOME}/.rvm/scripts/rvm"
+GEM_HOME="${HOME}/.gem"
 export GEM_HOME
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
-PATH="$PATH:$HOME/.rvm/bin"
+PATH="${PATH}:${HOME}/.rvm/bin"
 
 ## Other
-PATH="/usr/local/opt/sqlite/bin:$PATH"
-PATH="/usr/local/opt/openssl/bin:$PATH"
-PATH="/usr/local/opt/sphinx-doc/bin:$PATH"
-PATH="/usr/local/opt/nss/bin:$PATH"
+PATH="/usr/local/opt/sqlite/bin:${PATH}"
+PATH="/usr/local/opt/openssl/bin:${PATH}"
+PATH="/usr/local/opt/sphinx-doc/bin:${PATH}"
+PATH="/usr/local/opt/nss/bin:${PATH}"
 
 ### Kubernetes
 # https://github.com/jonmosco/kube-ps1
@@ -144,22 +144,22 @@ function ___ps1
 	fi
 
 	# Only print username if different than (\u)
-	if [[ "$USER" == 'go' ]] ; then
+	if [[ "${USER}" == 'go' ]] ; then
 		u='•'
 	else
 		u='$USER'
 	fi
 
 	# Get only the current or ~ if home
-	if [[ "$PWD" == "/Users/$USER" ]] ; then
+	if [[ "${PWD}" == "/Users/${USER}" ]] ; then
 		w='~'
 	else
-		w=${PWD##*/}
+		w="${PWD##*/}"
 		! [[ $w == "" ]] || w='/'
 	fi
 
 	# Print branch name if in a repository, otherwise print ⨯
-	if [[ -d "$PWD/.git" ]] || git rev-parse --git-dir > /dev/null 2>&1 ; then
+	if [[ -d "${PWD}/.git" ]] || git rev-parse --git-dir > /dev/null 2>&1 ; then
 		g=$(git rev-parse --abbrev-ref HEAD)
 	else
 		g='⨯'

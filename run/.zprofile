@@ -1,29 +1,27 @@
-# Load nvm
-[[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
-
 # Add Pyenv path
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
+export PYENV_ROOT="${HOME}/.pyenv"
+export PATH="${PYENV_ROOT}/bin:${PATH}"
 eval "$(pyenv init --path)"
 
 # Load nvm updater
 autoload -U add-zsh-hook
 load-nvmrc() {
-  local node_version="$(nvm version)"
-  local nvmrc_path="$(nvm_find_nvmrc)"
+  local NODE_VERSION="$(nvm version)"
+  local NVMRC_PATH="$(nvm_find_nvmrc)"
 
-  if [ -n "$nvmrc_path" ]; then
-    local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
+  if [ -n "$NVMRC_PATH" ]; then
+    local NVMRC_NODE_VERSION=$(nvm version "$(cat "${NVMRC_PATH}")")
 
-    if [ "$nvmrc_node_version" = "N/A" ]; then
+    if [ "${NVMRC_NODE_VERSION}" = "N/A" ]; then
       nvm install
-    elif [ "$nvmrc_node_version" != "$node_version" ]; then
+    elif [ "${NVMRC_NODE_VERSION}" != "${NODE_VERSION}" ]; then
       nvm use
     fi
-  elif [ "$node_version" != "$(nvm version default)" ]; then
+  elif [ "${NODE_VERSION}" != "$(nvm version default)" ]; then
     echo "Reverting to nvm default version"
     nvm use default
   fi
 }
+
 add-zsh-hook chpwd load-nvmrc
 load-nvmrc
