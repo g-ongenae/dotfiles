@@ -35,11 +35,13 @@ alias d="docker"
 alias ks="kubectl"
 
 # DB
+alias stop-mongod="kill -2 \$(pgrep mongo)"
 alias m="mongod --dbpath=\"\${HOME}/.data/db\""
 
 # Jupyter & Python
 alias ju="jupyter"
-alias py="python3"
+alias p="pipenv"
+alias py="pipenv run python"
 
 ## Program
 alias vscode="open -a 'visual studio code'"

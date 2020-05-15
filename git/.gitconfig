@@ -20,8 +20,11 @@
   ## Commit...
   a = add
   c = commit
-  cz = "!sh -c \"npm run commit\""                  # Commit with committizen (git-cz)
+    # Commit with committizen (git-cz)
+  cz = "!sh -c \"cd $(git rev-parse --show-toplevel || echo .) ; [ -f package.json ] && npm run commit || make commit ; cd -\""
   co = checkout
+    # Checkout a branch from a specific remote (by default origin/develop)
+  ct = "!sh -c \"git checkout --track "${1:-origin}/${2:-develop}"\" -"
   cp = cherry-pick
   r = rebase
 
@@ -30,6 +33,8 @@
   cu = rev-parse --abbrev-ref HEAD                  # Get the current branch name (cu for current)
   m = merge
   sw = switch
+    # Print the last commit of each branch, order by date, source: https://stackoverflow.com/a/30076212
+  recent = "!f() { git for-each-ref --sort=-committerdate refs/heads --format='%(HEAD)%(refname:short)|%(committerdate:relative)|%(subject)|%(authorname)' | column -ts '|'; }; f"
 
   ## Info
   ci = ci-status HEAD                               # Show the status of the last commit on the CI
@@ -76,7 +81,7 @@
   big = bisect good                                 # Man, it's good, that's big!
 
   ## Miscellaneous
-  fork = "!sh -c \"gh repo --fork "$(git config --get remote.origin.url)"\""
+  fork = "!sh -c \"gh repo fork "$(git config --get remote.origin.url)"\""
   f = flow                                          # For gitflow, see: https://github.com/nvie/gitflow
   k = "!f() { open -a 'github desktop'; }; f"       # To open GitHub Desktop, name k for gitk
 
