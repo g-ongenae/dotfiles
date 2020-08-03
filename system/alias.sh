@@ -60,6 +60,7 @@ alias reload="exec \${SHELL} -l"
 alias b="brew"
 
 ## Yarn & NPM
+alias fprettier="npx prettier --tab-width 1 --write package*.json"
 alias n="npm"
 alias nr="npm run"
 alias y="yarn"
@@ -83,6 +84,7 @@ alias ju="jupyter"
 alias py="python3"
 
 # Scripts
+alias deploy_me="bash ~/Documents/work/scripts/telepresence/deploy-me.sh"
 alias release="bash ~/Documents/work/scripts/openRelease/index.sh"
 alias upade_node="bash ~/Documents/prog/dotfiles/scripts/updateNodeVersion.sh"
 alias update_wallpaper="bash ~/Documents/prog/dotfiles/scripts/updateWallpaper.sh"
