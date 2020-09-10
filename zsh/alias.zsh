@@ -51,7 +51,8 @@ alias j="jrnl" # see https://github.com/maebert/jrnl | http://jrnl.sh
 alias h="open http://127.0.0.1:8080 & http-server"
 
 # Scripts
-alias deploy_me="bash ~/Documents/work/scripts/telepresence/deploy-me.sh"
+alias chenv="~/Documents/work/scripts/telepresence/change_env.sh"
+alias deploy_me="~/Documents/work/scripts/telepresence/deploy-me.sh"
 alias release="bash ~/Documents/work/scripts/openRelease/index.sh"
 alias upade_node="bash ~/Documents/prog/dotfiles/scripts/updateNodeVersion.sh"
 alias update_wallpaper="bash ~/Documents/prog/dotfiles/scripts/updateWallpaper.sh"
