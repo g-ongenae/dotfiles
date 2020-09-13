@@ -4,6 +4,17 @@
 
 # Env
 
+#----------------------------------------------------------------
+# Disable open collective messages and analytics
+
+# https://github.com/zloirock/core-js/issues/548#issuecomment-495388335
+export ADBLOCK="1"
+
+# https://docs.brew.sh/Analytics#opting-out
+export HOMEBREW_NO_ANALYTICS=1
+
+#----------------------------------------------------------------
+
 # z
 PATH="${HOME}/Documents/prog/dotfiles/scripts/z/z.sh:${PATH}"
 MANPATH="${MANPATH}:${HOME}/Documents/prog/dotfiles/scripts/z/z.1"
