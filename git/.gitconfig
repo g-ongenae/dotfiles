@@ -39,12 +39,20 @@
     # Create a [b]ack[u]p of the current branch (useful to create before a merge or rebase)
   bu = "!sh -c \"git branch -c "backup/$(git rev-parse --abbrev-ref HEAD)"\" -"
   cu = rev-parse --abbrev-ref HEAD                  # Get the current branch name (cu for current)
+    # Create a new feature branch
+  feat = "!sh -c \"git checkout develop ; \
+    git pull origin develop ; \
+    git checkout -b "feature/${1}"\" -"
+    # Create a new hotfix branch
+  hotfix = "!sh -c \"git checkout master ; \
+    git pull origin master ; \
+    git checkout -b "hotfix/${1}"\" -"
   m = merge
-  sw = switch
     # Print the last commit of each branch, order by date, source: https://stackoverflow.com/a/30076212
   recent = "!sh -c \"git for-each-ref --sort=-committerdate refs/heads \
     --format='%(HEAD)%(refname:short)|%(committerdate:relative)|%(subject)|%(authorname)' \
     | column -ts '|'\" -"
+  sw = switch
 
   ## Info
   ci = ci-status HEAD                               # Show the status of the last commit on the CI

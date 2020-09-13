@@ -258,4 +258,34 @@ function update_all_repositories
   done
 }
 
-export -f add_my_remote br get_branches get_current_branch pull push
+# Push the current branch and open a Pull Request
+function push_and_open_pr
+{
+  local BRANCH_NAME
+  local REVIEWERS
+  local REVIEWER_LIST
+
+  # Get informations
+  BRANCH_NAME="$(git rev-parse --abbrev-ref HEAD)"
+  REVIEWERS="$(git log --pretty="%ae" | grep "algoan" | sort -u)"
+  read -r -a REVIEWER_LIST <<< "${REVIEWERS}"
+
+  if [ "${BRANCH_NAME%/*}" == "hotfix" ] ; then
+    echo "Do not use this script to open an hotfix." >&2
+
+    exit 1
+  fi
+
+  # Push branch
+  git push -u ${1:origin} "${BRANCH_NAME}"
+
+  # Open PR
+  gh pr create \
+    --base "develop" \
+    --repo "${${$(git remote get-url origin)##*:}%.*}" \
+    --reviewer "${REVIEWER_LIST[0]}" --reviewer "${REVIEWER_LIST[1]}" --reviewer "${REVIEWER_LIST[2]}" \
+    --title "${BRANCH_NAME##*/}" \
+		--draft # Set as draft until the test passes
+}
+
+export -f add_my_remote br get_branches get_current_branch pull push push_and_open_pr
