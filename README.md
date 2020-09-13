@@ -8,6 +8,7 @@ I'm taking ideas from:
 - [@mathiasbynens](https://github.com/mathiasbynens/dotfiles);
 - [@holman](https://github.com/holman/dotfiles);
 - [@paulirish](https://github.com/paulirish/dotfiles);
+- [@matt-tingen](https://github.com/matt-tingen/configs);
 - and much more, from [_GitHub does dotfiles_](https://dotfiles.github.io/).
 
 Still learning and building, though.
