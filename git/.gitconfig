@@ -21,20 +21,30 @@
   a = add
   c = commit
     # Commit with committizen (git-cz)
-  cz = "!sh -c \"cd $(git rev-parse --show-toplevel || echo .) ; [ -f package.json ] && npm run commit || make commit ; cd -\""
+  cz = "!sh -c \"\
+    cd "$(git rev-parse --show-toplevel || echo .)" ;\
+    [ -f package.json ] && npm run commit || make commit ;\
+    cd -\""
   co = checkout
     # Checkout a branch from a specific remote (by default origin/develop)
   ct = "!sh -c \"git checkout --track "${1:-origin}/${2:-develop}"\" -"
   cp = cherry-pick
   r = rebase
+    # Create a "WIP" commit, commiting all the changes without running hooks
+  wip = "!sh -c \"git add . && git commit -n -m "WIP ${1}"\" -"
+	unwip = reset --mixed HEAD~1                      # Undo a "WIP" commit, staging the changes
 
   ## Branch
   b = branch
+    # Create a [b]ack[u]p of the current branch (useful to create before a merge or rebase)
+  bu = "!sh -c \"git branch -c "backup/$(git rev-parse --abbrev-ref HEAD)"\" -"
   cu = rev-parse --abbrev-ref HEAD                  # Get the current branch name (cu for current)
   m = merge
   sw = switch
     # Print the last commit of each branch, order by date, source: https://stackoverflow.com/a/30076212
-  recent = "!f() { git for-each-ref --sort=-committerdate refs/heads --format='%(HEAD)%(refname:short)|%(committerdate:relative)|%(subject)|%(authorname)' | column -ts '|'; }; f"
+  recent = "!sh -c \"git for-each-ref --sort=-committerdate refs/heads \
+    --format='%(HEAD)%(refname:short)|%(committerdate:relative)|%(subject)|%(authorname)' \
+    | column -ts '|'\" -"
 
   ## Info
   ci = ci-status HEAD                               # Show the status of the last commit on the CI
@@ -47,7 +57,7 @@
 
   ## With remote
     # List all of the branches on the remote (ex: git br [remote])
-  br = "!f() { git ls-remote -q --heads \"${1:-origin}\" | sed -nE 's/^.{30,}refs\\/heads\\/(.+)$/\\1/p'; }; f"
+  br = "!sh -c \"git ls-remote -q --heads \"${1:-origin}\" | sed -nE 's/^.{30,}refs\\/heads\\/(.+)$/\\1/p'\" -"
   cl = clone --recurse-submodules
   fe = fetch
   pl = pull
@@ -55,7 +65,7 @@
     # Push and create the current branch to the [remote] (e.g. git pu mine, default origin)
   pu = "!sh -c \"git push --set-upstream "${1:-origin}" "$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Checkout a PR (ex: git pr <pr-number> [remote])
-  pr = "!f() { git fetch -fu ${2:-origin} refs/pull/$1/head:pr/$1 && git checkout pr/$1; }; f"
+  pr = "!sh -c \"git fetch -fu "${2:-origin}" "refs/pull/${1}/head:pr/${1}" && git checkout "pr/${1}"\" -"
   re = remote
 
   ## Stash commands
@@ -87,7 +97,7 @@
   ## Miscellaneous
   fork = "!sh -c \"gh repo fork "$(git config --get remote.origin.url)"\""
   f = flow                                          # For gitflow, see: https://github.com/nvie/gitflow
-  k = "!f() { open -a 'github desktop'; }; f"       # To open GitHub Desktop, name k for gitk
+  k = "!sh -c \"open -a 'github desktop'\""         # To open GitHub Desktop, name k for gitk
 
 [hub]
   protocol = ssh
