@@ -33,6 +33,10 @@ alias hs_doc="open \${HOME}/Library/Haskell/doc/index.html"
 # Ops
 alias ci="circleci"
 alias d="docker"
+alias dbuild="docker build -t \"\${PWD##*/}\" \
+  --build-arg NODE_ENV=\"production\" \
+  --build-arg NPM_TOKEN=\"\$(sed -e 's/\/\/registry.npmjs.org\/:_authToken=//' ~/.npmrc | head -1)\" ."
+alias drun="docker run --rm -it -p 8080:8080 \"\${PWD##*/}\""
 alias ks="kubectl"
 
 # DB
