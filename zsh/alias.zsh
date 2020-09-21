@@ -47,6 +47,19 @@ alias m="mongod --dbpath=\"\${HOME}/.data/db\""
 alias ju="jupyter"
 alias p="pipenv"
 alias py="pipenv run python"
+# # Exec a Python server that serve the current directory
+# PYTHON_CORS_SERVER=<<END
+# from SimpleHTTPServer import SimpleHTTPRequestHandler
+# import BaseHTTPServer
+
+# class CORSRequestHandler (SimpleHTTPRequestHandler):
+#     def end_headers (self):
+#         self.send_header('Access-Control-Allow-Origin', '*')
+#         SimpleHTTPRequestHandler.end_headers(self)
+#         if __name__ == '__main__':
+#             BaseHTTPServer.test(CORSRequestHandler, BaseHTTPServer.HTTPServer)
+# END
+# alias corsserver="echo -e \"${PYTHON_CORS_SERVER}\" | python"
 
 ## Program
 alias vscode="open -a 'visual studio code'"
