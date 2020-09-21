@@ -57,6 +57,7 @@ alias h="open http://127.0.0.1:8080 & http-server"
 # Scripts
 alias chenv="~/Documents/work/scripts/telepresence/change_env.sh"
 alias deploy_me="~/Documents/work/scripts/telepresence/deploy-me.sh"
+alias update_aden="~/Documents/work/scripts/update-aden/index.sh"
 alias release="bash ~/Documents/work/scripts/openRelease/index.sh"
 alias upade_node="bash ~/Documents/prog/dotfiles/scripts/updateNodeVersion.sh"
 alias update_wallpaper="bash ~/Documents/prog/dotfiles/scripts/updateWallpaper.sh"
