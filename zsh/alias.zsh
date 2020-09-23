@@ -37,6 +37,8 @@ alias dbuild="docker build -t \"\${PWD##*/}\" \
   --build-arg NODE_ENV=\"production\" \
   --build-arg NPM_TOKEN=\"\$(sed -e 's/\/\/registry.npmjs.org\/:_authToken=//' ~/.npmrc | head -1)\" ."
 alias drun="docker run --rm -it -p 8080:8080 \"\${PWD##*/}\""
+alias dkill="docker ps | grep \"\${PWD##*/}\" | awk '{ print \$1 }' | xargs docker kill"
+alias drm="docker ps -a | grep \"\${PWD##*/}\" | awk '{ print \$1 }' | xargs docker rm"
 alias ks="kubectl"
 
 # DB
