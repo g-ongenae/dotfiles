@@ -81,4 +81,4 @@ alias update_wallpaper="bash ~/Documents/prog/dotfiles/scripts/updateWallpaper.s
 alias rp="lsof -nP -iTCP | grep LISTEN" # Running ports
 alias local_ip="ipconfig getifaddr en0"
 alias distant_ip="curl -s http://checkip.dyndns.org/ | sed 's/[a-zA-Z<>/ :]//g'"
-alias ip="echo -e \"Local IP: $(local_ip); Distant IP: $(distant_ip)\""
+alias ip="echo -e \"Local IP: \$(local_ip); Distant IP: \$(distant_ip)\""
