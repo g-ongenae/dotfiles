@@ -39,7 +39,12 @@ alias dbuild="docker build -t \"\${PWD##*/}\" \
 alias drun="docker run --rm -it -p 8080:8080 \"\${PWD##*/}\""
 alias dkill="docker ps | grep \"\${PWD##*/}\" | awk '{ print \$1 }' | xargs docker kill"
 alias drm="docker ps -a | grep \"\${PWD##*/}\" | awk '{ print \$1 }' | xargs docker rm"
+
 alias ks="kubectl"
+alias ksconfig="kubectl get configmap \"\${\${PWD##*/}//-}-config\" -o json"
+alias kssecret="kubectl get secrets \"\${\${PWD##*/}//-}-secret\" -o json"
+alias kslogs="kubectl logs -lapp=\"\${\${PWD##*/}//-}\" --all-containers=true --since=1h --tail=20"
+alias kswatch="kubectl logs -lapp=\"\${\${PWD##*/}//-}\" --all-containers=true -f"
 
 # DB
 alias stop-mongod="kill -2 \$(pgrep mongo)"
