@@ -76,7 +76,7 @@ alias d="docker"
 alias ks="kubectl"
 
 # DB
-alias stop-mongod="kill -2 \$(pgrep mongo)"
+alias stop_mongo="kill -2 \$(pgrep mongo)"
 alias m="mongod --dbpath=\"\${HOME}/.data/db\""
 
 # Jupyter & Python

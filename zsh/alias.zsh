@@ -41,13 +41,15 @@ alias dkill="docker ps | grep \"\${PWD##*/}\" | awk '{ print \$1 }' | xargs dock
 alias drm="docker ps -a | grep \"\${PWD##*/}\" | awk '{ print \$1 }' | xargs docker rm"
 
 alias ks="kubectl"
-alias ksconfig="kubectl get configmap \"\${\${PWD##*/}//-}-config\" -o json"
-alias kssecret="kubectl get secrets \"\${\${PWD##*/}//-}-secret\" -o json"
-alias kslogs="kubectl logs -lapp=\"\${\${PWD##*/}//-}\" --all-containers=true --since=1h --tail=20"
-alias kswatch="kubectl logs -lapp=\"\${\${PWD##*/}//-}\" --all-containers=true -f"
+alias ks_config="kubectl get configmap \"\${\${PWD##*/}//-}-config\" -o json"
+alias ks_confy="kubectl get configmap \"\${\${PWD##*/}//-}-config\" -o yaml"
+alias ks_secret="kubectl get secrets \"\${\${PWD##*/}//-}-secret\" -o json"
+alias ks_secry="kubectl get secrets \"\${\${PWD##*/}//-}-secret\" -o yaml"
+alias ks_logs="kubectl logs -lapp=\"\${\${PWD##*/}//-}\" --all-containers=true --since=1h --tail=20"
+alias ks_watch="kubectl logs -lapp=\"\${\${PWD##*/}//-}\" --all-containers=true -f"
 
 # DB
-alias stop-mongod="kill -2 \$(pgrep mongo)"
+alias stop_mongo="kill -2 \$(pgrep mongo)"
 alias m="mongod --dbpath=\"\${HOME}/.data/db\""
 
 # Jupyter & Python
