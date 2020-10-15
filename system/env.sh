@@ -15,9 +15,6 @@ export HOMEBREW_NO_ANALYTICS=1
 
 #----------------------------------------------------------------
 
-# z
-PATH="${HOME}/Documents/prog/dotfiles/scripts/z/z.sh:${PATH}"
-MANPATH="${MANPATH}:${HOME}/Documents/prog/dotfiles/scripts/z/z.1"
 
 ## GCloud
 

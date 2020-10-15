@@ -79,7 +79,6 @@ ZSH_CUSTOM=${HOME}/Documents/prog/dotfiles/zsh/
 plugins=(
   node
   osx
-  z
   zsh-autosuggestions
   zsh-syntax-highlighting
 )
