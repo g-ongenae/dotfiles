@@ -58,6 +58,7 @@ function install_all_tools
   # Shell useful command
   install_brew "tree"
   install_brew "gpg"
+  install_brew "zoxide"
 
   # Lang
   ! [ "$(go version 2>/dev/zero)" == "" ] || open https://golang.org/doc/install

@@ -15,6 +15,9 @@ export HOMEBREW_NO_ANALYTICS=1
 
 #----------------------------------------------------------------
 
+# To add alias of zoxide (z)
+# https://github.com/ajeetdsouza/zoxide#bash
+eval "$(zoxide init bash)"
 
 ## GCloud
 
