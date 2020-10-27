@@ -103,6 +103,8 @@
   big = bisect good                                 # Man, it's good, that's big!
 
   ## Miscellaneous
+    # Remove the git lock - see: https://stackoverflow.com/questions/7860751
+  unlock = "!sh -c \"rm -f "$(git rev-parse --show-toplevel || echo .)/.git/index.lock"\""
   fork = "!sh -c \"gh repo fork "$(git config --get remote.origin.url)"\""
   f = flow                                          # For gitflow, see: https://github.com/nvie/gitflow
   k = "!sh -c \"open -a 'github desktop'\""         # To open GitHub Desktop, name k for gitk
