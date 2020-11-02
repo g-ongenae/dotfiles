@@ -22,6 +22,9 @@ alias reload="exec \${SHELL} -l"
 alias fprettier="npx prettier --tab-width 1 --write package*.json"
 alias n="npm"
 alias nr="npm run"
+  # Run all NPM script to format, lint and test
+alias nr_all="npm run prettier ; npm run format ; npm run lint ; npm test ; npm run tu ; npm run test:tu ; npm run test:e2e"
+
 alias nls='npm list -g --depth=0'
 alias y="yarn"
 alias sw="swagger-editor-live"
