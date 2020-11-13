@@ -55,7 +55,7 @@
   sw = switch
 
   ## Info
-  ci = ci-status HEAD                               # Show the status of the last commit on the CI
+  ci = "!sh -c \"hub ci-status HEAD\""              # Show the status of the last commit on the CI
   df = diff --word-diff                             # To show diff by words
   h = help
   l = log --oneline -n 10
