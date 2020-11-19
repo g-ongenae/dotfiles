@@ -3,6 +3,7 @@
 # Zsh generated files
 run/.zsh_history*
 run/.zcompdump*
+run/.zsh_sessions/*
 
 # Git submodule
 # Bug on my computer?
