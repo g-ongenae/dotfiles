@@ -57,10 +57,13 @@
   ## Info
   ci = "!sh -c \"hub ci-status HEAD\""              # Show the status of the last commit on the CI
   df = diff --word-diff                             # To show diff by words
+  stat = !git --no-pager diff --stat                # Show statistics about the changes (nb lines, etc.)
   h = help
-  l = log --oneline -n 10
+  l = !git --no-pager log --oneline -n 10           # Show last ten commits by their title and SHA  
+    # Print all the log with the graph, source: http://www.jukie.net/bart/blog/pimping-out-git-log
+  lg = log --graph --all --pretty=format:'%Cred%h%Creset - %s %Cgreen(%cr) %C(bold blue)%an%Creset %C(yellow)%d%Creset' 
   log = log -n 10
-  s = status
+  s = status -sb                                    # Show git status in short format with branch name
   sh = show --pretty=""
 
   ## With remote
@@ -72,6 +75,8 @@
   ps = push
     # Push and create the current branch to the [remote] (e.g. git pu mine, default origin)
   pu = "!sh -c \"git push --set-upstream "${1:-origin}" "$(git rev-parse --abbrev-ref HEAD)"\" -"
+    # Push force the current branch to the [remote] (e.g. git pu mine, default origin)
+  pf = "!sh -c \"git push --force "${1:-origin}" "$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Checkout a PR (ex: git pr <pr-number> [remote])
   pr = "!sh -c \"git fetch -fu "${2:-origin}" "refs/pull/${1}/head:pr/${1}" && git checkout "pr/${1}"\" -"
   re = remote
