@@ -50,4 +50,4 @@ if type brew 2&>/dev/null ; then
 fi
 
 # Ask for today work
-new_day
+# new_day

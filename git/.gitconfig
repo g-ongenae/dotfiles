@@ -1,6 +1,6 @@
 [user]
   name = Guillaume Ongenae
-  email = guillaume.ongenae@algoan.com
+  email = guillaume.ongenae@gmail.com
 
 [github]
   user = g-ongenae
@@ -62,7 +62,7 @@
   h = help
   l = !git --no-pager log --oneline -n 10           # Show last ten commits by their title and SHA
     # Print all the log with the graph, source: http://www.jukie.net/bart/blog/pimping-out-git-log
-  lg = log --graph --all --pretty=format:'%Cred%h%Creset - %s %Cgreen(%cr) %C(bold blue)%an%Creset %C(yellow)%d%Creset' 
+  lg = log --graph --all --pretty=format:'%Cred%h%Creset - %s %Cgreen(%cr) %C(bold blue)%an%Creset %C(yellow)%d%Creset'
   log = log -n 10
   s = status -sb                                    # Show git status in short format with branch name
   sh = show --pretty=""
