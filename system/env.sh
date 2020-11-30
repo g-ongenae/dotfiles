@@ -4,9 +4,20 @@
 
 # Env
 
-# z
-PATH="${HOME}/Documents/prog/dotfiles/scripts/z/z.sh:${PATH}"
-MANPATH="${MANPATH}:${HOME}/Documents/prog/dotfiles/scripts/z/z.1"
+#----------------------------------------------------------------
+# Disable open collective messages and analytics
+
+# https://github.com/zloirock/core-js/issues/548#issuecomment-495388335
+export ADBLOCK="1"
+
+# https://docs.brew.sh/Analytics#opting-out
+export HOMEBREW_NO_ANALYTICS=1
+
+#----------------------------------------------------------------
+
+# To add alias of zoxide (z)
+# https://github.com/ajeetdsouza/zoxide#bash
+eval "$(zoxide init bash)"
 
 ## GCloud
 
@@ -19,6 +30,17 @@ fi
 if [ -f "$HOME/.gcloud/google-cloud-sdk/completion.bash.inc" ] ; then
 	source "$HOME/.gcloud/google-cloud-sdk/completion.bash.inc"
 fi
+
+## Kubernetes
+
+# Autocompletion
+if [ -n "$(command -v kubectl)" ] ; then
+	source <(kubectl completion bash)
+fi
+
+# Prompt
+# https://github.com/jonmosco/kube-ps1
+source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
 
 ## Lang
 
@@ -53,6 +75,10 @@ export NVM_DIR
 [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 ### Yarn Global Modules
 PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
+
+# Rust
+source "${HOME}/.cargo/env"
+PATH="$HOME/.cargo/bin:$PATH"
 
 ### RVM
 # Load RVM into a shell session *as a function*
@@ -91,7 +117,7 @@ IN="\[\033[0m\]"
 function ___ps1
 {
 	# Only print host if different than (\h)
-	local PC_NAME="on"
+	local PC_NAME="MacBook-Pro-de-Guillaume"
 
 	if [[
 		"${HOSTNAME}" == "${PC_NAME}.local" ||
@@ -136,9 +162,9 @@ function ___ps1
   export PS1
 }
 
-PROMPT_COMMAND=___ps1
-export PROMPT_COMMAND
+# PROMPT_COMMAND=___ps1
+# export PROMPT_COMMAND
 
 export PATH MANPATH
 
-export -f ___ps1
+# export -f ___ps1

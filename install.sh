@@ -15,6 +15,12 @@ function ensure_dir
   fi
 }
 
+function install_yh
+{
+  # Yaml display
+  # https://github.com/andreazorzetto/yh
+}
+
 # Install a cask software
 function install_cask
 {
@@ -58,6 +64,7 @@ function install_all_tools
   # Shell useful command
   install_brew "tree"
   install_brew "gpg"
+  install_brew "zoxide"
 
   # Lang
   ! [ "$(go version 2>/dev/zero)" == "" ] || open https://golang.org/doc/install
@@ -160,12 +167,11 @@ export DOTFILES_DIR
 
 # Bunch of symlinks
 bold "Creating Symlinks to access dotfiles from anywhere in user path";
-ln -sfv "${DOTFILES_DIR}/run/.bash_profile" ~
 ln -sfv "${DOTFILES_DIR}/git/.gitconfig" ~
 
-# Move and leave as a symlink
-mv "${DOTFILES_DIR}/run/.zshenv" ~
-ln -sfv ~/.zshenv "${DOTFILES_DIR}/run/"
+# Copying bashrc and zshenv beacause symlinks doesn't work for those
+cp "${DOTFILES_DIR}/run/.bash_profile" ~/.bashrc
+cp "${DOTFILES_DIR}/run/.zshenv" ~/.zshenv
 
 # Reload
 bold "Finished, reset shell session"

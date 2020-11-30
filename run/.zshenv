@@ -1,3 +1,14 @@
+#! /bin/zsh
+
+#----------------------------------------------------------------
+# Disable open collective messages and analytics
+
+# https://github.com/zloirock/core-js/issues/548#issuecomment-495388335
+export ADBLOCK="1"
+
+# https://docs.brew.sh/Analytics#opting-out
+export HOMEBREW_NO_ANALYTICS=1
+
 #----------------------------------------------------------------
 # Enable zsh
 
@@ -26,21 +37,42 @@ source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
 # Load RVM into a shell session *as a function*
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
 
-# Load avn
-[[ -s "$HOME/.avn/bin/avn.sh" ]] && source "$HOME/.avn/bin/avn.sh"
-
 # Load nvm
 [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
+
+autoload -U add-zsh-hook
+load-nvmrc() {
+  local node_version="$(nvm version)"
+  local nvmrc_path="$(nvm_find_nvmrc)"
+
+  if [ -n "$nvmrc_path" ]; then
+    local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
+
+    if [ "$nvmrc_node_version" = "N/A" ]; then
+      nvm install
+    elif [ "$nvmrc_node_version" != "$node_version" ]; then
+      nvm use
+    fi
+  elif [ "$node_version" != "$(nvm version default)" ]; then
+    echo "Reverting to nvm default version"
+    nvm use default
+  fi
+}
+add-zsh-hook chpwd load-nvmrc
+load-nvmrc
+nvm use
+
+## Python
+
+# # Start Pyenv
+# eval "$(/usr/local/bin/pyenv init -)"
+# eval "$(/usr/local/bin/pyenv virtualenv-init -)"
 
 # added by travis gem
 [ -f "$HOME/.travis/travis.sh" ] && source "$HOME/.travis/travis.sh"
 
 #----------------------------------------------------------------
 # Update PATH & other variables
-
-# z
-PATH="${HOME}/Documents/prog/dotfiles/scripts/z/z.sh:${PATH}"
-MANPATH="${MANPATH}:${HOME}/Documents/prog/dotfiles/scripts/z/z.1"
 
 ### Go Lang
 GOPATH="$HOME/Documents/prog/go"
@@ -65,8 +97,14 @@ NVM_DIR="$HOME/.nvm"
 export NVM_DIR
 
 ### Python
-# PYTHONPATH="/Library/Python/2.7/site-packages/:$PYTHONPATH"
-# export PYTHONPATH
+# PYTHONPATH="/Library/Python/2.7/site-packages/:${PYTHONPATH}"
+PYENV_ROOT="$HOME/.pyenv"
+PATH="$PYENV_ROOT/bin:$PATH"
+export PYTHONPATH PYENV_ROOT
+
+# Rust
+source "${HOME}/.cargo/env"
+PATH="$HOME/.cargo/bin:$PATH"
 
 ### RVM
 GEM_HOME="$HOME/.gem"

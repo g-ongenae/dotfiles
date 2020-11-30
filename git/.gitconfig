@@ -1,6 +1,6 @@
 [user]
   name = Guillaume Ongenae
-  email = guillaume.ongenae@gmail.com
+  email = guillaume.ongenae@algoan.com
 
 [github]
   user = g-ongenae
@@ -20,29 +20,56 @@
   ## Commit...
   a = add
   c = commit
-  cz = "!sh -c \"npm run commit\""                  # Commit with committizen (git-cz)
+    # Commit with committizen (git-cz)
+  cz = "!sh -c \"\
+    cd "$(git rev-parse --show-toplevel || echo .)" ;\
+    [ -f package.json ] && npm run commit || make commit ;\
+    cd -\""
   co = checkout
+    # Checkout a branch from a specific remote (by default origin/develop)
+  ct = "!sh -c \"git checkout --track "${1:-origin}/${2:-develop}"\" -"
   cp = cherry-pick
   r = rebase
+    # Create a "WIP" commit, commiting all the changes without running hooks
+  wip = "!sh -c \"git add . && git commit -n -m "WIP ${1}"\" -"
+	unwip = reset --mixed HEAD~1                      # Undo a "WIP" commit, staging the changes
 
   ## Branch
   b = branch
+    # Create a [b]ack[u]p of the current branch (useful to create before a merge or rebase)
+  bu = "!sh -c \"git branch -c "backup/$(git rev-parse --abbrev-ref HEAD)"\" -"
   cu = rev-parse --abbrev-ref HEAD                  # Get the current branch name (cu for current)
+    # Create a new feature branch
+  feat = "!sh -c \"git checkout develop ; \
+    git pull origin develop ; \
+    git checkout -b "feature/${1}"\" -"
+    # Create a new hotfix branch
+  hotfix = "!sh -c \"git checkout master ; \
+    git pull origin master ; \
+    git checkout -b "hotfix/${1}"\" -"
   m = merge
+    # Print the last commit of each branch, order by date, source: https://stackoverflow.com/a/30076212
+  recent = "!sh -c \"git for-each-ref --sort=-committerdate refs/heads \
+    --format='%(HEAD)%(refname:short)|%(committerdate:relative)|%(subject)|%(authorname)' \
+    | column -ts '|'\" -"
   sw = switch
 
   ## Info
-  ci = ci-status HEAD                               # Show the status of the last commit on the CI
-  df = diff --word-diff                             # To show diff by words
+  ci = "!sh -c \"hub ci-status HEAD\""              # Show the status of the last commit on the CI
+  dw = !git --no-pager diff --word-diff             # To show diff by words
+  df = diff                                         # To show diff
+  stat = !git --no-pager diff --stat                # Show statistics about the changes (nb lines, etc.)
   h = help
-  l = log --oneline -n 10
+  l = !git --no-pager log --oneline -n 10           # Show last ten commits by their title and SHA
+    # Print all the log with the graph, source: http://www.jukie.net/bart/blog/pimping-out-git-log
+  lg = log --graph --all --pretty=format:'%Cred%h%Creset - %s %Cgreen(%cr) %C(bold blue)%an%Creset %C(yellow)%d%Creset' 
   log = log -n 10
-  s = status
+  s = status -sb                                    # Show git status in short format with branch name
   sh = show --pretty=""
 
   ## With remote
     # List all of the branches on the remote (ex: git br [remote])
-  br = "!f() { git ls-remote -q --heads \"${1:-origin}\" | sed -nE 's/^.{30,}refs\\/heads\\/(.+)$/\\1/p'; }; f"
+  br = "!sh -c \"git ls-remote -q --heads \"${1:-origin}\" | sed -nE 's/^.{30,}refs\\/heads\\/(.+)$/\\1/p'\" -"
   cl = clone --recurse-submodules
   fe = fetch
   pl = pull
@@ -51,8 +78,10 @@
   pf = "!sh -c \"git push --force "${1:-origin}" "$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Push and create the current branch to the [remote] (e.g. git pu mine, default origin)
   pu = "!sh -c \"git push --set-upstream "${1:-origin}" "$(git rev-parse --abbrev-ref HEAD)"\" -"
+    # Push force the current branch to the [remote] (e.g. git pu mine, default origin)
+  pf = "!sh -c \"git push --force "${1:-origin}" "$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Checkout a PR (ex: git pr <pr-number> [remote])
-  pr = "!f() { git fetch -fu ${2:-origin} refs/pull/$1/head:pr/$1 && git checkout pr/$1; }; f"
+  pr = "!sh -c \"git fetch -fu "${2:-origin}" "refs/pull/${1}/head:pr/${1}" && git checkout "pr/${1}"\" -"
   re = remote
 
   ## Stash commands
@@ -61,6 +90,10 @@
   pop = stash pop                                   # Apply and drop the stash
   sa = stash save                                   # Stash all the files in the repository
   sf = stash push --                                # Stash file, only those given <files>
+    # Show the content of the [nth] stash
+  ss = "!sh -c \"git stash show -p stash@{"${1:-'0'}"}\" -"
+    # Drop the content of the [nth] stash
+  sd = "!sh -c \"git stash drop stash@{"${1:-'0'}"}\" -"
 
   ## Clean commands
   amend = commit --amend                            # Correct a commit (need -m for message or -a <file>)
@@ -78,9 +111,11 @@
   big = bisect good                                 # Man, it's good, that's big!
 
   ## Miscellaneous
-  fork = "!sh -c \"gh repo --fork "$(git config --get remote.origin.url)"\""
+    # Remove the git lock - see: https://stackoverflow.com/questions/7860751
+  unlock = "!sh -c \"rm -f "$(git rev-parse --show-toplevel || echo .)/.git/index.lock"\""
+  fork = "!sh -c \"gh repo fork "$(git config --get remote.origin.url)"\""
   f = flow                                          # For gitflow, see: https://github.com/nvie/gitflow
-  k = "!f() { open -a 'github desktop'; }; f"       # To open GitHub Desktop, name k for gitk
+  k = "!sh -c \"open -a 'github desktop'\""         # To open GitHub Desktop, name k for gitk
 
 [hub]
   protocol = ssh
@@ -117,4 +152,30 @@
   required = true
 
 [core]
+  # Use https://github.com/dandavison/delta
+  pager = delta
   excludesfile = "${HOME}/Documents/prog/dotfiles/git/.gitignore_global"
+
+[diff]
+  colorMoved = default
+
+[interactive]
+  diffFilter = delta --color-only
+
+[delta]
+  features = side-by-side line-numbers decorations
+  syntax-theme = Dracula
+  plus-style = syntax "#003800"
+  minus-style = syntax "#3f0001"
+
+[delta "decorations"]
+  commit-decoration-style = bold yellow box ul
+  file-style = bold yellow ul
+  file-decoration-style = none
+  hunk-header-decoration-style = cyan box ul
+
+[delta "line-numbers"]
+  line-numbers-left-style = cyan
+  line-numbers-right-style = cyan
+  line-numbers-minus-style = 124
+  line-numbers-plus-style = 28

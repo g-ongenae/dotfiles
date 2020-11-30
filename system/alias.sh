@@ -22,10 +22,11 @@ alias write="cd ~/Documents/write"
 alias root="cd \"\$(git rev-parse --show-toplevel || echo .)\""
 
 ## List
+alias ls="exa"
+alias la="exa --all --long"
 alias ls..="ls .."
 alias ls="ls \${LS_OPTIONS} -GhF"
 alias ll="ls \${LS_OPTIONS} -GlAhF"
-alias la="ls \${LS_OPTIONS} -GaAhF"
 alias lr="ls \${LS_OPTIONS} -GRAhF"
 alias lf="ls \${LS_OPTIONS} -GRAhF | grep ':$' | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's/-/|/'"
 
@@ -52,6 +53,7 @@ alias tres="tree -CF | less"
 alias tret="tree -CF -tp"
 
 ## Shell
+alias cat="bat"
 alias _="sudo"
 alias q="osascript -e 'tell application \"Terminal\" to quit'"
 alias reload="exec \${SHELL} -l"
@@ -60,6 +62,7 @@ alias reload="exec \${SHELL} -l"
 alias b="brew"
 
 ## Yarn & NPM
+alias fprettier="npx prettier --tab-width 1 --write package*.json"
 alias n="npm"
 alias nr="npm run"
 alias y="yarn"
@@ -75,6 +78,7 @@ alias d="docker"
 alias ks="kubectl"
 
 # DB
+alias stop_mongo="kill -2 \$(pgrep mongo)"
 alias m="mongod --dbpath=\"\${HOME}/.data/db\""
 
 # Jupyter & Python
@@ -82,6 +86,8 @@ alias ju="jupyter"
 alias py="python3"
 
 # Scripts
-alias release="bash ~/Documents/prog/dotfiles/scripts/openRelease.sh"
+alias chenv="~/Documents/work/scripts/telepresence/change_env.sh"
+alias deploy_me="~/Documents/work/scripts/telepresence/deploy-me.sh"
+alias release="bash ~/Documents/work/scripts/openRelease/index.sh"
 alias upade_node="bash ~/Documents/prog/dotfiles/scripts/updateNodeVersion.sh"
 alias update_wallpaper="bash ~/Documents/prog/dotfiles/scripts/updateWallpaper.sh"
