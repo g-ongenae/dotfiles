@@ -56,10 +56,11 @@
 
   ## Info
   ci = "!sh -c \"hub ci-status HEAD\""              # Show the status of the last commit on the CI
-  df = diff --word-diff                             # To show diff by words
+  dw = !git --no-pager diff --word-diff             # To show diff by words
+  df = diff                                         # To show diff
   stat = !git --no-pager diff --stat                # Show statistics about the changes (nb lines, etc.)
   h = help
-  l = !git --no-pager log --oneline -n 10           # Show last ten commits by their title and SHA  
+  l = !git --no-pager log --oneline -n 10           # Show last ten commits by their title and SHA
     # Print all the log with the graph, source: http://www.jukie.net/bart/blog/pimping-out-git-log
   lg = log --graph --all --pretty=format:'%Cred%h%Creset - %s %Cgreen(%cr) %C(bold blue)%an%Creset %C(yellow)%d%Creset' 
   log = log -n 10
@@ -149,4 +150,30 @@
   required = true
 
 [core]
+  # Use https://github.com/dandavison/delta
+  pager = delta
   excludesfile = "${HOME}/Documents/prog/dotfiles/git/.gitignore_global"
+
+[diff]
+  colorMoved = default
+
+[interactive]
+  diffFilter = delta --color-only
+
+[delta]
+  features = side-by-side line-numbers decorations
+  syntax-theme = Dracula
+  plus-style = syntax "#003800"
+  minus-style = syntax "#3f0001"
+
+[delta "decorations"]
+  commit-decoration-style = bold yellow box ul
+  file-style = bold yellow ul
+  file-decoration-style = none
+  hunk-header-decoration-style = cyan box ul
+
+[delta "line-numbers"]
+  line-numbers-left-style = cyan
+  line-numbers-right-style = cyan
+  line-numbers-minus-style = 124
+  line-numbers-plus-style = 28
