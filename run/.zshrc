@@ -71,8 +71,15 @@ ZSH_CUSTOM=${HOME}/Documents/prog/dotfiles/zsh/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
+  colored-man-pages
+  docker
+  fzf
+  heroku
   node
   osx
+  pip
+  pipenv-completion
+  pyenv
   zsh-autosuggestions
   zsh-syntax-highlighting
 )
