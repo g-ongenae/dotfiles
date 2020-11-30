@@ -1,0 +1,8 @@
+[hostname]
+ssh_only = true
+
+[gcloud]
+disabled = true
+
+[kubernetes]
+disabled = false

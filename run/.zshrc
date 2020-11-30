@@ -121,3 +121,8 @@ eval "$(starship init zsh)"
 # To add alias of zoxide (z)
 # https://github.com/ajeetdsouza/zoxide#zsh
 eval "$(zoxide init zsh)"
+
+# Kubernetes autocompletion
+if [ -n "$(command -v kubectl)" ] ; then
+	source <(kubectl completion zsh)
+fi

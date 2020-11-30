@@ -31,6 +31,17 @@ if [ -f "$HOME/.gcloud/google-cloud-sdk/completion.bash.inc" ] ; then
 	source "$HOME/.gcloud/google-cloud-sdk/completion.bash.inc"
 fi
 
+## Kubernetes
+
+# Autocompletion
+if [ -n "$(command -v kubectl)" ] ; then
+	source <(kubectl completion bash)
+fi
+
+# Prompt
+# https://github.com/jonmosco/kube-ps1
+source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
+
 ## Lang
 
 ### Haskell
