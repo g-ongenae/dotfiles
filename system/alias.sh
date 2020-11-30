@@ -22,10 +22,11 @@ alias write="cd ~/Documents/write"
 alias root="cd \"\$(git rev-parse --show-toplevel || echo .)\""
 
 ## List
+alias ls="exa"
+alias la="exa --all --long"
 alias ls..="ls .."
 alias ls="ls \${LS_OPTIONS} -GhF"
 alias ll="ls \${LS_OPTIONS} -GlAhF"
-alias la="ls \${LS_OPTIONS} -GaAhF"
 alias lr="ls \${LS_OPTIONS} -GRAhF"
 alias lf="ls \${LS_OPTIONS} -GRAhF | grep ':$' | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's/-/|/'"
 
@@ -52,6 +53,7 @@ alias tres="tree -CF | less"
 alias tret="tree -CF -tp"
 
 ## Shell
+alias cat="bat"
 alias _="sudo"
 alias q="osascript -e 'tell application \"Terminal\" to quit'"
 alias reload="exec \${SHELL} -l"

@@ -14,6 +14,10 @@ alias root="cd \"\$(git rev-parse --show-toplevel || echo .)\""
 alias b="brew"
 
 ## Shell
+alias ls="exa"
+alias la="exa --all --long"
+alias cat="bat"
+
 alias _="sudo"
 alias q="osascript -e 'tell application \"Terminal\" to quit'"
 alias reload="exec \${SHELL} -l"
