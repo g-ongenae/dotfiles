@@ -1,4 +1,7 @@
 
+# Set up fzf fuzzy find
+export FZF_BASE=/usr/local/opt/fzf/install
+export FZF_DEFAULT_COMMAND=fd
 
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
