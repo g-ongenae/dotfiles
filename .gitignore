@@ -7,6 +7,5 @@ run/.zsh_sessions/*
 
 # Git submodule
 # Bug on my computer?
-zsh/themes/powerlevel10k
 zsh/plugins/zsh-autosuggestions
 zsh/plugins/zsh-syntax-highlighting

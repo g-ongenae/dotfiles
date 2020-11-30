@@ -151,9 +151,9 @@ function ___ps1
   export PS1
 }
 
-PROMPT_COMMAND=___ps1
-export PROMPT_COMMAND
+# PROMPT_COMMAND=___ps1
+# export PROMPT_COMMAND
 
 export PATH MANPATH
 
-export -f ___ps1
+# export -f ___ps1

@@ -2,6 +2,15 @@
 
 # shellcheck disable=SC1090,SC2128
 
+# Change default starship.toml file location
+export STARSHIP_CONFIG=${HOME}/Documents/prog/dotfiles/run/starship.toml
+
+# Initialize starship prompting
+eval "$(starship init bash)"
+
+# Initialize zoxide aliases
+eval "$(zoxide init zsh)"
+
 # Resolve DOTFILES_DIR
 READLINK=$(which greadlink || which readlink)
 CURRENT_SCRIPT=$BASH_SOURCE
