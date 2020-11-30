@@ -15,6 +15,12 @@ function ensure_dir
   fi
 }
 
+function install_yh
+{
+  # Yaml display
+  # https://github.com/andreazorzetto/yh
+}
+
 # Install a cask software
 function install_cask
 {
