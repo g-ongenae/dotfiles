@@ -11,6 +11,12 @@
 [bitbucket]
   user = g_ongenae
 
+[help]
+  autocorrect = 1                                   # Automatically correct and execute mistyped commands
+
+[credential]
+  helper = cache                                    # Cache the http credentials
+
 [alias]
   ## Basic
   i = init
@@ -72,8 +78,8 @@
   br = "!sh -c \"git ls-remote -q --heads \"${1:-origin}\" | sed -nE 's/^.{30,}refs\\/heads\\/(.+)$/\\1/p'\" -"
   cl = clone --recurse-submodules
   fe = fetch
-  pl = pull
-  ps = push
+  pl = "!sh -c \"git pull "${1:-origin}" "$(git rev-parse --abbrev-ref HEAD)"\" -"
+  ps = "!sh -c \"git push "${1:-origin}" "$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Push force the current branch to the [remote] (e.g. git pf mine, default origin)
   pf = "!sh -c \"git push --force "${1:-origin}" "$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Push and create the current branch to the [remote] (e.g. git pu mine, default origin)
@@ -88,7 +94,7 @@
   apply = stash apply                               # Apply the stash and keep it in the stash history
   ls = stash list                                   # List all stash
   pop = stash pop                                   # Apply and drop the stash
-  sa = stash save                                   # Stash all the files in the repository
+  sa = stash save --include-untracked               # Stash all the files in the repository
   sf = stash push --                                # Stash file, only those given <files>
     # Show the content of the [nth] stash
   ss = "!sh -c \"git stash show -p stash@{"${1:-'0'}"}\" -"
@@ -116,6 +122,29 @@
   fork = "!sh -c \"gh repo fork "$(git config --get remote.origin.url)"\""
   f = flow                                          # For gitflow, see: https://github.com/nvie/gitflow
   k = "!sh -c \"open -a 'github desktop'\""         # To open GitHub Desktop, name k for gitk
+
+# Rewrite url http://bit.ly/g9c9Y2 (allows: git clone gh:rails/rails)
+[url "http://github.com/"]
+  insteadOf = "gh:"
+
+[url "git@github.com:"]
+  pushInsteadOf = "https://github.com/"
+  pushInsteadOf = "http://github.com/"
+  pushInsteadOf = "gh:"
+
+[url "git@github.com:g-ongenae/"]
+  pushInsteadOf = "my:"
+
+[url "http://github.com/g-ongenae/"]
+  insteadOf = "my:"
+
+[url "https://gist.github.com/"]
+  insteadOf = "gist:"
+
+[url "git@gist.github.com:"]
+  pushInsteadOf = "https://gist.github.com/"
+  pushInsteadOf = "http://gist.github.com/"
+  pushInsteadOf = "gist:"
 
 [hub]
   protocol = ssh
@@ -152,9 +181,8 @@
   required = true
 
 [core]
-  # Use https://github.com/dandavison/delta
-  pager = delta
-  excludesfile = "${HOME}/Documents/prog/dotfiles/git/.gitignore_global"
+  pager = delta                                     # Use https://github.com/dandavison/delta
+  excludesfile = "~/Documents/prog/dotfiles/git/.gitignore_global"
 
 [diff]
   colorMoved = default
