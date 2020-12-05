@@ -150,9 +150,8 @@
   required = true
 
 [core]
-  # Use https://github.com/dandavison/delta
-  pager = delta
-  excludesfile = "${HOME}/Documents/prog/dotfiles/git/.gitignore_global"
+  pager = delta                                     # Use https://github.com/dandavison/delta
+  excludesfile = "~/Documents/prog/dotfiles/git/.gitignore_global"
 
 [diff]
   colorMoved = default
