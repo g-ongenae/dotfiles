@@ -86,7 +86,7 @@
   apply = stash apply                               # Apply the stash and keep it in the stash history
   ls = stash list                                   # List all stash
   pop = stash pop                                   # Apply and drop the stash
-  sa = stash save                                   # Stash all the files in the repository
+  sa = stash save --include-untracked               # Stash all the files in the repository
   sf = stash push --                                # Stash file, only those given <files>
     # Show the content of the [nth] stash
   ss = "!sh -c \"git stash show -p stash@{"${1:-'0'}"}\" -"
