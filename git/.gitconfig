@@ -11,6 +11,12 @@
 [bitbucket]
   user = g_ongenae
 
+[help]
+  autocorrect = 1                                   # Automatically correct and execute mistyped commands
+
+[credential]
+  helper = cache                                    # Cache the http credentials
+
 [alias]
   ## Basic
   i = init
