@@ -115,6 +115,12 @@
   f = flow                                          # For gitflow, see: https://github.com/nvie/gitflow
   k = "!sh -c \"open -a 'github desktop'\""         # To open GitHub Desktop, name k for gitk
 
+[push]
+  default = current                                 # push should only push current branch, not all branches
+
+[pull]
+  default = current                                 # pull should only push current branch, not all branches
+
 # Rewrite url http://bit.ly/g9c9Y2 (allows: git clone gh:rails/rails)
 [url "http://github.com/"]
   insteadOf = "gh:"
