@@ -153,6 +153,29 @@
   pushInsteadOf = "http://gist.github.com/"
   pushInsteadOf = "gist:"
 
+# Rewrite url http://bit.ly/g9c9Y2 (allows: git clone gh:rails/rails)
+[url "http://github.com/"]
+  insteadOf = "gh:"
+
+[url "git@github.com:"]
+  pushInsteadOf = "https://github.com/"
+  pushInsteadOf = "http://github.com/"
+  pushInsteadOf = "gh:"
+
+[url "git@github.com:g-ongenae/"]
+  pushInsteadOf = "my:"
+
+[url "http://github.com/g-ongenae/"]
+  insteadOf = "my:"
+
+[url "https://gist.github.com/"]
+  insteadOf = "gist:"
+
+[url "git@gist.github.com:"]
+  pushInsteadOf = "https://gist.github.com/"
+  pushInsteadOf = "http://gist.github.com/"
+  pushInsteadOf = "gist:"
+
 [hub]
   protocol = ssh
 
