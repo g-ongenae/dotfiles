@@ -72,8 +72,8 @@
   br = "!sh -c \"git ls-remote -q --heads \"${1:-origin}\" | sed -nE 's/^.{30,}refs\\/heads\\/(.+)$/\\1/p'\" -"
   cl = clone --recurse-submodules
   fe = fetch
-  pl = pull
-  ps = push
+  pl = "!sh -c \"git pull "${1:-origin}" "$(git rev-parse --abbrev-ref HEAD)"\" -"
+  ps = "!sh -c \"git push "${1:-origin}" "$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Push and create the current branch to the [remote] (e.g. git pu mine, default origin)
   pu = "!sh -c \"git push --set-upstream "${1:-origin}" "$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Push force the current branch to the [remote] (e.g. git pu mine, default origin)
@@ -114,12 +114,6 @@
   fork = "!sh -c \"gh repo fork "$(git config --get remote.origin.url)"\""
   f = flow                                          # For gitflow, see: https://github.com/nvie/gitflow
   k = "!sh -c \"open -a 'github desktop'\""         # To open GitHub Desktop, name k for gitk
-
-[push]
-  default = current                                 # push should only push current branch, not all branches
-
-[pull]
-  default = current                                 # pull should only push current branch, not all branches
 
 # Rewrite url http://bit.ly/g9c9Y2 (allows: git clone gh:rails/rails)
 [url "http://github.com/"]
