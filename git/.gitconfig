@@ -87,6 +87,9 @@
     # Checkout a PR (ex: git pr <pr-number> [remote])
   pr = "!sh -c \"git fetch -fu "${2:-origin}" "refs/pull/${1}/head:pr/${1}" && git checkout "pr/${1}"\" -"
   re = remote
+    # Add remote for the fork (from GitHub user and directory name of the repository)
+  re-fork = "!sh -c 'git remote add \"$(git config --global --get github.user)\" \
+    \"git@github.com:$(git config --global --get github.user)/${PWD##*/}.git\"'"
 
   ## Stash commands
   apply = stash apply                               # Apply the stash and keep it in the stash history
