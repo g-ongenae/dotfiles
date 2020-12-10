@@ -1,3 +1,6 @@
+# Load nvm
+[[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
+
 # Load nvm updater
 autoload -U add-zsh-hook
 load-nvmrc() {
