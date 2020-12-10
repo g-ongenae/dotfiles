@@ -68,7 +68,7 @@
   h = help
   l = !git --no-pager log --oneline -n 10           # Show last ten commits by their title and SHA
     # Print all the log with the graph, source: http://www.jukie.net/bart/blog/pimping-out-git-log
-  lg = log --graph --all --pretty=format:'%Cred%h%Creset - %s %Cgreen(%cr) %C(bold blue)%an%Creset %C(yellow)%d%Creset' 
+  lg = log --graph --all --pretty=format:'%Cred%h%Creset - %s %Cgreen(%cr) %C(bold blue)%an%Creset %C(yellow)%d%Creset'
   log = log -n 10
   s = status -sb                                    # Show git status in short format with branch name
   sh = show --pretty=""
@@ -122,7 +122,7 @@
   k = "!sh -c \"open -a 'github desktop'\""         # To open GitHub Desktop, name k for gitk
 
 # Rewrite url http://bit.ly/g9c9Y2 (allows: git clone gh:rails/rails)
-[url "http://github.com/"]
+[url "git@github.com:"]
   insteadOf = "gh:"
 
 [url "git@github.com:"]
@@ -133,7 +133,7 @@
 [url "git@github.com:g-ongenae/"]
   pushInsteadOf = "my:"
 
-[url "http://github.com/g-ongenae/"]
+[url "git@github.com:g-ongenae/"]
   insteadOf = "my:"
 
 [url "https://gist.github.com/"]
