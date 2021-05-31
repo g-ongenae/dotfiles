@@ -27,7 +27,19 @@ alias fprettier="npx prettier --tab-width 1 --write package*.json"
 alias n="npm"
 alias nr="npm run"
   # Run all NPM script to format, lint and test
-alias nr_all="npm run prettier ; npm run format ; npm run lint ; npm test ; npm run tu ; npm run test:tu ; npm run test:e2e"
+alias nr_all="
+  echo 'npx node-config-ts'; npx node-config-ts
+  echo 'npm run prettier'; npm run prettier
+  echo 'npm run format'; npm run format
+  echo 'npm run lint'; npm run lint
+  echo 'npm run build'; npm run build
+  echo 'npm test'; npm test
+  echo 'npm run tu'; npm run tu
+  echo 'npm run test:tu'; npm run test:tu
+  echo 'npm run test:e2e'; npm run test:e2e
+  echo 'npm run test:cov'; npm run test:cov
+  echo 'npm run cover'; npm run cover
+"
 
 alias nls='npm list -g --depth=0'
 alias y="yarn"
