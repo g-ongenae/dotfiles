@@ -59,6 +59,9 @@
     --format='%(HEAD)%(refname:short)|%(committerdate:relative)|%(subject)|%(authorname)' \
     | column -ts '|'\" -"
   sw = switch
+  w = worktree
+    # Open VSCode on a new worktree (of current repository) in a temporary folder
+  wa = "!f() { local DIR ; DIR=\"$(mktemp -d)\" ; git worktree add \"${DIR}\" \"${1:-master}\" ; open -a 'visual studio code' \"${DIR}\" ; }; f"
 
   ## Info
   ci = "!sh -c \"hub ci-status HEAD\""              # Show the status of the last commit on the CI
