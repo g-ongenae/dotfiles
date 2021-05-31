@@ -102,6 +102,10 @@ alias h="open http://127.0.0.1:8080 & http-server"
 
 # Scripts
 alias chenv="~/Documents/work/scripts/telepresence/change_env.sh"
+alias sw_prod="chenv -P algoan-prod -d"
+alias sw_preprod="chenv -P algoan-preprod -d"
+alias sw_dev="chenv -P algoan-dev -C algoan-dev-v2"
+
 alias deploy_me="~/Documents/work/scripts/telepresence/deploy-me.sh"
 alias update_aden="~/Documents/work/scripts/update-aden/index.sh"
 alias release="bash ~/Documents/work/scripts/openRelease/index.sh"
