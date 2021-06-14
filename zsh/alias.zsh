@@ -24,11 +24,13 @@ alias reload="exec \${SHELL} -l"
 
 ## Yarn & NPM
 alias fprettier="npx prettier --tab-width 1 --write package*.json"
+alias fimports="git add --all --dry-run | awk '{print \$2}' | grep -E '.js|.jsx|.ts|.tsx' | xargs npx organize-imports-cli ; npm run prettier ; npm run format"
 alias n="npm"
 alias nr="npm run"
   # Run all NPM script to format, lint and test
 alias nr_all="
   echo 'npx node-config-ts'; npx node-config-ts
+  echo 'npx organize-imports-cli'; git add --all --dry-run | awk '{print \$2}' | grep -E '.js|.jsx|.ts|.tsx' | xargs npx organize-imports-cli
   echo 'npm run prettier'; npm run prettier
   echo 'npm run format'; npm run format
   echo 'npm run lint'; npm run lint
@@ -39,6 +41,7 @@ alias nr_all="
   echo 'npm run test:e2e'; npm run test:e2e
   echo 'npm run test:cov'; npm run test:cov
   echo 'npm run cover'; npm run cover
+  echo 'open coveragge'; open ./coverage/lcov-report/index.html
 "
 
 alias nls='npm list -g --depth=0'
