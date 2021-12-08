@@ -131,7 +131,7 @@ function install_all_npm
     http-server swagger-editor-live typescript fx unsplash-wallpaper \
     cypress
 
-  npx unsplash-wallpaper --daily # update with a new wallpaper image every day
+  dum unsplash-wallpaper --daily # update with a new wallpaper image every day
 }
 
 # Create Documents architecture

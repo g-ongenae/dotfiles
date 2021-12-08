@@ -30,7 +30,7 @@ function runTestSuiteSeparately
   for TEST_FILE in "${TEST_DIR}/"* ; do
     TEST_FILE_EXT="${TEST_FILE##*.}"
     if [ -f "${TEST_FILE}" ] && [[ "${TEST_FILE_EXT}" == "ts" ]] ; then
-      npm run test:e2e -- "${TEST_FILE}"
+      dum test:e2e -- "${TEST_FILE}"
     fi
   done
 }
@@ -58,43 +58,43 @@ alias q="osascript -e 'tell application \"Terminal\" to quit'"
 alias reload="exec \${SHELL} -l"
 
 ## Yarn & NPM
-alias fprettier="npx prettier --tab-width 1 --write package*.json"
+alias fprettier="dum prettier --tab-width 1 --write package*.json"
 alias yaml_prettier="\
   getGitUpdatedFiles |\
   grep -E '\.(yml|yaml)' |\
-  xargs npx prettier --parser yaml --write\
+  xargs dum prettier --parser yaml --write\
 "
 alias json_prettier="
   getGitUpdatedFiles |\
   grep -v 'package' | grep -E '\.json' |\
-  xargs npx prettier --parser json --write\
+  xargs dum prettier --parser json --write\
 "
 alias js_ts_prettier="\
   getGitUpdatedFiles |\
   grep -v '.json' | grep -E '\.(js|jsx|ts|tsx|md)' |\
-  xargs npx prettier --write\
+  xargs dum prettier --write\
 "
 alias pretty="yaml_prettier ; json_prettier ; js_ts_prettier"
-alias ordered="getGitUpdatedFiles | grep -v '.json' | grep -E '\.(js|jsx|ts|tsx)' | xargs npx organize-imports-cli"
-alias update_config_ts="root ; if [ -f './config/default.json' ] ; then npx node-config-ts ; fi"
+alias ordered="getGitUpdatedFiles | grep -v '.json' | grep -E '\.(js|jsx|ts|tsx)' | xargs dum organize-imports-cli"
+alias update_config_ts="root ; if [ -f './config/default.json' ] ; then dum node-config-ts ; fi"
 alias n="npm"
-alias nr="npm run"
+alias nr="dum"
   # Run all NPM script to format, lint and build
 alias nr_basics="\
   echo 'npx node-config-ts'; $(update_config_ts) ;\
   echo 'npx organize-imports-cli'; ordered ;\
   echo 'npm run prettier'; pretty ;\
-  echo 'npm run lint'; npm run lint ;\
-  echo 'npm run build'; npm run build ;\
+  echo 'npm run lint'; dum lint ;\
+  echo 'npm run build'; dum build ;\
 "
   # Run all NPM test: e2e, unit, and coverage
 alias nr_tests="\
   echo 'npm test'; npm test ;\
-  echo 'npm run tu'; npm run tu ;\
-  echo 'npm run test:tu'; npm run test:tu ;\
-  echo 'npm run test:e2e'; npm run test:e2e ;\
-  echo 'npm run test:cov'; npm run test:cov ;\
-  echo 'npm run cover'; npm run cover ;\
+  echo 'npm run tu'; dum tu ;\
+  echo 'npm run test:tu'; dum test:tu ;\
+  echo 'npm run test:e2e'; dum test:e2e ;\
+  echo 'npm run test:cov'; dum test:cov ;\
+  echo 'npm run cover'; dum cover ;\
   echo 'open coveragge'; open ./coverage/lcov-report/index.html ;\
 "
   # Run all NPM script to format, lint and test

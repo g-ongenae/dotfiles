@@ -9,7 +9,7 @@ function update_wallpaper
   DIR="$(mktemp -d)"
 
   # Copy the image of the day
-  npx unsplash-wallpaper --random --dir "${DIR}"
+  dum unsplash-wallpaper --random --dir "${DIR}"
 
   # Get the file name in the temp dir
   IMAGE="$(ls "${DIR}")"

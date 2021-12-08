@@ -335,15 +335,15 @@ function lint_file
 
 	case "${FILENAME##*.}" in
 		# Code
-		js) npx eslint "${FILENAME}" ;;
-		ts) npx tslint "${FILENAME}" ;;
+		js) dum eslint "${FILENAME}" ;;
+		ts) dum tslint "${FILENAME}" ;;
 
 		# Ops
 		Dockerfile) hadolint "${FILENAME}" ;;
 
 		# Template
-		pug) npx pug-lint "${FILENAME}" ;;
-		hbs) npx ember-template-lint "${FILENAME}" ;;
+		pug) dum pug-lint "${FILENAME}" ;;
+		hbs) dum ember-template-lint "${FILENAME}" ;;
 		# ejs) ;;
 
 		# Front

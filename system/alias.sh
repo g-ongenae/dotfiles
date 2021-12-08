@@ -62,9 +62,9 @@ alias reload="exec \${SHELL} -l"
 alias b="brew"
 
 ## Yarn & NPM
-alias fprettier="npx prettier --tab-width 1 --write package*.json"
+alias fprettier="dum prettier --tab-width 1 --write package*.json"
 alias n="npm"
-alias nr="npm run"
+alias nr="dum"
 alias y="yarn"
 alias sw="swagger-editor-live"
 
