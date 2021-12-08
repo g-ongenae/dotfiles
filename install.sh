@@ -15,11 +15,11 @@ function ensure_dir
   fi
 }
 
-function install_yh
-{
-  # Yaml display
-  # https://github.com/andreazorzetto/yh
-}
+# function install_yh
+# {
+#   # Yaml display
+#   # https://github.com/andreazorzetto/yh
+# }
 
 # Install a cask software
 function install_cask
@@ -107,16 +107,16 @@ function install_all_cask
   install_brew "cask"
 
   install_cask "insomnia"
-  install_cask "1Clipboard"
-  install_cask "Dashlane"
+  # install_cask "1Clipboard"
+  # install_cask "Dashlane"
   install_cask "typora" # or open https://typora.io/download/Typora.dmg
-  install_cask "Studio\ 3T" "studio-3t"
+  # install_cask "Studio\ 3T" "studio-3t"
   install_cask "Github\ Desktop" "github-desktop"
   install_cask "Visual\ Studio\ Code" "visual-studio-code"
   install_cask "Google\ Chrome" "google-chrome"
-  ! [ -f "/Applications/Cliqz.app" ] || open https://cdn.cliqz.com/browser-f/download/web0001/CLIQZ.en-US.mac.dmg
-  ! [ -f "/Applications/Perimeter81.app" ] || open https://www.perimeter81.com
-  ! [ -f "/Applications/Scratches.app" ] || open https://github.com/heapwolf/scratches
+  # ! [ -f "/Applications/Cliqz.app" ] || open https://cdn.cliqz.com/browser-f/download/web0001/CLIQZ.en-US.mac.dmg
+  # ! [ -f "/Applications/Perimeter81.app" ] || open https://www.perimeter81.com
+  # ! [ -f "/Applications/Scratches.app" ] || open https://github.com/heapwolf/scratches
 }
 
 function install_all_npm
