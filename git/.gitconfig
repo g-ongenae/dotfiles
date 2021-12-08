@@ -127,6 +127,7 @@
   f = flow                                          # For gitflow, see: https://github.com/nvie/gitflow
   k = "!sh -c \"open -a 'github desktop'\""         # To open GitHub Desktop, name k for gitk
   root = rev-parse --show-toplevel                  # Get root directory of the current git repository
+    # Open the current repository remote
   open = "!sh -c \"git remote get-url origin | sed -e 's#:#/#' -e 's#git@#https:////#' | xargs open\" -"
 
 # Rewrite url http://bit.ly/g9c9Y2 (allows: git clone gh:rails/rails)
