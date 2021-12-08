@@ -27,10 +27,7 @@
   a = add
   c = commit
     # Commit with committizen (git-cz)
-  cz = "!sh -c \"\
-    cd "$(git rev-parse --show-toplevel || echo .)" ;\
-    [ -f package.json ] && npm run commit || make commit ;\
-    cd -\""
+  cz = "!sh -c \"cd "$(git root || echo .)" ; [ -f package.json ] && npm run commit || make commit ; cd - 1> /dev/null\""
   co = checkout
     # Checkout a branch from a specific remote (by default origin/develop)
   ct = "!sh -c \"git checkout --track "${1:-origin}/${2:-develop}"\" -"
