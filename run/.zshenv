@@ -15,6 +15,9 @@ export HOMEBREW_NO_ANALYTICS=1
 ZDOTDIR="${HOME}/Documents/prog/dotfiles/run"
 export ZDOTDIR
 
+# Set up Byobu Tmux
+export BYOBU_PREFIX=/usr/local
+
 #----------------------------------------------------------------
 # Source some scripts for languages...
 

@@ -6,3 +6,8 @@ disabled = true
 
 [kubernetes]
 disabled = false
+
+[kubernetes.context_aliases]
+"gke_algoan-dev_europe-west1-c_algoan-dev-v2" = "stg"
+"gke_algoan-preprod_europe-west1-c_algoan-preprod" = "preprod"
+"gke_algoan-prod_europe-west1-c_algoan-prod" = "prod"
