@@ -195,6 +195,7 @@
 [core]
   pager = delta                                     # Use https://github.com/dandavison/delta
   excludesfile = "~/Documents/prog/dotfiles/git/.gitignore_global"
+  editor = code --wait
 
 [diff]
   colorMoved = default
