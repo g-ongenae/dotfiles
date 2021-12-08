@@ -1,5 +1,40 @@
 #! /bin/zsh
 
+# Functions
+
+# Get git updated filed
+function getGitUpdatedFiles
+{
+  local DRY STATUS
+
+  DRY="$(git add --all --dry-run | grep -v remove | awk '{print $2}')"
+  STATUS="$(git status -s | grep -v D | awk '{print $2}')"
+
+  echo -e "${DRY}\n${STATUS}" | sort | uniq
+}
+
+function runTestSuiteSeparately
+{
+  local ROOT_DIR TEST_DIR TEST_FILE TEST_FILE_EXT
+
+  ROOT_DIR="$(git root)"
+
+  if [ -d "${ROOT_DIR}/test" ] ; then
+    TEST_DIR="${ROOT_DIR}/test"
+  elif [ -d "${ROOT_DIR}/tests" ] ; then
+    TEST_DIR="${ROOT_DIR}/tests"
+  else
+    echo "Fatal: Unknown test directory for ${ROOT_DIR}" >& 1
+  fi
+
+  for TEST_FILE in "${TEST_DIR}/"* ; do
+    TEST_FILE_EXT="${TEST_FILE##*.}"
+    if [ -f "${TEST_FILE}" ] && [[ "${TEST_FILE_EXT}" == "ts" ]] ; then
+      npm run test:e2e -- "${TEST_FILE}"
+    fi
+  done
+}
+
 # Alias
 
 alias c="clear"
@@ -8,7 +43,7 @@ alias kill_dashboard="defaults write com.apple.dashboard mcx-disabled -boolean Y
 # Git
 alias g="git"
 # Go to the root folder of the repository
-alias root="cd \"\$(git rev-parse --show-toplevel || echo .)\""
+alias root="cd \"\$(git root || echo .)\""
 
 # Installer
 alias b="brew"
@@ -24,25 +59,46 @@ alias reload="exec \${SHELL} -l"
 
 ## Yarn & NPM
 alias fprettier="npx prettier --tab-width 1 --write package*.json"
-alias fimports="git add --all --dry-run | awk '{print \$2}' | grep -E '.js|.jsx|.ts|.tsx' | xargs npx organize-imports-cli ; npm run prettier ; npm run format"
+alias yaml_prettier="\
+  getGitUpdatedFiles |\
+  grep -E '\.(yml|yaml)' |\
+  xargs npx prettier --parser yaml --write\
+"
+alias json_prettier="
+  getGitUpdatedFiles |\
+  grep -v 'package' | grep -E '\.json' |\
+  xargs npx prettier --parser json --write\
+"
+alias js_ts_prettier="\
+  getGitUpdatedFiles |\
+  grep -v '.json' | grep -E '\.(js|jsx|ts|tsx|md)' |\
+  xargs npx prettier --write\
+"
+alias pretty="yaml_prettier ; json_prettier ; js_ts_prettier"
+alias ordered="getGitUpdatedFiles | grep -v '.json' | grep -E '\.(js|jsx|ts|tsx)' | xargs npx organize-imports-cli"
+alias update_config_ts="root ; if [ -f './config/default.json' ] ; then npx node-config-ts ; fi"
 alias n="npm"
 alias nr="npm run"
-  # Run all NPM script to format, lint and test
-alias nr_all="
-  echo 'npx node-config-ts'; npx node-config-ts
-  echo 'npx organize-imports-cli'; git add --all --dry-run | awk '{print \$2}' | grep -E '.js|.jsx|.ts|.tsx' | xargs npx organize-imports-cli
-  echo 'npm run prettier'; npm run prettier
-  echo 'npm run format'; npm run format
-  echo 'npm run lint'; npm run lint
-  echo 'npm run build'; npm run build
-  echo 'npm test'; npm test
-  echo 'npm run tu'; npm run tu
-  echo 'npm run test:tu'; npm run test:tu
-  echo 'npm run test:e2e'; npm run test:e2e
-  echo 'npm run test:cov'; npm run test:cov
-  echo 'npm run cover'; npm run cover
-  echo 'open coveragge'; open ./coverage/lcov-report/index.html
+  # Run all NPM script to format, lint and build
+alias nr_basics="\
+  echo 'npx node-config-ts'; $(update_config_ts) ;\
+  echo 'npx organize-imports-cli'; ordered ;\
+  echo 'npm run prettier'; pretty ;\
+  echo 'npm run lint'; npm run lint ;\
+  echo 'npm run build'; npm run build ;\
 "
+  # Run all NPM test: e2e, unit, and coverage
+alias nr_tests="\
+  echo 'npm test'; npm test ;\
+  echo 'npm run tu'; npm run tu ;\
+  echo 'npm run test:tu'; npm run test:tu ;\
+  echo 'npm run test:e2e'; npm run test:e2e ;\
+  echo 'npm run test:cov'; npm run test:cov ;\
+  echo 'npm run cover'; npm run cover ;\
+  echo 'open coveragge'; open ./coverage/lcov-report/index.html ;\
+"
+  # Run all NPM script to format, lint and test
+alias nr_all="nr_basics ; nr_tests"
 
 alias nls='npm list -g --depth=0'
 alias y="yarn"
