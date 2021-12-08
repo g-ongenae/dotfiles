@@ -40,12 +40,6 @@ source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
 # Load nvm
 [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 
-## Python
-
-# # Start Pyenv
-# eval "$(/usr/local/bin/pyenv init -)"
-# eval "$(/usr/local/bin/pyenv virtualenv-init -)"
-
 # added by travis gem
 [ -f "$HOME/.travis/travis.sh" ] && source "$HOME/.travis/travis.sh"
 

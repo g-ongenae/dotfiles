@@ -65,6 +65,11 @@ export DERBY_HOME
 ### Python
 # PYTHONPATH="/Library/Python/2.7/site-packages/:$PYTHONPATH"
 # export PYTHONPATH
+# Add Pyenv path
+PYENV_ROOT="$HOME/.pyenv"
+PATH="$PYENV_ROOT/bin:$PATH"
+export PYENV_ROOT
+eval "$(pyenv init --path)"
 
 ## Version Manager
 

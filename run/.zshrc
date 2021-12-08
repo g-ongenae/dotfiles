@@ -129,3 +129,6 @@ eval "$(zoxide init zsh)"
 if [ -n "$(command -v kubectl)" ] ; then
 	source <(kubectl completion zsh)
 fi
+
+# Load Pyenv
+eval "$(pyenv init -)"

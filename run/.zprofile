@@ -1,6 +1,11 @@
 # Load nvm
 [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 
+# Add Pyenv path
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init --path)"
+
 # Load nvm updater
 autoload -U add-zsh-hook
 load-nvmrc() {
