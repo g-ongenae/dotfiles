@@ -38,10 +38,11 @@ function install_cask
 
 function install_brew
 {
-  local NAME="${1}"
+  local CLI_NAME="${1}"
+  local INSTALL_NAME="${2:-1}"
 
-  if ! [ "$(brew list | grep "${NAME}")" == "" ] ; then
-    brew install "${NAME}"
+  if ! [ "$(brew list | grep "${CLI_NAME}")" == "" ] ; then
+    brew install "${INSTALL_NAME}"
   fi
 }
 
@@ -71,6 +72,7 @@ function install_all_tools
   ! [ "$(ghc --version 2>/dev/zero)" == "" ] || open https://www.haskell.org/downloads
   install_brew "node"
   install_brew "nvm"
+  install_brew "dum" "egoist/tap/dum"
 
   if [ "$(rvm --version 2>/dev/zero)" == "" ]; then
     gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
