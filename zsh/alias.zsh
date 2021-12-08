@@ -115,8 +115,11 @@ alias dbuild="docker build -t \"\${PWD##*/}\" \
   --build-arg NODE_ENV=\"production\" \
   --build-arg NPM_TOKEN=\"\$(sed -e 's/\/\/registry.npmjs.org\/:_authToken=//' ~/.npmrc | head -1)\" ."
 alias drun="docker run --rm -it -p 8080:8080 \"\${PWD##*/}\""
+alias dstop="docker ps -a | grep \"\${PWD##*/}\" | awk '{ print \$1 }' | xargs docker stop"
 alias dkill="docker ps | grep \"\${PWD##*/}\" | awk '{ print \$1 }' | xargs docker kill"
 alias drm="docker ps -a | grep \"\${PWD##*/}\" | awk '{ print \$1 }' | xargs docker rm"
+alias drmi="d images | grep \"\${PWD##*/}\" | awk '{ print \$3 }' | xargs docker rmi"
+alias dclean="d images | grep \"<none>\" | awk '{ print \$3 }' | xargs docker rmi"
 
 alias ks="kubectl"
 alias ksc="kubectl config current-context"
