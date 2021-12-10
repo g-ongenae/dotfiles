@@ -35,7 +35,7 @@
   r = rebase
     # Create a "WIP" commit, commiting all the changes without running hooks
   wip = "!sh -c \"git add . && git commit -n -m "WIP ${1}"\" -"
-	unwip = reset --mixed HEAD~1                      # Undo a "WIP" commit, staging the changes
+  unwip = reset --mixed HEAD~1                      # Undo a "WIP" commit, staging the changes
 
   ## Branch
   b = branch
@@ -154,7 +154,7 @@
   protocol = ssh
 
 [pull]
-	ff = only
+  ff = only
 
 [rerere]
   enabled = true
