@@ -42,13 +42,15 @@
     # Create a [b]ack[u]p of the current branch (useful to create before a merge or rebase)
   bu = "!sh -c \"git branch -c "backup/$(git rev-parse --abbrev-ref HEAD)"\" -"
   cu = rev-parse --abbrev-ref HEAD                  # Get the current branch name (cu for current)
+    # Get the default branch of the current repository
+  default-branch = "!sh -c \"git remote show origin | grep 'HEAD branch' | cut -d' ' -f5\" -"
     # Create a new feature branch
-  feat = "!sh -c \"git checkout develop ; \
-    git pull origin develop ; \
+  feat = "!sh -c \"git checkout "$(git default-branch)" ; \
+    git pull origin "$(git default-branch)" ; \
     git checkout -b "feature/${1}"\" -"
     # Create a new hotfix branch
-  hotfix = "!sh -c \"git checkout master ; \
-    git pull origin master ; \
+  hotfix = "!sh -c \"git checkout "$(git default-branch)" ; \
+    git pull origin "$(git default-branch)" ; \
     git checkout -b "hotfix/${1}"\" -"
   m = merge
     # Print the last commit of each branch, order by date, source: https://stackoverflow.com/a/30076212
@@ -158,6 +160,9 @@
 
 [rerere]
   enabled = true
+
+[init]
+  defaultBranch = master
 
 [color]
   ui = auto
