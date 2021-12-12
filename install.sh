@@ -55,7 +55,7 @@ function install_homebrew
   fi
 
   # Install Brew dependenciesw
-  brew bundle --file "${HOME}/Documents/prog/dotfiles/Brewfile"
+  brew bundle
 }
 
 # Install NPM global modules
@@ -91,6 +91,9 @@ if [ "$(uname)" != "Darwin" ] ; then
 else
   bold "Starting to install programs"
   install_basic_tools
+
+  cd "${HOME}/Documents/prog/dotfiles" || exit 1
+
   install_homebrew
   install_npm_modules
   install_vscode_plugins
