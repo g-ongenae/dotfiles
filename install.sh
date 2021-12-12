@@ -41,7 +41,7 @@ function install_homebrew
 {
   if [ "$(brew --version 2>/dev/zero)" == "" ] ; then
     bold "Installing Homebrew";
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   else
     bold "Updating Homebrew";
     brew update
