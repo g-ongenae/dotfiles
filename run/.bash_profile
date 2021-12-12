@@ -9,7 +9,10 @@ export STARSHIP_CONFIG=${HOME}/Documents/prog/dotfiles/run/starship.toml
 eval "$(starship init bash)"
 
 # Initialize zoxide aliases
-eval "$(zoxide init zsh)"
+eval "$(zoxide init bash)"
+
+# Navi - https://github.com/denisidoro/navi
+eval "$(navi widget bash)"
 
 # Resolve DOTFILES_DIR
 READLINK=$(which greadlink || which readlink)

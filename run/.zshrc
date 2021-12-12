@@ -132,3 +132,6 @@ fi
 
 # Load Pyenv
 eval "$(pyenv init -)"
+
+# Navi - https://github.com/denisidoro/navi
+eval "$(navi widget zsh)"
