@@ -34,13 +34,6 @@ function install_basic_tools
     cd "${HOME}/Documents/prog" || { echo "Unable to open prog folder." ; exit ; }
     git clone https://github.com/g-ongenae/dotfiles.git dotfiles
   fi
-
-  if [ "$(rvm --version 2>/dev/zero)" == "" ]; then
-    gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-    curl -sSL https://get.rvm.io | bash -s stable
-  fi
-
-  ! [ -f "/Applications/Perimeter81.app" ] || open https://www.perimeter81.com
 }
 
 # Install Homebrew
@@ -79,6 +72,16 @@ function install_vscode_plugins
   done < ./VSCodeExtension.txt
 }
 
+function install_specials
+{
+  if [ "$(rvm --version 2>/dev/zero)" == "" ]; then
+    gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+    curl -sSL https://get.rvm.io | bash -s stable
+  fi
+
+  ! [ -f "/Applications/Perimeter81.app" ] || open https://www.perimeter81.com
+}
+
 # Create Documents architecture
 ensure_dir "prog"
 ensure_dir "try"
@@ -97,6 +100,7 @@ else
   install_homebrew
   install_npm_modules
   install_vscode_plugins
+  install_specials
 fi
 
 # Get current dir (so run this script from anywhere)
