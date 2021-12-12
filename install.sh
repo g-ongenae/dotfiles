@@ -126,6 +126,7 @@ ln -sfv "${DOTFILES_DIR}/git/.gitconfig" ~
 
 # Copying bashrc and zshenv beacause symlinks doesn't work for those
 cp "${DOTFILES_DIR}/run/.bash_profile" ~/.bashrc
+cp "${DOTFILES_DIR}/run/.bash_profile" ~/.bash_profile
 cp "${DOTFILES_DIR}/run/.zshenv" ~/.zshenv
 
 # Reload

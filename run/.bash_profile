@@ -3,7 +3,7 @@
 # shellcheck disable=SC1090,SC2128
 
 # Change default starship.toml file location
-export STARSHIP_CONFIG=${HOME}/Documents/prog/dotfiles/run/starship.toml
+export STARSHIP_CONFIG="${HOME}/Documents/prog/dotfiles/run/starship.toml"
 
 # Initialize starship prompting
 eval "$(starship init bash)"
@@ -47,10 +47,7 @@ export DOTFILES_DIR DOTFILES_EXTRA_DIR
 
 # Add autocompletion
 if type brew 2&>/dev/null ; then
-  for completion_file in $(brew --prefix)/etc/bash_completion.d/* ; do
+  for completion_file in "$(brew --prefix)/etc/bash_completion.d/"* ; do
     [ -f "$completion_file" ] && source "$completion_file"
   done
 fi
-
-# Ask for today work
-new_day
