@@ -31,8 +31,14 @@ function install_basic_tools
   # Download dotfiles
   if ! [ -d "${HOME}/Documents/prog/dotfiles" ] ; then
     bold "Downloading dotfiles";
-    cd "${HOME}/Documents/prog" || { echo "Unable to open prog folder." ; exit ; }
+    # Clone repository
+    cd "${HOME}/Documents/prog" || { echo "Unable to open prog folder." ; exit 1 ; }
     git clone https://github.com/g-ongenae/dotfiles.git dotfiles
+
+    # Add Submodules
+    cd "${HOME}/Documents/prog/dotfiles" || exit 1
+    git submodule init
+    git submodule update
   fi
 }
 
