@@ -60,9 +60,7 @@ function install_all_npm
   npm i -g npm
 
   bold "Install or update globally NPM modules"
-  npm i -g pug-lint ember-template-lint eslint tslint prettier sass-lint \
-    http-server swagger-editor-live typescript fx unsplash-wallpaper \
-    cypress
+  cat ./NPMGlobalModules.txt | xargs npm i -g
 
   npx unsplash-wallpaper --daily # update with a new wallpaper image every day
 }
