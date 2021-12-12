@@ -34,7 +34,17 @@ function install_all_tools
     git clone https://github.com/g-ongenae/dotfiles.git dotfiles
   fi
 
-  # Install Homebrew
+  if [ "$(rvm --version 2>/dev/zero)" == "" ]; then
+    gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+    curl -sSL https://get.rvm.io | bash -s stable
+  fi
+
+  ! [ -f "/Applications/Perimeter81.app" ] || open https://www.perimeter81.com
+}
+
+# Install Homebrew
+function install_homebrew
+{
   if [ "$(brew --version 2>/dev/zero)" == "" ] ; then
     bold "Installing Homebrew";
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -45,13 +55,6 @@ function install_all_tools
 
   # Install Brew dependenciesw
   brew bundle --file "${HOME}/Documents/prog/dotfiles/Brewfile"
-
-  if [ "$(rvm --version 2>/dev/zero)" == "" ]; then
-    gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-    curl -sSL https://get.rvm.io | bash -s stable
-  fi
-
-  ! [ -f "/Applications/Perimeter81.app" ] || open https://www.perimeter81.com
 }
 
 function install_all_npm
