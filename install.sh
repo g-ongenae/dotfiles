@@ -17,16 +17,29 @@ function ensure_dir
 
 function install_all_tools
 {
-  xcode --select install 2>/dev/zero
+  # Install XCode
+  xcode --select install
 
+  # Install Git
+  git
+
+  # Download dotfiles
+  if ! [ -d "${HOME}/Documents/prog/dotfiles" ] ; then
+    bold "Downloading dotfiles";
+    cd "${HOME}/Documents/prog" || { echo "Unable to open prog folder." ; exit ; }
+    git clone https://github.com/g-ongenae/dotfiles.git dotfiles
+  fi
+
+  # Install Homebrew
   if [ "$(brew --version 2>/dev/zero)" == "" ] ; then
     bold "Installing Homebrew";
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   else
     bold "Updating Homebrew";
     brew update
   fi
 
+  # Install Brew dependenciesw
   brew bundle --file "${HOME}/Documents/prog/dotfiles/Brewfile"
 
   if [ "$(rvm --version 2>/dev/zero)" == "" ]; then
@@ -39,7 +52,7 @@ function install_all_tools
 
 function install_all_npm
 {
-  # TODO install vscode & hyper plugins
+  # TODO install vscode plugins
 
   bold "Update NPM"
   npm i -g npm
@@ -57,15 +70,6 @@ ensure_dir "prog"
 ensure_dir "try"
 ensure_dir "write"
 ensure_dir "work"
-
-git >/dev/null # install git in silence
-
-# Download dotfiles
-if ! [ -d "${HOME}/Documents/prog/dotfiles" ] ; then
-  bold "Downloading dotfiles";
-  cd "${HOME}/Documents/prog" || { echo "Unable to open prog folder." ; exit ; }
-  git clone https://github.com/g-ongenae/dotfiles.git dotfiles
-fi
 
 if [ "$(uname)" != "Darwin" ] ; then
   # TODO handle linux
