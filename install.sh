@@ -20,8 +20,12 @@ function install_all_tools
   # Install XCode
   xcode-select --install
 
+  read -r -p "Press enter to continue"
+
   # Install Git
   git
+
+  read -r -p "Press enter to continue"
 
   # Download dotfiles
   if ! [ -d "${HOME}/Documents/prog/dotfiles" ] ; then
