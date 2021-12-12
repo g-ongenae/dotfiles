@@ -18,7 +18,7 @@ function ensure_dir
 function install_all_tools
 {
   # Install XCode
-  xcode --select install
+  xcode-select --install
 
   # Install Git
   git
