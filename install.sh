@@ -15,7 +15,8 @@ function ensure_dir
   fi
 }
 
-function install_all_tools
+# Install basic tools
+function install_basic_tools
 {
   # Install XCode
   xcode-select --install
@@ -57,7 +58,8 @@ function install_homebrew
   brew bundle --file "${HOME}/Documents/prog/dotfiles/Brewfile"
 }
 
-function install_all_npm
+# Install NPM global modules
+function install_npm_modules
 {
   bold "Update NPM"
   npm i -g npm
@@ -88,8 +90,10 @@ if [ "$(uname)" != "Darwin" ] ; then
   bold "Unable to install programs: need MacOS"
 else
   bold "Starting to install programs"
-  install_all_tools
-  install_all_npm
+  install_basic_tools
+  install_homebrew
+  install_npm_modules
+  install_vscode_plugins
 fi
 
 # Get current dir (so run this script from anywhere)
