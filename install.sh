@@ -56,8 +56,6 @@ function install_all_tools
 
 function install_all_npm
 {
-  # TODO install vscode plugins
-
   bold "Update NPM"
   npm i -g npm
 
@@ -67,6 +65,15 @@ function install_all_npm
     cypress
 
   npx unsplash-wallpaper --daily # update with a new wallpaper image every day
+}
+
+# Install VS Code plugins
+function install_vscode_plugins
+{
+  bold "Install VSCode plugins"
+  while read -r CODE_EXTENSION ; do
+    code --install-extension "${CODE_EXTENSION}"
+  done < ./VSCodeExtension.txt
 }
 
 # Create Documents architecture
