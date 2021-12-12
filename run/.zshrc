@@ -79,7 +79,7 @@ plugins=(
   fzf
   heroku
   node
-  osx
+  macos
   pip
   pipenv-completion
   pyenv

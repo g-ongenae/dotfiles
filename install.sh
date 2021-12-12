@@ -74,12 +74,19 @@ function install_vscode_plugins
 
 function install_specials
 {
-  if [ "$(rvm --version 2>/dev/zero)" == "" ]; then
+  # Install RVM
+  if [ "$(rvm --version 2>/dev/zero)" == "" ] ; then
     gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
     curl -sSL https://get.rvm.io | bash -s stable
   fi
 
-  ! [ -f "/Applications/Perimeter81.app" ] || open https://www.perimeter81.com
+  # Install Oh My ZSH
+  sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+  # Install Perimeter81 manually
+  if ! [ -f "/Applications/Perimeter81.app" ] ; then
+    open https://www.perimeter81.com
+  fi
 }
 
 # Create Documents architecture
