@@ -84,6 +84,7 @@ brew 'jrnl'
 
 # Helpers
 
+tap 'denisidoro/tools'
 brew 'denisidoro/tools/navi'
 brew 'tldr'
 brew 'howdoi'
@@ -94,11 +95,12 @@ brew 'git'
 brew 'git-lfs'
 brew 'git-ftp'
 brew 'git-delta'
+tap 'github/gh'
 brew 'github/gh/gh'
 brew 'hub'
 
 cask 'gitup'
-cask 'github-desktop'
+cask 'github'
 
 # Editors
 
@@ -110,14 +112,15 @@ cask 'typora'
 
 brew 'docker'
 cask 'virtualbox'
-brew 'gcloud'
+brew 'google-cloud-sdk'
+tap 'heroku/brew'
 brew 'heroku'
 cask 'osxfuse'
-brew 'telepresence'
+tap 'datawire/blackbird'
+brew 'datawire/blackbird/telepresence'
 cask 'proxyman'
 cask 'insomnia'
 brew 'tcl-tk'
-cask 'kube-solo'
 brew 'kubectl'
 brew 'minikube'
 brew 'kubernetes-cli'
@@ -126,9 +129,8 @@ brew 'terraform'
 
 # Database
 
-brew 'mongodb'
+tap 'mongodb/brew'
 brew 'mongodb-community'
-brew 'mongodb-database-tools'
 cask 'mongodb-compass-isolated-edition'
 brew 'mongosh'
 
@@ -150,13 +152,13 @@ brew 'cabal-install'
 
 brew 'node'
 brew 'nvm'
-brew 'dum'
+tap 'egoist/tap'
+brew 'egoist/tap/dum'
 
 brew 'python3'
 brew 'pyenv'
 brew 'pyenv-virtualenv'
 
-brew 'rvm'
 brew 'ruby'
 brew 'ruby-install'
 
@@ -181,6 +183,6 @@ cask 'android-platform-tools'
 cask 'android-sdk'
 
 # Selenium
-brew 'selenium-server-standalone'
-brew 'chromedriver'
+brew 'selenium-server'
+cask 'chromedriver'
 brew 'geckodriver'
