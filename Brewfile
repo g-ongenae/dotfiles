@@ -26,6 +26,7 @@ cask 'slack'
 cask 'raycast'
 cask 'karabiner-elements'
 cask 'rescuetime'
+brew 'wallpaper'
 
 # Terminals
 
