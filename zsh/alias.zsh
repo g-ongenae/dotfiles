@@ -172,7 +172,7 @@ alias deploy_me="~/Documents/work/scripts/telepresence/deploy-me.sh"
 alias update_aden="~/Documents/work/scripts/update-aden/index.sh"
 alias release="bash ~/Documents/work/scripts/openRelease/index.sh"
 alias upade_node="bash ~/Documents/prog/dotfiles/scripts/updateNodeVersion.sh"
-alias update_wallpaper="bash ~/Documents/prog/dotfiles/scripts/update-all-wallpaper.sh"
+alias update_wallpaper="bash ~/Documents/prog/dotfiles/scripts/update-all-wallpapers.sh"
 
 # Network
 alias rp="lsof -nP -iTCP | grep LISTEN" # Running ports
