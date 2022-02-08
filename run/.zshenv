@@ -1,6 +1,13 @@
 #! /bin/zsh
 
 #----------------------------------------------------------------
+# Change the language of the terminal to German
+LC_ALL="de_DE.UTF-8"
+LANG="de_DE.UTF-8"
+LANGUAGE="de_DE.UTF-8"
+export LC_ALL LANG LANGUAGE
+
+#----------------------------------------------------------------
 # Disable open collective messages and analytics
 
 # https://github.com/zloirock/core-js/issues/548#issuecomment-495388335
