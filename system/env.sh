@@ -87,6 +87,8 @@ export NVM_DIR
 [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 ### Yarn Global Modules
 PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
+### Bit (bit.dev)
+PATH="$PATH:$HOME/bin"
 
 # Rust
 source "${HOME}/.cargo/env"

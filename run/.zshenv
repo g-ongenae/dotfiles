@@ -95,6 +95,9 @@ export GEM_HOME
 ### Yarn Global Modules
 PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
 
+### Bit (bit.dev)
+PATH="$PATH:$HOME/bin"
+
 ### Other
 PATH="$PATH:/usr/local/opt/sqlite/bin"
 PATH="$PATH:/usr/local/opt/openssl/bin"
