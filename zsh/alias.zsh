@@ -97,7 +97,7 @@ alias nr_tests="\
   echo 'npm run test:e2e'; npm run test:e2e ;\
   echo 'npm run test:cov'; npm run test:cov ;\
   echo 'npm run cover'; npm run cover ;\
-  echo 'open coveragge'; open ./coverage/lcov-report/index.html ;\
+  echo 'open coverage'; open ./coverage/lcov-report/index.html ;\
 "
   # Run all NPM script to format, lint and test
 alias nr_all="nr_basics ; nr_tests"
