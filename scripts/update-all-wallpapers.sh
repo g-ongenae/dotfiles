@@ -21,7 +21,11 @@ function update_all_wallpapers
   DIR="$(mktemp -d)"
 
   # Copy the image to the temporary folder
-  npx unsplash-wallpaper --random --dir "${DIR}"
+  if [ -n "${1}" ] ; then
+    npx unsplash-wallpaper -q "${1}" --dir "${DIR}"
+  else
+    npx unsplash-wallpaper --random --dir "${DIR}"
+  fi
 
   # Get the file name in the temp dir
   IMAGE="$(ls "${DIR}")"
@@ -33,4 +37,4 @@ function update_all_wallpapers
   rm -fr "${DIR}"
 }
 
-update_all_wallpapers
+update_all_wallpapers "${@}"
