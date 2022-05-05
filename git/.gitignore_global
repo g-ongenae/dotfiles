@@ -26,3 +26,6 @@ npm-debug.log
 
 ## Terminal and Editor Config
 .vscode/
+
+# Personal files for development
+NOTE.md
