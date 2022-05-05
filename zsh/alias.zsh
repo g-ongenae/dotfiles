@@ -32,7 +32,7 @@ function runTestSuiteSeparately
   for TEST_FILE in "${TEST_DIR}/"* ; do
     TEST_FILE_EXT="${TEST_FILE##*.}"
     if [ -f "${TEST_FILE}" ] && [[ "${TEST_FILE_EXT}" == "ts" ]] ; then
-      npm run test:e2e -- "${TEST_FILE}"
+      npm run test:e2e -- --detectOpenHandles --forceExit "${TEST_FILE}"
     fi
   done
 }
