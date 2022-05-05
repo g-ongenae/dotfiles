@@ -19,7 +19,9 @@ function runTestSuiteSeparately
 
   ROOT_DIR="$(git root)"
 
-  if [ -d "${ROOT_DIR}/test" ] ; then
+  if [ -n "${1}" ] && [ -d "${ROOT_DIR}/${1}" ] ; then
+    TEST_DIR="${ROOT_DIR}/${1}"
+  elif [ -d "${ROOT_DIR}/test" ] ; then
     TEST_DIR="${ROOT_DIR}/test"
   elif [ -d "${ROOT_DIR}/tests" ] ; then
     TEST_DIR="${ROOT_DIR}/tests"
