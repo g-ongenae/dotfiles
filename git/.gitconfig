@@ -43,7 +43,8 @@
   bu = "!sh -c \"git branch -c "backup/$(git rev-parse --abbrev-ref HEAD)"\" -"
   cu = rev-parse --abbrev-ref HEAD                  # Get the current branch name (cu for current)
     # Get the default branch of the current repository
-  default-branch = "!sh -c \"git remote show origin | grep 'HEAD branch' | cut -d' ' -f5\" -"
+  master = "!sh -c \"git checkout "$(git default-branch)"\" -"
+  default-branch = "!sh -c \"git remote show origin | grep -E 'HEAD branch:|Hauptbranch:' | cut -d':' -f2\" -"
     # Create a new feature branch
   feat = "!sh -c \"git checkout "$(git default-branch)" ; \
     git pull origin "$(git default-branch)" ; \
