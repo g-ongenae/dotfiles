@@ -123,6 +123,10 @@ export DOTFILES_DIR
 # Bunch of symlinks
 bold "Creating Symlinks to access dotfiles from anywhere in user path";
 ln -sfv "${DOTFILES_DIR}/git/.gitconfig" ~
+# Make GitHub CLI configs accessible
+if [ -f "~/.config/gh/config.yml" ] ; then
+  ln -sfv ~/.config/gh/config.yml "${DOTFILES_DIR}/git/gh.link.yaml"
+fi
 
 # Copying bashrc and zshenv beacause symlinks doesn't work for those
 cp "${DOTFILES_DIR}/run/bash_profile.template.bash" ~/.bashrc
