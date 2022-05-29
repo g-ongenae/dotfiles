@@ -1,5 +1,11 @@
 # Git ignore
 
+# Sym links
+# Running copies of the committed files
+# that are at a different place
+*.link
+*.link.*
+
 # Zsh generated files
 run/.zsh_history*
 run/.zcompdump*
