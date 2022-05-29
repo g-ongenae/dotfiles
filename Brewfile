@@ -11,7 +11,7 @@ tap 'homebrew/services'
 # Web browser
 
 cask 'finicky'
-cask 'firefox'
+cask 'librewolf'
 cask 'brave-browser'
 tap 'browsh-org/homebrew-browsh'
 brew 'browsh'
