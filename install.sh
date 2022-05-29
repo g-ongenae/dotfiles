@@ -128,11 +128,13 @@ ln -sfv "${DOTFILES_DIR}/git/.gitconfig" ~
 cp "${DOTFILES_DIR}/run/bash_profile.template.bash" ~/.bashrc
 cp "${DOTFILES_DIR}/run/bash_profile.template.bash" ~/.bash_profile
 cp "${DOTFILES_DIR}/run/zshenv.template.zsh" ~/.zshenv
+cp "${DOTFILES_DIR}/apps/finicky.template.js" ~/.finicky.js
 
 # Add a link to easily access the running copies
 ln -sfv ~/.bashrc "${DOTFILES_DIR}/run/bashrc.link.bash"
 ln -sfv ~/.bash_profile "${DOTFILES_DIR}/run/bash_profile.link.bash"
 ln -sfv ~/.zshenv "${DOTFILES_DIR}/run/zshenv.link.zsh"
+ln -sfv ~/.finicky.js "${DOTFILES_DIR}/apps/finicky.link.js"
 
 # Reload
 bold "Finished, reset shell session"
