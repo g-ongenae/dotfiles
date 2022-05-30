@@ -139,7 +139,7 @@ export DOTFILES_DIR
 bold "Creating Symlinks to access dotfiles from anywhere in user path";
 ln -sfv "${DOTFILES_DIR}/git/.gitconfig" ~
 # Make GitHub CLI configs accessible
-if [ -f "~/.config/gh/config.yml" ] ; then
+if [ -f "${HOME}/.config/gh/config.yml" ] ; then
   ln -sfv ~/.config/gh/config.yml "${DOTFILES_DIR}/git/gh.link.yaml"
 fi
 
