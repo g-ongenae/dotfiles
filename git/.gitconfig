@@ -42,16 +42,16 @@
     # Create a [b]ack[u]p of the current branch (useful to create before a merge or rebase)
   bu = "!sh -c \"git branch -c "backup/$(git rev-parse --abbrev-ref HEAD)"\" -"
   cu = rev-parse --abbrev-ref HEAD                  # Get the current branch name (cu for current)
-    # Get the default branch of the current repository
-  master = "!sh -c \"git checkout "$(git default-branch)"\" -"
-  default-branch = "!sh -c \"git remote show origin | grep -E 'HEAD branch:|Hauptbranch:' | cut -d':' -f2\" -"
+    # Get the default (HEAD) branch of the current repository
+  head = "!sh -c \"git checkout "$(git head-name)"\" -"
+  head-name = "!sh -c \"git remote show origin | grep -E 'Branche HEAD :|HEAD branch:|Hauptbranch:' | cut -d':' -f2\" -"
     # Create a new feature branch
-  feat = "!sh -c \"git checkout "$(git default-branch)" ; \
-    git pull origin "$(git default-branch)" ; \
+  feat = "!sh -c \"git checkout "$(git head-name)" ; \
+    git pull origin "$(git head-name)" ; \
     git checkout -b "feature/${1}"\" -"
     # Create a new hotfix branch
-  hotfix = "!sh -c \"git checkout "$(git default-branch)" ; \
-    git pull origin "$(git default-branch)" ; \
+  hotfix = "!sh -c \"git checkout "$(git head-name)" ; \
+    git pull origin "$(git head-name)" ; \
     git checkout -b "hotfix/${1}"\" -"
   m = merge
     # Print the last commit of each branch, order by date, source: https://stackoverflow.com/a/30076212
