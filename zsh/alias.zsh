@@ -118,7 +118,18 @@ alias nr_tests="\
   # Run all NPM script to format, lint and test
 alias nr_all="nr_basics ; nr_tests"
 
-alias nls='npm list -g --depth=0'
+  # npm list but listing interesting stuff
+function nls
+{
+  if [ -n "${1}" ] && [ "${1}" = "-g" ] ; then
+    # Get all module globally installed (which should be CLI)
+    npm list -g --depth=0
+  else
+    # List scripts of the current project
+    ls-scripts
+  fi
+}
+
 alias y="yarn"
 alias sw="swagger-editor-live"
 
