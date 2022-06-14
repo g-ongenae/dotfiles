@@ -99,6 +99,7 @@ brew 'git-ftp'
 brew 'git-delta'
 brew 'gh'
 brew 'hub'
+brew 'git-plus'
 
 cask 'gitup'
 cask 'github'
