@@ -129,6 +129,7 @@
   root = rev-parse --show-toplevel                  # Get root directory of the current git repository
     # Open the current repository remote
   open = "!sh -c \"git remote get-url origin | sed -e 's#:#/#' -e 's#git@#https:////#' | xargs open\" -"
+  ok = "!sh -c \"sl\""                              # Slow down, you wanted to write "g pl" (git pull)
 
 # Rewrite url http://bit.ly/g9c9Y2 (allows: git clone gh:rails/rails)
 [url "git@github.com:"]
