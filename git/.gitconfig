@@ -33,6 +33,8 @@
   ct = "!sh -c \"git checkout --track "${1:-origin}/${2:-develop}"\" -"
   cp = cherry-pick
   r = rebase
+    # Rebase head branch in interactive mode (most likely master or main)
+  rih = "!sh -c \"git rebase -i "$(git head-name)"\" -"
     # Create a "WIP" commit, commiting all the changes without running hooks
   wip = "!sh -c \"git add . && git commit -n -m "WIP ${1}"\" -"
   unwip = reset --mixed HEAD~1                      # Undo a "WIP" commit, staging the changes
