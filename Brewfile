@@ -23,6 +23,7 @@ cask 'slack'
 
 # Environment-related
 
+cask 'alt-tab'
 cask 'raycast'
 cask 'karabiner-elements'
 cask 'rescuetime'
