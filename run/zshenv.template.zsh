@@ -103,6 +103,7 @@ PATH="$PATH:/usr/local/opt/sqlite/bin"
 PATH="$PATH:/usr/local/opt/openssl/bin"
 PATH="$PATH:/usr/local/opt/sphinx-doc/bin"
 PATH="$PATH:/usr/local/opt/nss/bin"
+PATH="$PATH:/usr/local/sbin"
 
 ### RVM
 # Make sure this is the last PATH variable change.
