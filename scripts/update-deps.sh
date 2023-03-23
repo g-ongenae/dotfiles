@@ -1,7 +1,9 @@
 #! /bin/bash
 
-tldr --update
 brew update
 brew upgrade
+brew cleanup
 
-# TODO add update all npm global modules
+npm update --global
+
+tldr --update
