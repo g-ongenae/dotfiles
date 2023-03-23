@@ -13,6 +13,7 @@ tap 'homebrew/services'
 cask 'finicky'
 cask 'librewolf'
 cask 'brave-browser'
+cask 'responsively'
 tap 'browsh-org/homebrew-browsh'
 brew 'browsh'
 
