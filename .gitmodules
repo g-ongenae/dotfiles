@@ -4,3 +4,6 @@
 [submodule "zsh/plugins/zsh-syntax-highlighting"]
 	path = zsh/plugins/zsh-syntax-highlighting
 	url = https://github.com/zsh-users/zsh-syntax-highlighting.git
+[submodule "zsh/plugins/jq"]
+	path = zsh/plugins/jq
+	url = https://github.com/reegnz/jq-zsh-plugin

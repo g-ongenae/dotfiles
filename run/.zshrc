@@ -77,12 +77,11 @@ plugins=(
   colored-man-pages
   docker
   fzf
-  heroku
+  gcloud
+  jq
+  kubectl
   node
   macos
-  pip
-  pipenv-completion
-  pyenv
   zsh-autosuggestions
   zsh-syntax-highlighting
 )
@@ -126,9 +125,9 @@ eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
 
 # Kubernetes autocompletion
-if [ -n "$(command -v kubectl)" ] ; then
-	source <(kubectl completion zsh)
-fi
+# if [ -n "$(command -v kubectl)" ] ; then
+# 	source <(kubectl completion zsh)
+# fi
 
 # Load Pyenv
 eval "$(pyenv init -)"
