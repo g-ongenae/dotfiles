@@ -130,7 +130,7 @@ eval "$(zoxide init zsh)"
 # fi
 
 # Load Pyenv
-eval "$(pyenv init -)"
+# eval "$(pyenv init -)"
 
 # Navi - https://github.com/denisidoro/navi
 eval "$(navi widget zsh)"
