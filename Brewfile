@@ -123,6 +123,7 @@ cask 'osxfuse'
 tap 'datawire/blackbird'
 brew 'datawire/blackbird/telepresence'
 cask 'proxyman'
+cask 'wireshark'
 cask 'insomnia'
 brew 'tcl-tk'
 brew 'kubectl'
@@ -130,6 +131,10 @@ brew 'minikube'
 brew 'kubernetes-cli'
 brew 'kube-ps1'
 brew 'terraform'
+brew 'helm'
+cask 'openlens'
+
+cask 'mockoon'
 
 # Database
 
@@ -180,6 +185,7 @@ brew 'hadolint'
 brew 'prettier'
 
 # Android
+
 cask 'android-studio'
 cask 'android-file-transfer'
 cask 'android-messages'
@@ -188,6 +194,7 @@ cask 'android-platform-tools'
 cask 'android-sdk'
 
 # Selenium
+
 brew 'selenium-server'
 cask 'chromedriver'
 brew 'geckodriver'
