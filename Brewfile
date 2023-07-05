@@ -154,6 +154,7 @@ brew 'openjdk'
 brew 'ghc'
 brew 'cabal-install'
 
+brew 'nodeenv'
 brew 'node'
 brew 'nvm'
 tap 'egoist/tap'

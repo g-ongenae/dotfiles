@@ -134,3 +134,6 @@ eval "$(zoxide init zsh)"
 
 # Navi - https://github.com/denisidoro/navi
 eval "$(navi widget zsh)"
+
+# Node env - https://github.com/nodenv/nodenv
+eval "$(nodenv init -)"
