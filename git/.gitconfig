@@ -44,7 +44,7 @@
     # Create a [b]ack[u]p of the current branch (useful to create before a merge or rebase)
   bu = "!sh -c \"git branch -c "backup/$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Remove all merged branch of the current repository
-  bd = "!sh -c \"git branch --merged | grep -i -v -E 'master|main|develop' | xargs git branch -d\" -"
+  bd = "!sh -c \"git branch --merged | grep -i -v -E 'master|main|develop|beta' | grep -i -v '*' | xargs git branch -d\" -"
   cu = rev-parse --abbrev-ref HEAD                  # Get the current branch name (cu for current)
     # Get the default (HEAD) branch of the current repository
   head = "!sh -c \"git checkout "$(git head-name)"\" -"
