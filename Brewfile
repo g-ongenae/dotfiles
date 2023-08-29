@@ -161,9 +161,10 @@ brew 'cabal-install'
 
 brew 'nodeenv'
 brew 'node'
-brew 'nvm'
-tap 'egoist/tap'
-brew 'egoist/tap/dum'
+# brew 'nvm'
+# tap 'egoist/tap'
+# brew 'egoist/tap/dum'
+brew 'volta'
 
 brew 'python3'
 brew 'pyenv'
