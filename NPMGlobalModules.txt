@@ -1,10 +1,4 @@
-pug-lint
-ember-template-lint
 eslint
-sass-lint
-http-server
 swagger-editor-live
 typescript
-unsplash-wallpaper
-cypress
 npm-ls-scripts

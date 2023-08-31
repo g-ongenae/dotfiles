@@ -12,32 +12,34 @@ tap 'homebrew/services'
 
 cask 'finicky'
 cask 'librewolf'
-cask 'brave-browser'
-cask 'responsively'
-tap 'browsh-org/homebrew-browsh'
-brew 'browsh'
+cask 'firefox'
+cask 'google-chrome'
+# cask 'brave-browser'
+# cask 'responsively'
+# tap 'browsh-org/homebrew-browsh'
+# brew 'browsh'
 
 # Chat
 
-cask 'discord'
-cask 'slack'
+# cask 'discord'
+# cask 'slack'
 
 # Environment-related
 
-cask 'alt-tab'
+# cask 'alt-tab'
 cask 'raycast'
-cask 'karabiner-elements'
+# cask 'karabiner-elements'
 cask 'rescuetime'
-brew 'wallpaper'
+# brew 'wallpaper'
 
 # Terminals
 
-cask 'tabby'
+# cask 'tabby'
 
 # Tmux is a newer terminal multiplexer.
-brew 'pkg-config', link: true
-brew 'tmux'
-brew 'reattach-to-user-namespace'
+# brew 'pkg-config', link: true
+# brew 'tmux'
+# brew 'reattach-to-user-namespace'
 
 # Shells
 
@@ -83,49 +85,49 @@ brew 'openssl'
 brew 'readline'
 brew 'rlwrap'
 brew 'base64'
-brew 'translate-shell'
-brew 'jrnl'
+# brew 'translate-shell'
+# brew 'jrnl'
 
 # Helpers
 
-tap 'denisidoro/tools'
-brew 'denisidoro/tools/navi'
+# tap 'denisidoro/tools'
+# brew 'denisidoro/tools/navi'
 brew 'tldr'
-brew 'howdoi'
+# brew 'howdoi'
 
 # Git
 
 brew 'git'
 brew 'git-lfs'
-brew 'git-ftp'
+# brew 'git-ftp'
 brew 'git-delta'
 brew 'gh'
-brew 'hub'
+# brew 'hub'
 brew 'git-plus'
 
-cask 'gitup'
+# cask 'gitup'
 cask 'github'
 
 # Editors
 
 brew 'vim'
 cask 'visual-studio-code'
-cask 'typora'
+# cask 'typora'
 
 # Ops
 
 brew 'docker'
-cask 'virtualbox'
+# cask 'virtualbox'
 brew 'google-cloud-sdk'
-tap 'heroku/brew'
-brew 'heroku'
+# tap 'heroku/brew'
+# brew 'heroku'
 cask 'osxfuse'
 tap 'datawire/blackbird'
 brew 'datawire/blackbird/telepresence'
 cask 'proxyman'
-cask 'wireshark'
+# cask 'wireshark'
 cask 'insomnia'
-brew 'tcl-tk'
+# brew 'tcl-tk'
 brew 'kubectl'
 brew 'minikube'
 brew 'kubernetes-cli'
@@ -134,7 +136,7 @@ brew 'terraform'
 brew 'helm'
 cask 'openlens'
 
-cask 'mockoon'
+# cask 'mockoon'
 
 # Database
 
@@ -152,15 +154,15 @@ brew 'freetype'
 
 brew 'gcc'
 
-brew 'go'
+# brew 'go'
 
-brew 'openjdk'
+# brew 'openjdk'
 
-brew 'ghc'
-brew 'cabal-install'
+# brew 'ghc'
+# brew 'cabal-install'
 
-brew 'nodeenv'
-brew 'node'
+# brew 'nodeenv'
+# brew 'node'
 # brew 'nvm'
 # tap 'egoist/tap'
 # brew 'egoist/tap/dum'
@@ -170,32 +172,32 @@ brew 'python3'
 brew 'pyenv'
 brew 'pyenv-virtualenv'
 
-brew 'ruby'
-brew 'ruby-install'
+# brew 'ruby'
+# brew 'ruby-install'
 
-brew 'rust'
-brew 'rustup-init'
+# brew 'rust'
+# brew 'rustup-init'
 
-brew 'jupyterlab'
+# brew 'jupyterlab'
 
 # Linters
 
 brew 'pandoc', link: true
 brew 'shellcheck'
 brew 'hadolint'
-brew 'prettier'
+# brew 'prettier'
 
 # Android
 
-cask 'android-studio'
-cask 'android-file-transfer'
-cask 'android-messages'
-cask 'android-ndk'
-cask 'android-platform-tools'
-cask 'android-sdk'
+# cask 'android-studio'
+# cask 'android-file-transfer'
+# cask 'android-messages'
+# cask 'android-ndk'
+# cask 'android-platform-tools'
+# cask 'android-sdk'
 
 # Selenium
 
-brew 'selenium-server'
-cask 'chromedriver'
-brew 'geckodriver'
+# brew 'selenium-server'
+# cask 'chromedriver'
+# brew 'geckodriver'

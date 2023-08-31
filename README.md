@@ -18,7 +18,7 @@ Still learning and building, though.
 Run:
 
 ```bash
-curl https://raw.githubusercontent.com/g-ongenae/dotfiles/master/install.sh | bash
+curl https://raw.githubusercontent.com/g-ongenae/dotfiles/algoan/install.sh | bash
 ```
 
 ## Help

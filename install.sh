@@ -53,7 +53,7 @@ function install_homebrew
     brew update
   fi
 
-  # Install Brew dependenciesw
+  # Install Brew dependencies
   brew bundle
 }
 
@@ -81,10 +81,10 @@ function install_vscode_plugins
 function install_specials
 {
   # Install RVM
-  if [ "$(rvm --version 2>/dev/zero)" == "" ] ; then
-    gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-    curl -sSL https://get.rvm.io | bash -s stable
-  fi
+  # if [ "$(rvm --version 2>/dev/zero)" == "" ] ; then
+  #   gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+  #   curl -sSL https://get.rvm.io | bash -s stable
+  # fi
 
   # Install Oh My ZSH
   sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
@@ -111,7 +111,7 @@ else
   cd "${HOME}/Documents/prog/dotfiles" || exit 1
 
   install_homebrew
-  install_npm_modules
+  # install_npm_modules
   install_vscode_plugins
   install_specials
 fi
