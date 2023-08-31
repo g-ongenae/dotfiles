@@ -48,6 +48,9 @@ function install_homebrew
   if [ "$(brew --version 2>/dev/zero)" == "" ] ; then
     bold "Installing Homebrew";
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    (echo; echo "export PATH=\"/opt/homebrew/bin:\$PATH\"") >> ~/.zprofile
+    eval "$(/opt/homebrew/bin/brew shellenv)"
   else
     bold "Updating Homebrew";
     brew update
