@@ -51,24 +51,6 @@ source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
 
 ## Lang
 
-### Haskell
-PATH="$PATH:$HOME/Library/Haskell/bin"
-PATH="$PATH:$HOME/.local/bin"
-
-### Go Lang
-GOPATH="$HOME/Documents/prog/go"
-GOBIN="$HOME/Documents/prog/go/bin"
-export GOPATH GOBIN
-
-### Java
-JAVA_HOME=$(/usr/libexec/java_home)
-export JAVA_HOME
-
-#### Derby
-DERBY_HOME="${HOME}/Documents/prog/derby/bin"
-PATH="$PATH:$DERBY_HOME/bin"
-export DERBY_HOME
-
 ### Python
 # PYTHONPATH="/Library/Python/2.7/site-packages/:$PYTHONPATH"
 # export PYTHONPATH
@@ -80,30 +62,7 @@ eval "$(pyenv init --path)"
 
 ## Version Manager
 
-### Node
-### => NVM
-NVM_DIR="$HOME/.nvm"
-export NVM_DIR
-[[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
-### Yarn Global Modules
-PATH="$PATH:$HOME/.config/yarn/global/node_modules/.bin"
-### Bit (bit.dev)
-PATH="$PATH:$HOME/bin"
-
-# Rust
-source "${HOME}/.cargo/env"
-PATH="$HOME/.cargo/bin:$PATH"
-
-### RVM
-# Load RVM into a shell session *as a function*
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
-GEM_HOME="$HOME/.gem"
-export GEM_HOME
-# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
-PATH="$PATH:$HOME/.rvm/bin"
-
 ## Other
-PATH="/usr/local/opt/sqlite/bin:$PATH"
 PATH="/usr/local/opt/openssl/bin:$PATH"
 PATH="/usr/local/opt/sphinx-doc/bin:$PATH"
 PATH="/usr/local/opt/nss/bin:$PATH"

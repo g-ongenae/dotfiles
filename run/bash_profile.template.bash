@@ -11,12 +11,6 @@ eval "$(starship init bash)"
 # Initialize zoxide aliases
 eval "$(zoxide init bash)"
 
-# Navi - https://github.com/denisidoro/navi
-eval "$(navi widget bash)"
-
-# Node env - https://github.com/nodenv/nodenv
-eval "$(nodenv init -)"
-
 # Resolve DOTFILES_DIR
 READLINK=$(which greadlink || which readlink)
 CURRENT_SCRIPT=$BASH_SOURCE
