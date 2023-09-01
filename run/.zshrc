@@ -84,6 +84,7 @@ plugins=(
   macos
   zsh-autosuggestions
   zsh-syntax-highlighting
+  volta
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -132,3 +133,4 @@ eval "$(zoxide init zsh)"
 # Load Pyenv
 # eval "$(pyenv init -)"
 export VOLTA_HOME="$HOME/.volta"
+export PATH="$VOLTA_HOME/bin:$PATH"
