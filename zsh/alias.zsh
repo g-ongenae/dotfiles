@@ -99,7 +99,7 @@ alias n="npm"
 alias nr="npm run"
   # Run all NPM script to format, lint and build
 alias nr_basics="\
-  echo 'npx node-config-ts'; $(update_config_ts) ;\
+  echo 'npx node-config-ts'; update_config_ts ;\
   echo 'npx organize-imports-cli'; ordered ;\
   echo 'npm run prettier'; pretty ;\
   echo 'npm run lint'; npm run lint ;\
