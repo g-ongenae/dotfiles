@@ -39,7 +39,7 @@ fi
 
 ## Kubernetes
 # https://github.com/jonmosco/kube-ps1
-source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
+source "/opt/homebrew/opt/kube-ps1/share/kube-ps1.sh"
 
 #----------------------------------------------------------------
 # Update PATH & other variables

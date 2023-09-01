@@ -47,7 +47,7 @@ fi
 
 # Prompt
 # https://github.com/jonmosco/kube-ps1
-source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
+source "/opt/homebrew/opt/kube-ps1/share/kube-ps1.sh"
 
 ## Lang
 
@@ -69,7 +69,7 @@ PATH="/usr/local/opt/nss/bin:$PATH"
 
 ### Kubernetes
 # https://github.com/jonmosco/kube-ps1
-source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
+source "/opt/homebrew/opt/kube-ps1/share/kube-ps1.sh"
 kubeoff # Only enable it when necessary
 
 # Auto completion for kubectl
