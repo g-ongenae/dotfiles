@@ -26,6 +26,33 @@ function elementIn() {
   return 1
 }
 
+# Remove node modules
+function removeNodeModules() {
+  local BASE_PATH FOLDER
+
+  BASE_PATH="${1}"
+  IGNORED_FOLDERS="${2}"
+
+  for FOLDER in ${BASE_PATH}/* ; do
+    if [[ ! -d "${FOLDER}" ]] ; then
+      continue
+    fi
+
+    if elementIn "${FOLDER}" "${IGNORED_FOLDERS[@]}" ; then
+      echo "Skipping ${FOLDER}"
+    elif [[ -d "${FOLDER}/node_modules" ]] ; then
+      echo "Removing node modules of ${FOLDER}"
+      rm -fr "${FOLDER}/node_modules"
+    else
+      echo "No node modules in ${FOLDER}, skipping."
+    fi
+
+    if [[ -d "${FOLDER}" ]] ; then
+      removeNodeModules "${FOLDER}"
+    fi
+  done
+}
+
 # Run
 function run() {
   local IGNORED_FOLDERS IFS BASE_PATH FOLDER
@@ -41,18 +68,12 @@ function run() {
     echo "Removing all node modules except for ${IGNORED_FOLDERS[@]}"
   fi
 
-  for BASE_PATH in '.' './*' ; do
-    for FOLDER in ${BASE_PATH}/*/ ; do
-      if elementIn "${FOLDER}" "${IGNORED_FOLDERS[@]}" ; then
-        echo "Skipping ${FOLDER}"
-      elif [[ -d "${FOLDER}/node_modules" ]] ; then
-        echo "Removing node modules of ${FOLDER}"
-        rm -fr "${FOLDER}/node_modules"
-      else
-        echo "No node modules in ${FOLDER}, skipping."
-      fi
-    done
-  done
+  if [[ -d "./node_modules" ]] ; then
+    echo "Removing node modules of root folder"
+    rm -fr "./node_modules"
+  fi
+
+  removeNodeModules '.' "${IGNORED_FOLDERS[@]}"
 
   unset IFS
 }
