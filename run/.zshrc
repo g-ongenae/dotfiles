@@ -134,3 +134,6 @@ eval "$(zoxide init zsh)"
 # eval "$(pyenv init -)"
 export VOLTA_HOME="$HOME/.volta"
 export PATH="$VOLTA_HOME/bin:$PATH"
+
+# Created by `pipx` on 2024-01-18 15:57:16
+export PATH="$PATH:/Users/guillaumeongenae/.local/bin"
