@@ -19,6 +19,7 @@ npm-debug.log
 
 ## Cache
 .npm
+.nx/cache
 .sass-cache
 
 ## Temporary files
