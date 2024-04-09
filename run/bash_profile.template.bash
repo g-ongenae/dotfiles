@@ -48,3 +48,8 @@ if type brew 2&>/dev/null ; then
     [ -f "$completion_file" ] && source "$completion_file"
   done
 fi
+
+export VOLTA_HOME="${HOME}/.volta"
+PATH="${VOLTA_HOME}/bin:${PATH}"
+
+export PATH

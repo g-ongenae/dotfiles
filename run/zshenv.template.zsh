@@ -37,18 +37,35 @@ if [ -f "$HOME/.gcloud/google-cloud-sdk/completion.zsh.inc" ] ; then
 	source "$HOME/.gcloud/google-cloud-sdk/completion.zsh.inc"
 fi
 
+## Homebrew
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
 ## Kubernetes
 # https://github.com/jonmosco/kube-ps1
 source "/opt/homebrew/opt/kube-ps1/share/kube-ps1.sh"
 
+# Autocompletion
+if [ -n "$(command -v kubectl)" ] ; then
+	source <(kubectl completion zsh)
+fi
+
 #----------------------------------------------------------------
 # Update PATH & other variables
 
+## Node
+# Load Volta
+export VOLTA_HOME="${HOME}/.volta"
+PATH="${VOLTA_HOME}/bin:${PATH}"
+
 ### Python
+# Load Pyenv
 # PYTHONPATH="/Library/Python/2.7/site-packages/:${PYTHONPATH}"
-PYENV_ROOT="$HOME/.pyenv"
-PATH="$PYENV_ROOT/bin:$PATH"
+PYENV_ROOT="${HOME}/.pyenv"
+PATH="${PATH}:${PYENV_ROOT}/bin"
 export PYTHONPATH PYENV_ROOT
+
+# Load pipx
+PATH="${PATH}:${HOME}/.local/bin"
 
 ### Other
 PATH="$PATH:/usr/local/opt/openssl/bin"

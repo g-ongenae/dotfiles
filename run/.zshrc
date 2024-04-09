@@ -124,16 +124,3 @@ eval "$(starship init zsh)"
 # To add alias of zoxide (z)
 # https://github.com/ajeetdsouza/zoxide#zsh
 eval "$(zoxide init zsh)"
-
-# Kubernetes autocompletion
-# if [ -n "$(command -v kubectl)" ] ; then
-# 	source <(kubectl completion zsh)
-# fi
-
-# Load Pyenv
-# eval "$(pyenv init -)"
-export VOLTA_HOME="$HOME/.volta"
-export PATH="$VOLTA_HOME/bin:$PATH"
-
-# Created by `pipx` on 2024-01-18 15:57:16
-export PATH="$PATH:/Users/guillaumeongenae/.local/bin"
