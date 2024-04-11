@@ -180,6 +180,38 @@ function fetch_br
 	git checkout "${FETCHING_BRANCH}"
 }
 
+USAGE_FETCH_FROM_NEW_REMOTE="\
+Usage: fetch_branch_from_new_remote [remote-name:branch]
+
+  remote-name:branch => the name of the remote and the branch to fetch
+";
+
+# Fetch a branch from a new remote
+function fetch_branch_from_new_remote
+{
+	local NAME BRANCH REPO
+
+	NAME="${1##*:}"
+	BRANCH="${1%%:*}"
+	REPO="$(basename `git rev-parse --show-toplevel`)"
+
+	if [ -z "${NAME}" ] || [ -z "${BRANCH}" ] ; then
+		echo "Invalid branch: Could not parse ${1}"
+		return
+	fi
+
+	if [ -z "${REPO}" ] ; then
+		echo "Invalid repository: no name found"
+		return
+	fi
+
+	echo "Fetching branch ${BRANCH} from remote ${NAME}..."
+
+	git remote add "${NAME}" git@github.com:${NAME}/${REPO}.git
+	git fetch --all
+	git checkout -b "${BRANCH}" "${NAME}/${BRANCH}"
+}
+
 USAGE_BR="\
 Usage: br -[d|f|s|l]
 
@@ -288,4 +320,12 @@ function push_and_open_pr
 		--draft # Set as draft until the test passes
 }
 
-export -f add_my_remote br get_branches get_current_branch pull push push_and_open_pr
+export -f \
+	add_my_remote \
+	br \
+	fetch_branch_from_new_remote \
+	get_branches \
+	get_current_branch \
+	pull \
+	push \
+	push_and_open_pr
