@@ -1,6 +1,11 @@
 #! /bin/zsh
 
 #----------------------------------------------------------------
+# Enable zsh completion
+autoload -Uz compinit
+compinit
+
+#----------------------------------------------------------------
 # Change the language of the terminal to German
 LC_ALL="de_DE.UTF-8"
 LANG="de_DE.UTF-8"
