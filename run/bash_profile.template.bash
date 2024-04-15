@@ -2,6 +2,9 @@
 
 # shellcheck disable=SC1090,SC2128
 
+# Initialize fuzzy finder
+eval "$(fzf --bash)"
+
 # Change default starship.toml file location
 export STARSHIP_CONFIG="${HOME}/Documents/prog/dotfiles/run/starship.toml"
 

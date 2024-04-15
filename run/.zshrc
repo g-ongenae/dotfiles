@@ -124,3 +124,6 @@ eval "$(starship init zsh)"
 # To add alias of zoxide (z)
 # https://github.com/ajeetdsouza/zoxide#zsh
 eval "$(zoxide init zsh)"
+
+# Initialize fuzzy finder
+eval "$(fzf --zsh)"
