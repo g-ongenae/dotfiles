@@ -76,6 +76,7 @@ alias q="osascript -e 'tell application \"Terminal\" to quit'"
 alias reload="exec \${SHELL} -l"
 
 ## Yarn & NPM
+alias md_prettier="npx prettier --parser markdown --write"
 alias fprettier="npx prettier --tab-width 1 --write package*.json"
 alias yaml_prettier="\
   getGitUpdatedFiles |\
