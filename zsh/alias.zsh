@@ -117,6 +117,7 @@ alias nr_tests="\
 "
   # Run all NPM script to format, lint and test
 alias nr_all="nr_basics ; nr_tests"
+alias nx="nocorrect npx nx"
 
   # npm list but listing interesting stuff
 function nls
