@@ -76,28 +76,29 @@ alias q="osascript -e 'tell application \"Terminal\" to quit'"
 alias reload="exec \${SHELL} -l"
 
 ## Yarn & NPM
-alias md_prettier="npx prettier --parser markdown --write"
-alias fprettier="npx prettier --tab-width 1 --write package*.json"
-alias yaml_prettier="\
-  getGitUpdatedFiles |\
-  grep -E '\.(yml|yaml)' |\
-  xargs npx prettier --parser yaml --write\
-"
-alias json_prettier="
-  getGitUpdatedFiles |\
-  grep -v 'package' | grep -E '\.json' |\
-  xargs npx prettier --parser json --write\
-"
-alias js_ts_prettier="\
-  getGitUpdatedFiles |\
-  grep -v '.json' | grep -E '\.(js|jsx|ts|tsx|md)' |\
-  xargs npx prettier --write\
-"
-alias pretty="yaml_prettier ; json_prettier ; js_ts_prettier"
+
+# Prettier
+alias prettier="npx prettier --write"
+alias prettier_markdown="npx prettier --no-config --parser markdown --write"
+alias prettier_pkg="npx prettier --no-config --tab-width 1 --write package*.json"
+alias prettier_yaml="npx prettier --no-config --parser yaml --write"
+alias prettier_json="npx prettier --no-config --parser json --write"
+alias prettier_ts="npx prettier --no-config --parser typescript --write"
+
+alias prettier_markdown_git="getGitUpdatedFiles | grep -E '\.(md|markdown)' | xargs prettier_markdown"
+alias prettier_yaml_git="getGitUpdatedFiles | grep -E '\.(yml|yaml)' | xargs prettier_yaml"
+alias prettier_json_git="getGitUpdatedFiles | grep -v 'package' | grep -E '\.json' | xargs prettier_json"
+alias prettier_ts_git="getGitUpdatedFiles | grep -v '.json' | grep -E '\.(js|jsx|ts|tsx)' | xargs prettier_ts"
+alias prettier_git="prettier_markdown_git ; prettier_yaml_git ; prettier_json_git ; prettier_ts_git"
+
 alias ordered="getGitUpdatedFiles | grep -v '.json' | grep -E '\.(js|jsx|ts|tsx)' | xargs npx organize-imports-cli"
+
 alias update_config_ts="root ; if [ -f './config/default.json' ] ; then npx node-config-ts ; fi"
+
+# NPM
 alias n="npm"
 alias nr="npm run"
+alias nx="nocorrect npx nx"
   # Run all NPM script to format, lint and build
 alias nr_basics="\
   echo 'npx node-config-ts'; update_config_ts ;\
@@ -118,7 +119,6 @@ alias nr_tests="\
 "
   # Run all NPM script to format, lint and test
 alias nr_all="nr_basics ; nr_tests"
-alias nx="nocorrect npx nx"
 
   # npm list but listing interesting stuff
 function nls
