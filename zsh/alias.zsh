@@ -103,18 +103,18 @@ alias nx="nocorrect npx nx"
 alias nr_basics="\
   echo 'npx node-config-ts'; update_config_ts ;\
   echo 'npx organize-imports-cli'; ordered ;\
-  echo 'npm run prettier'; pretty ;\
+  echo 'npm run prettier'; npm run format --if-present ; npm run prettier --if-present ;\
   echo 'npm run lint'; npm run lint ;\
   echo 'npm run build'; npm run build ;\
 "
   # Run all NPM test: e2e, unit, and coverage
 alias nr_tests="\
   echo 'npm test'; npm test ;\
-  echo 'npm run tu'; npm run tu ;\
-  echo 'npm run test:tu'; npm run test:tu ;\
-  echo 'npm run test:e2e'; npm run test:e2e ;\
-  echo 'npm run test:cov'; npm run test:cov ;\
-  echo 'npm run cover'; npm run cover ;\
+  echo 'npm run tu'; npm run tu --if-present ;\
+  echo 'npm run test:tu'; npm run test:tu --if-present ;\
+  echo 'npm run test:e2e'; npm run test:e2e --if-present ;\
+  echo 'npm run test:cov'; npm run test:cov --if-present ;\
+  echo 'npm run cover'; npm run cover --if-present ;\
   echo 'open coverage'; open ./coverage/lcov-report/index.html ;\
 "
   # Run all NPM script to format, lint and test
