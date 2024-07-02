@@ -120,6 +120,8 @@ alias nr_tests="\
   # Run all NPM script to format, lint and test
 alias nr_all="nr_basics ; nr_tests"
 
+alias t="nr_basics ; echo 'npm test'; npm test ; echo 'npm run test:e2e:cov'; runTestSuiteSeparately -R "
+
   # npm list but listing interesting stuff
 function nls
 {
