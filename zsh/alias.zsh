@@ -67,8 +67,8 @@ alias root="cd \"\$(git root || echo .)\""
 alias b="brew"
 
 ## Shell
-alias ls="exa"
-alias la="exa --all --long"
+alias ls="eza"
+alias la="eza --all --long"
 alias cat="bat"
 
 alias _="sudo"

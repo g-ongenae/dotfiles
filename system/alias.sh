@@ -22,8 +22,8 @@ alias write="cd ~/Documents/write"
 alias root="cd \"\$(git rev-parse --show-toplevel || echo .)\""
 
 ## List
-alias ls="exa"
-alias la="exa --all --long"
+alias ls="eza"
+alias la="eza --all --long"
 alias ls..="ls .."
 alias ls="ls \${LS_OPTIONS} -GhF"
 alias ll="ls \${LS_OPTIONS} -GlAhF"
