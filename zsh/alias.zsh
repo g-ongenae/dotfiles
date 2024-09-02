@@ -146,7 +146,7 @@ alias ci="circleci"
 alias d="docker"
 alias dbuild="docker build -t \"\${PWD##*/}\" \
   --build-arg NODE_ENV=\"production\" \
-  --build-arg NPM_TOKEN=\"\$(sed -e 's/\/\/registry.npmjs.org\/:_authToken=//' ~/.npmrc | head -1)\" ."
+  --build-arg NPM_TOKEN=\"\$(sed -e 's/\/\/npm.pkg.github.com\/:_authToken=//' ~/.npmrc | head -1)\" ."
 alias drun="docker run --rm -it -p 8080:8080 \"\${PWD##*/}\""
 alias dstop="docker ps -a | grep \"\${PWD##*/}\" | awk '{ print \$1 }' | xargs docker stop"
 alias dkill="docker ps | grep \"\${PWD##*/}\" | awk '{ print \$1 }' | xargs docker kill"
