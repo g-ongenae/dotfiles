@@ -63,14 +63,14 @@ export VOLTA_HOME="${HOME}/.volta"
 PATH="${VOLTA_HOME}/bin:${PATH}"
 
 ### Python
+# Load pipx
+PATH="${HOME}/.local/bin:${PATH}"
+
 # Load Pyenv
 # PYTHONPATH="/Library/Python/2.7/site-packages/:${PYTHONPATH}"
 PYENV_ROOT="${HOME}/.pyenv"
-PATH="${PATH}:${PYENV_ROOT}/bin"
+PATH="${PYENV_ROOT}/bin:${PATH}"
 export PYTHONPATH PYENV_ROOT
-
-# Load pipx
-PATH="${PATH}:${HOME}/.local/bin"
 
 ### Other
 PATH="$PATH:/usr/local/opt/openssl/bin"
