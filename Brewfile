@@ -49,6 +49,7 @@ brew 'zsh-completions'
 brew 'zsh-lovers'
 brew 'starship'
 brew 'coreutils'
+brew 'atuin'
 brew 'bat'
 brew 'less'
 brew 'most'
@@ -118,7 +119,8 @@ cask 'visual-studio-code'
 
 # Ops
 
-brew 'docker'
+# brew 'docker'
+cask 'docker'
 # cask 'virtualbox'
 brew 'google-cloud-sdk'
 # tap 'heroku/brew'
