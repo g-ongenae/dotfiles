@@ -12,7 +12,10 @@
   user = g_ongenae
 
 [help]
-  autocorrect = 1                                   # Automatically correct and execute mistyped commands
+   # Automatically correct and execute mistyped commands
+   # See: https://blog.gitbutler.com/why-is-git-autocorrect-too-fast-for-formula-one-drivers/
+   # And: https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration
+  autocorrect = "prompt"
 
 [credential]
   helper = cache                                    # Cache the http credentials
