@@ -67,16 +67,23 @@ PATH="${VOLTA_HOME}/bin:${PATH}"
 PATH="${HOME}/.local/bin:${PATH}"
 
 # Load Pyenv
-# PYTHONPATH="/Library/Python/2.7/site-packages/:${PYTHONPATH}"
+PYTHONPATH="/Library/Python/2.7/site-packages/:${PYTHONPATH}"
 PYENV_ROOT="${HOME}/.pyenv"
+if [[ -d "${PYENV_ROOT}/bin" ]] ; then
+	PATH="${PYENV_ROOT}/bin:${PATH}"
+fi
 PATH="${PYENV_ROOT}/bin:${PATH}"
 export PYTHONPATH PYENV_ROOT
 
 ### Other
-PATH="$PATH:/usr/local/opt/openssl/bin"
-PATH="$PATH:/usr/local/opt/nss/bin"
-PATH="$PATH:/usr/local/sbin"
+PATH="${PATH}:/usr/local/opt/openssl/bin"
+PATH="${PATH}:/usr/local/opt/nss/bin"
+PATH="${PATH}:/usr/local/sbin"
 
 #----------------------------------------------------------------
 # Export PATH
 export PATH MANPATH
+
+#----------------------------------------------------------------
+# Initialize pyenv after setting PATH
+eval "$(pyenv init -)"
