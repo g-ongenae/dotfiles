@@ -127,3 +127,6 @@ eval "$(zoxide init zsh)"
 
 # Initialize fuzzy finder
 eval "$(fzf --zsh)"
+
+# Load Atuin - a better history
+eval "$(atuin init zsh)"
