@@ -196,14 +196,9 @@ alias j="jrnl" # see https://github.com/maebert/jrnl | http://jrnl.sh
 alias h="open http://127.0.0.1:8080 & http-server"
 
 # Scripts
-alias chenv="~/Documents/work/scripts/telepresence/change_env.sh"
-alias sw_prod="chenv -P algoan-prod -d"
-alias sw_preprod="chenv -P algoan-preprod -d"
-alias sw_dev="chenv -P algoan-dev -C algoan-dev-v2"
+alias chacc="gcloud config set account"
+alias chenv="~/Documents/work/scripts/tools/telepresence/change_env.sh"
 
-alias deploy_me="~/Documents/work/scripts/telepresence/deploy-me.sh"
-alias update_aden="~/Documents/work/scripts/update-aden/index.sh"
-alias release="bash ~/Documents/work/scripts/openRelease/index.sh"
 alias upade_node="bash ~/Documents/prog/dotfiles/scripts/updateNodeVersion.sh"
 alias update_wallpaper="bash ~/Documents/prog/dotfiles/scripts/update-all-wallpapers.sh"
 
@@ -212,3 +207,6 @@ alias rp="lsof -nP -iTCP | grep LISTEN" # Running ports
 alias local_ip="ipconfig getifaddr en0"
 alias distant_ip="curl -s http://checkip.dyndns.org/ | sed 's/[a-zA-Z<>/ :]//g'"
 alias ip="echo -e \"Local IP: \$(local_ip); Distant IP: \$(distant_ip)\""
+
+# Add secret aliases
+source ~/Documents/prog/dotfiles/zsh/secret/alias.zsh
