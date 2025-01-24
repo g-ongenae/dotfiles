@@ -139,6 +139,8 @@ brew 'kube-ps1'
 brew 'terraform'
 brew 'helm'
 cask 'openlens'
+tap 'hashicorp/tap'
+brew 'hashicorp/tap/terraform'
 
 # cask 'mockoon'
 
