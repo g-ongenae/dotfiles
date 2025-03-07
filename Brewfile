@@ -151,6 +151,9 @@ brew 'mongodb-community'
 cask 'mongodb-compass-isolated-edition'
 brew 'mongosh'
 
+tap 'dbt-labs/dbt-cli'
+brew 'dbt'
+
 # Fonts
 
 brew 'fontconfig'
@@ -177,6 +180,7 @@ brew 'volta'
 brew 'python3'
 brew 'pyenv'
 brew 'pyenv-virtualenv'
+brew 'uv'
 
 # brew 'ruby'
 # brew 'ruby-install'
