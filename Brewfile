@@ -88,6 +88,7 @@ brew 'openssl'
 brew 'readline'
 brew 'rlwrap'
 brew 'base64'
+brew 'cloc'
 # brew 'translate-shell'
 # brew 'jrnl'
 
