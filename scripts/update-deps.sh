@@ -7,3 +7,5 @@ brew cleanup
 npm update --global
 
 tldr --update
+
+gcloud components update
