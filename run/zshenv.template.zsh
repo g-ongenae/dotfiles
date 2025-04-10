@@ -57,6 +57,10 @@ fi
 #----------------------------------------------------------------
 # Update PATH & other variables
 
+## Go
+export GOPATH="${HOME}/go"
+PATH="${GOPATH}/bin:${PATH}"
+
 ## Node
 # Load Volta
 export VOLTA_HOME="${HOME}/.volta"
