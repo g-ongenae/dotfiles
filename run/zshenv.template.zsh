@@ -79,6 +79,9 @@ fi
 PATH="${PYENV_ROOT}/bin:${PATH}"
 export PYTHONPATH PYENV_ROOT
 
+## Kubernetes
+PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+
 ### Other
 PATH="${PATH}:/usr/local/opt/openssl/bin"
 PATH="${PATH}:/usr/local/opt/nss/bin"
