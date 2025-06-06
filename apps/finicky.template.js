@@ -1,3 +1,9 @@
+// @ts-check
+
+/**
+ * @typedef {import('/Applications/Finicky.app/Contents/Resources/finicky.d.ts').FinickyConfig} FinickyConfig
+ */
+
 /**
  * List of Apps installed on my computer
  * which are accessible through https? request
@@ -26,20 +32,23 @@ const Browsers = {
   // VIVALDI: "Vivaldi",
 };
 
-module.exports = {
+/**
+ * @type {FinickyConfig}
+ */
+export default {
   // Browser with the most privacy
   // See: https://privacytests.org/
   defaultBrowser: Browsers.LIBRE_WOLF,
   rewrite: [
     {
       // Redirect all urls to use https
-      match: ({ url }) => url.protocol === "http",
-      url: { protocol: "https" },
+      match: (url) => url.protocol === "http",
+      url: (url) => { url.protocol = "https"; return url; },
     },
     {
       // Redirect all urls to use https
       match: /^https?:\/\/localhost.*$/,
-      url: { protocol: "http" },
+      url: (url) => { url.protocol = "http"; return url; },
     },
   ],
   handlers: [
