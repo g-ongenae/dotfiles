@@ -55,6 +55,10 @@ if [ -n "$(command -v kubectl)" ] ; then
 	source <(kubectl completion zsh)
 fi
 
+if [ command -v ngrok &>/dev/null ] ; then
+	eval "$(ngrok completion)"
+fi
+
 #----------------------------------------------------------------
 # Update PATH & other variables
 
