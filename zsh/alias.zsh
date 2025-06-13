@@ -43,7 +43,7 @@ function runTestSuiteSeparately
     return 1
   fi
 
-  TEST_REGEX="\.(e2e(-spec)?|spec)\.ts$"
+  TEST_REGEX="\.(e2e(-spec)?|spec|test)\.ts$"
   for TEST_FILE in "${ROOT_DIR}/${TEST_DIR}/"* ; do
     if [ -d "${TEST_FILE}" ] && [ -n "${RECURSIVE}" ] ; then
       runTestSuiteSeparately -R "${TEST_DIR}/${TEST_FILE##*/}"
