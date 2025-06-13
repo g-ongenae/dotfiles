@@ -79,6 +79,9 @@ fi
 PATH="${PYENV_ROOT}/bin:${PATH}"
 export PYTHONPATH PYENV_ROOT
 
+# Load Python 3.12 from Homebrew
+PATH="/opt/homebrew/opt/python@3.12/libexec/bin:${PATH}"
+
 ## Kubernetes
 PATH="${PATH}:${KREW_ROOT:-$HOME/.krew}/bin"
 
