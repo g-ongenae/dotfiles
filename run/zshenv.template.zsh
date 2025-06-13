@@ -45,6 +45,7 @@ fi
 ## Homebrew
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
+
 ## Kubernetes
 # https://github.com/jonmosco/kube-ps1
 source "/opt/homebrew/opt/kube-ps1/share/kube-ps1.sh"
@@ -59,8 +60,7 @@ fi
 
 ## Go
 export GOPATH="${HOME}/go"
-PATH="${GOPATH}/bin:${PATH}"
-
+PATH="${PATH}:${GOPATH}/bin"
 ## Node
 # Load Volta
 export VOLTA_HOME="${HOME}/.volta"
@@ -80,7 +80,7 @@ PATH="${PYENV_ROOT}/bin:${PATH}"
 export PYTHONPATH PYENV_ROOT
 
 ## Kubernetes
-PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+PATH="${PATH}:${KREW_ROOT:-$HOME/.krew}/bin"
 
 ### Other
 PATH="${PATH}:/usr/local/opt/openssl/bin"
