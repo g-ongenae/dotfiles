@@ -48,7 +48,8 @@
   bu = "!sh -c \"git branch -c "backup/$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Remove all merged branch of the current repository
   bd = "!sh -c \"git branch --merged | grep -i -v -E 'master|main|develop|beta' | grep -i -v '*' | xargs git branch -d\" -"
-  cu = rev-parse --abbrev-ref HEAD                  # Get the current branch name (cu for current)
+  cu = current-branch
+  current-branch = rev-parse --abbrev-ref HEAD                  # Get the current branch name
     # Get the default (HEAD) branch of the current repository
   head = "!sh -c \"git checkout "$(git head-name)"\" -"
   head-name = "!sh -c \"git remote show origin | grep -E 'Branche HEAD :|HEAD branch:|Hauptbranch:' | cut -d':' -f2\" -"
