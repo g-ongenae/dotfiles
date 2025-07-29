@@ -141,6 +141,9 @@
    # Statistics about the repository
   count-files = "!sh -c \"git ls-files | wc -l\""
   count-lines = "!sh -c \"git ls-files | xargs wc -l\""
+    # Get the version of a dependency in the package.json file - usage: git get-deps-version <dependency>
+  get-deps-version = "!sh -c \"cat package.json | jq '.dependencies.${1}'\" -"
+  get-dev-deps-version = "!sh -c \"cat package.json | jq '.devDependencies.${1}'\" -"
 
 # Rewrite url http://bit.ly/g9c9Y2 (allows: git clone gh:rails/rails)
 [url "git@github.com:"]
