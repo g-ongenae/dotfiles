@@ -144,9 +144,12 @@ alias hs_doc="open \${HOME}/Library/Haskell/doc/index.html"
 # Ops
 alias ci="circleci"
 alias d="docker"
+alias docker_build_with_secret="docker build --secret id=NPM_TOKEN,env=NPM_TOKEN ."
 alias dbuild="docker build -t \"\${PWD##*/}\" \
   --build-arg NODE_ENV=\"production\" \
-  --build-arg NPM_TOKEN=\"\$(sed -e 's/\/\/npm.pkg.github.com\/:_authToken=//' ~/.npmrc | head -1)\" ."
+  --build-arg NPM_TOKEN=\"\$(sed -e 's/\/\/npm.pkg.github.com\/:_authToken=//' ~/.npmrc | head -1)\" \
+  --secret id=NPM_TOKEN,env=NPM_TOKEN \
+  ."
 alias drun="docker run --rm -it -p 8080:8080 \"\${PWD##*/}\""
 alias dstop="docker ps -a | grep \"\${PWD##*/}\" | awk '{ print \$1 }' | xargs docker stop"
 alias dkill="docker ps | grep \"\${PWD##*/}\" | awk '{ print \$1 }' | xargs docker kill"
