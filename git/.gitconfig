@@ -51,7 +51,8 @@
   cu = current-branch
   current-branch = rev-parse --abbrev-ref HEAD                  # Get the current branch name
     # Get the default (HEAD) branch of the current repository
-  head = "!sh -c \"git checkout "$(git head-name)"\" -"
+  head = "!sh -c \"git checkout $(git head-name)\" -"
+  # head = !f() { if [[ -z \"$(git current-branch | tr -d ' ' | grep -Eq  '^(master|main|develop|beta)$')\" ]] ; then git checkout "$(git head-name)" ; fi ; }; f"
   head-name = "!sh -c \"git remote show origin | grep -E 'Branche HEAD :|HEAD branch:|Hauptbranch:' | cut -d':' -f2\" -"
     # Create a new feature branch
   feat = "!sh -c \"git checkout "$(git head-name)" ; \
