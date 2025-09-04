@@ -17,9 +17,16 @@ npm-debug.log
 *.out
 *.o
 
+## TypeScript compilation
+*.tsbuildinfo
+config/Config.d.ts
+dist
+build
+
 ## Cache
 .npm
 .nx/cache
+.nx/workspace-data
 .sass-cache
 
 ## Temporary files
