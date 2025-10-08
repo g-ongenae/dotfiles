@@ -211,5 +211,9 @@ alias local_ip="ipconfig getifaddr en0"
 alias distant_ip="curl -s http://checkip.dyndns.org/ | sed 's/[a-zA-Z<>/ :]//g'"
 alias ip="echo -e \"Local IP: \$(local_ip); Distant IP: \$(distant_ip)\""
 
+# Some useful scripts
+alias update_repos="~/Documents/prog/dotfiles/scripts/update-repos.sh"
+alias update_deps="~/Documents/prog/dotfiles/scripts/update-deps.sh"
+
 # Add secret aliases
 source ~/Documents/prog/dotfiles/zsh/secret/alias.zsh
