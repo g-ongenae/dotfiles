@@ -1,0 +1,1 @@
+45 12 16 1 *    /Users/guillaumeongenae/Documents/prog/dotfiles/scripts/script.sh
