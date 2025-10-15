@@ -1,4 +1,4 @@
-#! /bin/env bash
+#! /usr/bin/env bash
 
 # Echo in bold format
 function bold
@@ -39,6 +39,7 @@ function install_basic_tools
     cd "${HOME}/Documents/prog/dotfiles" || exit 1
     git submodule init
     git submodule update
+    git checkout algoan
   fi
 }
 
@@ -47,7 +48,7 @@ function install_homebrew
 {
   if [ "$(brew --version 2>/dev/zero)" == "" ] ; then
     bold "Installing Homebrew";
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    /usr/bin/env bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
     (echo; echo "export PATH=\"/opt/homebrew/bin:\$PATH\"") >> ~/.zprofile
     eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -69,7 +70,7 @@ function install_npm_modules
   bold "Install or update globally NPM modules"
   cat ./NPMGlobalModules.txt | xargs npm i -g
 
-  npx unsplash-wallpaper --daily # update with a new wallpaper image every day
+  # npx unsplash-wallpaper --daily # update with a new wallpaper image every day
 }
 
 # Install VS Code plugins
@@ -93,9 +94,9 @@ function install_specials
   sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
   # Install Perimeter81 manually
-  if ! [ -f "/Applications/Perimeter81.app" ] ; then
-    open https://www.perimeter81.com
-  fi
+  # if ! [ -f "/Applications/Perimeter81.app" ] ; then
+  #   open https://www.perimeter81.com
+  # fi
 }
 
 # Create Documents architecture

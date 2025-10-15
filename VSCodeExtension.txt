@@ -1,4 +1,3 @@
-eamodio.gitlens
 GitHub.vscode-pull-request-github
 MS-CEINTL.vscode-language-pack-fr
 rafmsou.nicer-high-contrast
@@ -15,3 +14,6 @@ wix.vscode-import-cost
 GitHub.copilot
 dbaeumer.vscode-eslint
 nhoizey.gremlins
+bierner.markdown-mermaid
+bpruitt-goddard.mermaid-markdown-syntax-highlighting
+nrwl.angular-console

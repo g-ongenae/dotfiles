@@ -8,39 +8,13 @@ tap 'homebrew/core'
 tap 'homebrew/bundle'
 tap 'homebrew/services'
 
-# Web browser
-
 cask 'finicky'
 cask 'librewolf'
-cask 'firefox'
-cask 'google-chrome'
-cask 'arc'
-# cask 'brave-browser'
-# cask 'responsively'
-# tap 'browsh-org/homebrew-browsh'
-# brew 'browsh'
-
-# Chat
-
-# cask 'discord'
-# cask 'slack'
 
 # Environment-related
 
-# cask 'alt-tab'
+cask 'alt-tab'
 cask 'raycast'
-# cask 'karabiner-elements'
-cask 'rescuetime'
-# brew 'wallpaper'
-
-# Terminals
-
-# cask 'tabby'
-
-# Tmux is a newer terminal multiplexer.
-# brew 'pkg-config', link: true
-# brew 'tmux'
-# brew 'reattach-to-user-namespace'
 
 # Shells
 
@@ -89,68 +63,43 @@ brew 'readline'
 brew 'rlwrap'
 brew 'base64'
 brew 'cloc'
-# brew 'translate-shell'
-# brew 'jrnl'
 
 # Helpers
 
-# tap 'denisidoro/tools'
-# brew 'denisidoro/tools/navi'
 brew 'tldr'
-# brew 'howdoi'
 
 # Git
 
 brew 'git'
 brew 'git-lfs'
-# brew 'git-ftp'
 brew 'git-delta'
 brew 'gh'
-# brew 'hub'
 brew 'git-plus'
 
-# cask 'gitup'
 cask 'github'
 
 # Editors
 
 brew 'vim'
 cask 'visual-studio-code'
-# cask 'typora'
 
 # Ops
 
-# brew 'docker'
-cask 'docker'
-# cask 'virtualbox'
 brew 'google-cloud-sdk'
-# tap 'heroku/brew'
-# brew 'heroku'
 cask 'osxfuse'
 tap 'datawire/blackbird'
 brew 'datawire/blackbird/telepresence'
 cask 'proxyman'
-# cask 'wireshark'
+cask 'wireshark'
 cask 'insomnia'
-# brew 'tcl-tk'
 brew 'kubectl'
 brew 'minikube'
 brew 'kubernetes-cli'
 brew 'kube-ps1'
 brew 'terraform'
 brew 'helm'
-cask 'openlens'
 tap 'hashicorp/tap'
 brew 'hashicorp/tap/terraform'
-
-# cask 'mockoon'
-
-# Database
-
-tap 'mongodb/brew'
-brew 'mongodb-community'
-cask 'mongodb-compass-isolated-edition'
-brew 'mongosh'
 
 tap 'dbt-labs/dbt-cli'
 brew 'dbt'
@@ -163,19 +112,6 @@ brew 'freetype'
 # Langs
 
 brew 'gcc'
-
-# brew 'go'
-
-# brew 'openjdk'
-
-# brew 'ghc'
-# brew 'cabal-install'
-
-# brew 'nodeenv'
-# brew 'node'
-# brew 'nvm'
-# tap 'egoist/tap'
-# brew 'egoist/tap/dum'
 brew 'volta'
 
 brew 'python3'
@@ -183,32 +119,8 @@ brew 'pyenv'
 brew 'pyenv-virtualenv'
 brew 'uv'
 
-# brew 'ruby'
-# brew 'ruby-install'
-
-# brew 'rust'
-# brew 'rustup-init'
-
-# brew 'jupyterlab'
-
 # Linters
 
 brew 'pandoc', link: true
 brew 'shellcheck'
 brew 'hadolint'
-# brew 'prettier'
-
-# Android
-
-# cask 'android-studio'
-# cask 'android-file-transfer'
-# cask 'android-messages'
-# cask 'android-ndk'
-# cask 'android-platform-tools'
-# cask 'android-sdk'
-
-# Selenium
-
-# brew 'selenium-server'
-# cask 'chromedriver'
-# brew 'geckodriver'
