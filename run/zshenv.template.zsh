@@ -62,6 +62,9 @@ fi
 #----------------------------------------------------------------
 # Update PATH & other variables
 
+# Homebrew
+PATH="/opt/homebrew/bin:/opt/homebrew/sbin:${PATH}"
+
 ## Go
 export GOPATH="${HOME}/go"
 PATH="${PATH}:${GOPATH}/bin"

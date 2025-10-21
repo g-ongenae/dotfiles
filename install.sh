@@ -50,7 +50,10 @@ function install_homebrew
     bold "Installing Homebrew";
     /usr/bin/env bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-    (echo; echo "export PATH=\"/opt/homebrew/bin:\$PATH\"") >> ~/.zprofile
+    # Add Homebrew to PATH for installation session
+    # It will be added permanently by the install script in the env files with correct order of paths
+    # Volta needs to be before Homebrew in PATH for proper functioning (of NodeJS management)
+    export PATH="/opt/homebrew/bin:$PATH"
     eval "$(/opt/homebrew/bin/brew shellenv)"
   else
     bold "Updating Homebrew";
@@ -135,12 +138,14 @@ fi
 # Copying bashrc and zshenv beacause symlinks doesn't work for those
 cp "${DOTFILES_DIR}/run/bash_profile.template.bash" ~/.bashrc
 cp "${DOTFILES_DIR}/run/bash_profile.template.bash" ~/.bash_profile
+cp "${DOTFILES_DIR}/run/zprofile.template.zsh" ~/.zprofile
 cp "${DOTFILES_DIR}/run/zshenv.template.zsh" ~/.zshenv
 cp "${DOTFILES_DIR}/apps/finicky.template.js" ~/.finicky.js
 
 # Add a link to easily access the running copies
 ln -sfv ~/.bashrc "${DOTFILES_DIR}/run/bashrc.link.bash"
 ln -sfv ~/.bash_profile "${DOTFILES_DIR}/run/bash_profile.link.bash"
+ln -sfv ~/.zprofile "${DOTFILES_DIR}/run/zprofile.link.zsh"
 ln -sfv ~/.zshenv "${DOTFILES_DIR}/run/zshenv.link.zsh"
 ln -sfv ~/.finicky.js "${DOTFILES_DIR}/apps/finicky.link.js"
 

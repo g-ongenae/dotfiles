@@ -130,3 +130,7 @@ eval "$(fzf --zsh)"
 
 # Load Atuin - a better history
 eval "$(atuin init zsh)"
+
+# Reset Volta as the first thing in PATH
+PATH="${VOLTA_HOME}/bin:${PATH}"
+export PATH

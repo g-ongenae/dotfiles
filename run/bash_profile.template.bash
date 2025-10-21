@@ -56,6 +56,6 @@ export VOLTA_HOME="${HOME}/.volta"
 PATH="${VOLTA_HOME}/bin:${PATH}"
 
 ## Kubernetes
-PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+PATH="${KREW_ROOT:-$HOME/.krew}/bin:${PATH}"
 
 export PATH
