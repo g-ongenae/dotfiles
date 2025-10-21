@@ -66,6 +66,7 @@ export default {
       // Default connected browser
       browser: Browsers.BRAVE,
       match: [
+        "https://app.datadoghq.eu*",
         "*github.com*",
         "www.linkedin.com*",
         "docs.google.com*",
