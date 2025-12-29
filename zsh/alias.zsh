@@ -199,8 +199,6 @@ alias j="jrnl" # see https://github.com/maebert/jrnl | http://jrnl.sh
 alias h="open http://127.0.0.1:8080 & http-server"
 
 # Scripts
-alias chacc="gcloud config set account"
-alias chenv="~/Documents/work/scripts/tools/telepresence/change_env.sh"
 
 alias upade_node="bash ~/Documents/prog/dotfiles/scripts/updateNodeVersion.sh"
 alias update_wallpaper="bash ~/Documents/prog/dotfiles/scripts/update-all-wallpapers.sh"
