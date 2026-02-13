@@ -82,6 +82,7 @@
     # Print all the log with the graph, source: http://www.jukie.net/bart/blog/pimping-out-git-log
   lg = log --graph --all --pretty=format:'%Cred%h%Creset - %s %Cgreen(%cr) %C(bold blue)%an%Creset %C(yellow)%d%Creset'
   log = log -n 10
+  tree = log --oneline --graph --decorate --all
   s = status -sb                                    # Show git status in short format with branch name
   sh = show --pretty=""
 
