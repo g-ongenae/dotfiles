@@ -20,7 +20,7 @@ function runTestSuiteSeparately
 
   ROOT_DIR="$(git root)"
 
-  if [ -n "${1}" ] && [[ "${1}" == "-R" ]] ; then
+  if [ -n "${1}" ] && [ "${1}" = "-R" ] ; then
     RECURSIVE="true"
     shift
   fi
@@ -43,12 +43,57 @@ function runTestSuiteSeparately
     return 1
   fi
 
-  TEST_REGEX="\.(e2e(-spec)?|spec|test)\.ts$"
-  for TEST_FILE in "${ROOT_DIR}/${TEST_DIR}/"* ; do
-    if [ -d "${TEST_FILE}" ] && [ -n "${RECURSIVE}" ] ; then
-      runTestSuiteSeparately -R "${TEST_DIR}/${TEST_FILE##*/}"
-    elif [ -f "${TEST_FILE}" ] && [[ ${TEST_FILE} =~ ${TEST_REGEX} ]] ; then
-      npm run test:e2e -- --detectOpenHandles --forceExit "${TEST_FILE}"
+  TEST_REGEX="\.(e2e(-spec)?|spec)\.ts$"
+  TEST_FILES=()
+  for FILE in "${ROOT_DIR}/${TEST_DIR}/"* ; do
+    if [ -f "$FILE" ] && [[ $FILE =~ $TEST_REGEX ]] ; then
+      TEST_FILES+=("$FILE")
+    fi
+  done
+
+  if [ ${#TEST_FILES[@]} -eq 0 ]; then
+    echo "No test files found."
+
+    return 1
+  fi
+
+  echo "Available test files:"
+  for i in "${!TEST_FILES[@]}"; do
+    printf "%2d) %s\n" $((i+1)) "${TEST_FILES[$i]##*/}"
+  done
+  echo " a) ALL"
+
+  read -p "Select tests to run (comma-separated numbers, or 'a' for all): " SELECTION
+
+  SELECTED_TESTS=()
+  if [ "$SELECTION" = "a" ] || [ "$SELECTION" = "A" ]; then
+    SELECTED_TESTS=("${TEST_FILES[@]}")
+  else
+    IFS=',' read -ra INDICES <<< "$SELECTION"
+    for idx in "${INDICES[@]}"; do
+      idx=$(echo "$idx" | xargs) # trim spaces
+      if [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -ge 1 ] && [ "$idx" -le ${#TEST_FILES[@]} ]; then
+        SELECTED_TESTS+=("${TEST_FILES[$((idx-1))]}")
+      else
+        echo "Invalid selection: $idx"
+      fi
+    done
+  fi
+
+  TOTAL_TESTS=${#SELECTED_TESTS[@]}
+  if [ $TOTAL_TESTS -eq 0 ]; then
+    echo "No valid tests selected. Exiting."
+    return 1
+  fi
+
+  for ((i=0; i<$TOTAL_TESTS; i++)); do
+    TEST_FILE="${SELECTED_TESTS[$i]}"
+    CURRENT=$((i+1))
+    echo "Running test $CURRENT of $TOTAL_TESTS: ${TEST_FILE##*/}"
+    npm run test:e2e -- --detectOpenHandles --forceExit "$TEST_FILE"
+    LEFT=$((TOTAL_TESTS-CURRENT))
+    if [ $LEFT -gt 0 ]; then
+      read -p "Press Enter to continue to the next test ($LEFT left)..."
     fi
   done
 }
