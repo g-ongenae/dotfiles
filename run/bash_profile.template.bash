@@ -58,4 +58,7 @@ PATH="${VOLTA_HOME}/bin:${PATH}"
 ## Kubernetes
 PATH="${KREW_ROOT:-$HOME/.krew}/bin:${PATH}"
 
+## Homebrew binaries
+PATH="/opt/homebrew/bin:${PATH}"
+
 export PATH

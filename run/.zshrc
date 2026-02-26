@@ -133,4 +133,8 @@ eval "$(atuin init zsh)"
 
 # Reset Volta as the first thing in PATH
 PATH="${VOLTA_HOME}/bin:${PATH}"
+
+### Homebrew binaries
+PATH="/opt/homebrew/bin:${PATH}"
+
 export PATH
