@@ -5,10 +5,10 @@
 # Env
 
 #----------------------------------------------------------------
-# Change the language of the terminal to German
-LC_ALL="de_DE.UTF-8"
-LANG="de_DE.UTF-8"
-LANGUAGE="de_DE.UTF-8"
+# Ensure we use English
+LANGUAGE="en_US.UTF-8"
+LANG="en_US.UTF-8"
+LC_ALL="en_US.UTF-8"
 export LC_ALL LANG LANGUAGE
 
 #----------------------------------------------------------------
@@ -48,6 +48,16 @@ fi
 # Prompt
 # https://github.com/jonmosco/kube-ps1
 source "/opt/homebrew/opt/kube-ps1/share/kube-ps1.sh"
+
+## Git
+
+## What a pain
+alias g="git"
+
+# Autocompletion
+if [ -f $(brew --prefix)/opt/bash-completion/etc/profile.d/bash_completion.sh ]; then
+	. $(brew --prefix)/opt/bash-completion/etc/profile.d/bash_completion.sh
+fi
 
 ## Lang
 
