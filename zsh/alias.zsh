@@ -16,14 +16,9 @@ function getGitUpdatedFiles
 # Run test suite separately
 function runTestSuiteSeparately
 {
-  local ROOT_DIR TEST_DIR TEST_FILE TEST_FILE_EXT RECURSIVE TEST_REGEX
+  local ROOT_DIR TEST_DIR TEST_FILE TEST_REGEX
 
   ROOT_DIR="$(git root)"
-
-  if [ -n "${1}" ] && [ "${1}" = "-R" ] ; then
-    RECURSIVE="true"
-    shift
-  fi
 
   if [ -n "${1}" ] ; then
     if [ -d "${ROOT_DIR}/${1}" ] ; then
@@ -58,18 +53,21 @@ function runTestSuiteSeparately
   fi
 
   echo "Available test files:"
-  for i in "${!TEST_FILES[@]}"; do
-    printf "%2d) %s\n" $((i+1)) "${TEST_FILES[$i]##*/}"
+  local I=1
+  for f in "${TEST_FILES[@]}"; do
+    printf "%2d) %s\n" $I "${f##*/}"
+    ((I++))
   done
   echo " a) ALL"
 
-  read -p "Select tests to run (comma-separated numbers, or 'a' for all): " SELECTION
+  echo -n "Select tests to run (comma-separated numbers, or 'a' for all): "
+  read -r  SELECTION
 
   SELECTED_TESTS=()
   if [ "$SELECTION" = "a" ] || [ "$SELECTION" = "A" ]; then
     SELECTED_TESTS=("${TEST_FILES[@]}")
   else
-    IFS=',' read -ra INDICES <<< "$SELECTION"
+    INDICES=(${(s:,:)SELECTION})
     for idx in "${INDICES[@]}"; do
       idx=$(echo "$idx" | xargs) # trim spaces
       if [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -ge 1 ] && [ "$idx" -le ${#TEST_FILES[@]} ]; then
@@ -81,19 +79,19 @@ function runTestSuiteSeparately
   fi
 
   TOTAL_TESTS=${#SELECTED_TESTS[@]}
-  if [ $TOTAL_TESTS -eq 0 ]; then
+  if [ "${TOTAL_TESTS}" -eq 0 ]; then
     echo "No valid tests selected. Exiting."
     return 1
   fi
 
-  for ((i=0; i<$TOTAL_TESTS; i++)); do
+  for ((i=0; i<TOTAL_TESTS; i++)); do
     TEST_FILE="${SELECTED_TESTS[$i]}"
     CURRENT=$((i+1))
     echo "Running test $CURRENT of $TOTAL_TESTS: ${TEST_FILE##*/}"
     npm run test:e2e -- --detectOpenHandles --forceExit "$TEST_FILE"
     LEFT=$((TOTAL_TESTS-CURRENT))
     if [ $LEFT -gt 0 ]; then
-      read -p "Press Enter to continue to the next test ($LEFT left)..."
+      read -r -p "Press Enter to continue to the next test ($LEFT left)..."
     fi
   done
 }
@@ -143,7 +141,7 @@ alias update_config_ts="root ; if [ -f './config/default.json' ] ; then npx node
 # NPM
 alias n="npm"
 alias nr="npm run"
-alias nx="nocorrect npx nx"
+alias nx="nocorrect pnpm exec nx run"
   # Run all NPM script to format, lint and build
 alias nr_basics="\
   echo 'npx node-config-ts'; update_config_ts ;\
