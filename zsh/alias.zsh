@@ -16,39 +16,52 @@ function getGitUpdatedFiles
 # Run test suite separately
 function runTestSuiteSeparately
 {
-  local ROOT_DIR TEST_DIR TEST_FILE TEST_REGEX
+  local ROOT_DIR TEST_DIR TEST_FILE TEST_REGEX RECURSIVE=0
+
+  # Parse flags
+  while getopts ":r" opt; do
+    case $opt in
+      r) RECURSIVE=1 ;;
+      *) echo "Unknown option: -$OPTARG" >&2; return 1 ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+  OPTIND=1  # Reset getopts for future calls
 
   ROOT_DIR="$(git root)"
-
-  if [ -n "${1}" ] ; then
-    if [ -d "${ROOT_DIR}/${1}" ] ; then
+  if [ -n "${1}" ]; then
+    if [ -d "${ROOT_DIR}/${1}" ]; then
       TEST_DIR="${1}"
     else
-      echo "Fatal: Invalid test directory passed: ${1}" >& 1
-
+      echo "Fatal: Invalid test directory passed: ${1}" >&2
       return 1
     fi
-  elif [ -d "${ROOT_DIR}/test" ] ; then
+  elif [ -d "${ROOT_DIR}/test" ]; then
     TEST_DIR="test"
-  elif [ -d "${ROOT_DIR}/tests" ] ; then
+  elif [ -d "${ROOT_DIR}/tests" ]; then
     TEST_DIR="tests"
   else
-    echo "Fatal: Unknown test directory for ${ROOT_DIR}" >& 1
-
+    echo "Fatal: Unknown test directory for ${ROOT_DIR}" >&2
     return 1
   fi
 
   TEST_REGEX="\.(e2e(-spec)?|spec)\.ts$"
   TEST_FILES=()
-  for FILE in "${ROOT_DIR}/${TEST_DIR}/"* ; do
-    if [ -f "$FILE" ] && [[ $FILE =~ $TEST_REGEX ]] ; then
+
+  if [ "$RECURSIVE" -eq 1 ]; then
+    while IFS= read -r FILE; do
       TEST_FILES+=("$FILE")
-    fi
-  done
+    done < <(find "${ROOT_DIR}/${TEST_DIR}" -type f \( -name "*.spec.ts" -o -name "*.e2e.ts" -o -name "*.e2e-spec.ts" \))
+  else
+    for FILE in "${ROOT_DIR}/${TEST_DIR}/"*; do
+      if [ -f "$FILE" ] && [[ $FILE =~ $TEST_REGEX ]]; then
+        TEST_FILES+=("$FILE")
+      fi
+    done
+  fi
 
   if [ ${#TEST_FILES[@]} -eq 0 ]; then
     echo "No test files found."
-
     return 1
   fi
 
@@ -61,7 +74,7 @@ function runTestSuiteSeparately
   echo " a) ALL"
 
   echo -n "Select tests to run (comma-separated numbers, or 'a' for all): "
-  read -r  SELECTION
+  read -r SELECTION
 
   SELECTED_TESTS=()
   if [ "$SELECTION" = "a" ] || [ "$SELECTION" = "A" ]; then
@@ -89,9 +102,10 @@ function runTestSuiteSeparately
     CURRENT=$((i+1))
     echo "Running test $CURRENT of $TOTAL_TESTS: ${TEST_FILE##*/}"
     npm run test:e2e -- --detectOpenHandles --forceExit "$TEST_FILE"
-    LEFT=$((TOTAL_TESTS-CURRENT))
+    LEFT=$((TOTAL_TESTS - CURRENT))
     if [ $LEFT -gt 0 ]; then
-      read -r -p "Press Enter to continue to the next test ($LEFT left)..."
+      echo -n "Press Enter to continue to the next test ($LEFT left)..."
+      read -r
     fi
   done
 }
