@@ -16,6 +16,46 @@ function getGitUpdatedFiles
 # Run test suite separately
 function runTestSuiteSeparately
 {
+  local ROOT_DIR TEST_DIR TEST_FILE TEST_FILE_EXT RECURSIVE TEST_REGEX
+
+  ROOT_DIR="$(git root)"
+
+  if [ -n "${1}" ] && [[ "${1}" == "-R" ]] ; then
+    RECURSIVE="true"
+    shift
+  fi
+
+  if [ -n "${1}" ] ; then
+    if [ -d "${ROOT_DIR}/${1}" ] ; then
+      TEST_DIR="${1}"
+    else
+      echo "Fatal: Invalid test directory passed: ${1}" >& 1
+
+      return 1
+    fi
+  elif [ -d "${ROOT_DIR}/test" ] ; then
+    TEST_DIR="test"
+  elif [ -d "${ROOT_DIR}/tests" ] ; then
+    TEST_DIR="tests"
+  else
+    echo "Fatal: Unknown test directory for ${ROOT_DIR}" >& 1
+
+    return 1
+  fi
+
+  TEST_REGEX="\.(e2e(-spec)?|spec|test)\.ts$"
+  for TEST_FILE in "${ROOT_DIR}/${TEST_DIR}/"* ; do
+    if [ -d "${TEST_FILE}" ] && [ -n "${RECURSIVE}" ] ; then
+      runTestSuiteSeparately -R "${TEST_DIR}/${TEST_FILE##*/}"
+    elif [ -f "${TEST_FILE}" ] && [[ ${TEST_FILE} =~ ${TEST_REGEX} ]] ; then
+      npm run test:e2e -- --detectOpenHandles --forceExit "${TEST_FILE}"
+    fi
+  done
+}
+
+# Run test suite separately with prompt
+function runTestSuiteSeparatelyWithPrompt
+{
   local ROOT_DIR TEST_DIR TEST_FILE TEST_REGEX RECURSIVE=0
 
   # Parse flags
