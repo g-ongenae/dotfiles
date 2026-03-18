@@ -76,8 +76,9 @@ export default {
         "calendar.google.com*",
         "meet.google.com*",
         "www.figma.com*",
-        "www.grammarly.com*",
-        "twitch.tv*",
+        "cloud.nx.app/*",
+        "claude.ai/*",
+        "*notion.so*",
       ],
     },
     {
