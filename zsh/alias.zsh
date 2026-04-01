@@ -297,7 +297,7 @@ alias h="open http://127.0.0.1:8080 & http-server"
 
 # Scripts
 
-alias upade_node="bash ~/Documents/prog/dotfiles/scripts/updateNodeVersion.sh"
+alias update_node="bash ~/Documents/prog/dotfiles/scripts/updateNodeVersion.sh"
 alias update_wallpaper="bash ~/Documents/prog/dotfiles/scripts/update-all-wallpapers.sh"
 
 # Network
