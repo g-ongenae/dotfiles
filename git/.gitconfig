@@ -143,6 +143,7 @@
    # Statistics about the repository
   count-files = "!sh -c \"git ls-files | wc -l\""
   count-lines = "!sh -c \"git ls-files | xargs wc -l\""
+  count-total-lines = "!sh -c \"git ls-files | xargs wc -l | tail -n 1\""
     # Get the version of a dependency in the package.json file - usage: git get-deps-version <dependency>
   get-deps-version = "!sh -c \"cat package.json | jq '.dependencies.${1}'\" -"
   get-dev-deps-version = "!sh -c \"cat package.json | jq '.devDependencies.${1}'\" -"
