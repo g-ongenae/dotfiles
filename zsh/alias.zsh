@@ -294,6 +294,7 @@ alias vscode="open -a 'visual studio code'"
 alias typora="open -a typora"
 alias j="jrnl" # see https://github.com/maebert/jrnl | http://jrnl.sh
 alias h="open http://127.0.0.1:8080 & http-server"
+alias zed="open -a /Applications/Zed.app -n"
 
 # Scripts
 
