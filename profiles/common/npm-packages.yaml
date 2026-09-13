@@ -1,0 +1,14 @@
+common:
+  - can-i-ignore-scripts
+  - dpdm
+  - eslint
+  - fx
+  - npm-ls-scripts
+  - socket
+  - typescript-language-server
+  - typescript
+macos:
+  - '@devcontainers/cli'
+# Use system Chromium, without downloading a second browser.
+debian-server:
+  - puppeteer-core

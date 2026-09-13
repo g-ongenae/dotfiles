@@ -59,8 +59,8 @@
     | column -ts '|'\" -"
   sw = switch
   w = worktree
-    # Open VSCode on a new worktree (of current repository) in a temporary folder
-  wa = "!f() { local DIR ; DIR=\"$(mktemp -d)\" ; git worktree add \"${DIR}\" \"${1:-master}\" ; open -a 'visual studio code' \"${DIR}\" ; }; f"
+    # Create a worktree; use the configured editor on desktops, print it on servers.
+  wa = "!f() { dir=$(mktemp -d) || return; git worktree add \"$dir\" \"${1:-HEAD}\" || return; case \"${DOTFILES_PROFILE:-}\" in macos) code \"$dir\" ;; fedora) codium \"$dir\" ;; *) printf '%s\\n' \"$dir\" ;; esac; }; f"
 
   ## Info
   ci = "!sh -c \"hub ci-status HEAD\""              # Show the status of the last commit on the CI
@@ -203,8 +203,8 @@
 
 [core]
   pager = delta                                     # Use https://github.com/dandavison/delta
-  excludesfile = "~/Documents/prog/dotfiles/git/.gitignore_global"
-  editor = code --wait
+  # The installer supplies the checkout-specific excludesFile and profile editor.
+  editor = vim
 
 [diff]
   colorMoved = default

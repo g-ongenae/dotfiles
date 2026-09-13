@@ -1,0 +1,12 @@
+# Firefox entries are AMO slugs; Chromium entries are Web Store IDs.
+firefox:
+  - ublock-origin
+  - sponsorblock
+  - privacy-badger17
+  - pr-review-collector
+  - github-mermaid-jsdoc-viewer
+fedora-firefox:
+  - switchyard
+chromium:
+  - jhkfjpfhioaoopiapaipleecedggpimi
+  - jdkfjefccncegmcelnnbfmmibppjchgi
