@@ -1,3 +1,8 @@
+@devcontainers/cli
+can-i-ignore-scripts
+dpdm
 eslint
-typescript
 npm-ls-scripts
+socket
+typescript-language-server
+typescript
