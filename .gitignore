@@ -1,4 +1,7 @@
 # Git ignore
+__pycache__/
+*.pyc
+.gitconfig.local
 
 # Sym links
 # Running copies of the committed files

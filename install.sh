@@ -1,141 +1,59 @@
 #!/usr/bin/env bash
+set -euo pipefail
+DOTFILES_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
-# Echo in bold format
-function bold
-{
-  echo "$(tput bold)${1}$(tput sgr0)"
-}
-
-# Ensure a directory is created
-function ensure_dir
-{
-  local NAME="${1}"
-  if ! [ -d "${HOME}/Documents/${NAME}" ] ; then
-    mkdir "${HOME}/Documents/${NAME}"
-  fi
-}
-
-# Install basic tools
-function install_basic_tools
-{
-  # Install XCode
-  xcode-select --install
-
-  read -r -p "Press enter to continue"
-
-  # Install Git
-  git
-
-  read -r -p "Press enter to continue"
-
-  # Download dotfiles
-  if ! [ -d "${HOME}/Documents/prog/dotfiles" ] ; then
-    bold "Downloading dotfiles";
-    # Clone repository
-    cd "${HOME}/Documents/prog" || { echo "Unable to open prog folder." ; exit 1 ; }
-    git clone https://github.com/g-ongenae/dotfiles.git dotfiles
-
-    # Add Submodules
-    cd "${HOME}/Documents/prog/dotfiles" || exit 1
-    git submodule init
-    git submodule update
-    git checkout algoan
-  fi
-}
-
-# Install Homebrew
-function install_homebrew
-{
-  if [ "$(brew --version 2>/dev/zero)" == "" ] ; then
-    bold "Installing Homebrew";
-    /usr/bin/env bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-    # Add Homebrew to PATH for installation session
-    # It will be added permanently by the install script in the env files with correct order of paths
-    # Volta needs to be before Homebrew in PATH for proper functioning (of NodeJS management)
-    export PATH="/opt/homebrew/bin:$PATH"
-    eval "$(/opt/homebrew/bin/brew shellenv)"
+run_as_root() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
   else
-    bold "Updating Homebrew";
-    brew update
+    sudo "$@"
   fi
-
-  # Install Brew dependencies
-  brew bundle
 }
 
-# Install NPM global modules
-function install_npm_modules
-{
-  bold "Update NPM"
-  npm i -g npm
-
-  bold "Install or update globally NPM modules"
-  cat ./NPMGlobalModules.txt | xargs npm i -g
-}
-
-# Install VS Code plugins
-function install_vscode_plugins
-{
-  bold "Install VSCode plugins"
-  while read -r CODE_EXTENSION ; do
-    code --install-extension "${CODE_EXTENSION}"
-  done < ./VSCodeExtension.txt
-}
-
-function install_specials
-{
-  # Install Oh My ZSH
-  sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-}
-
-# Create Documents architecture
-ensure_dir "prog"
-ensure_dir "try"
-ensure_dir "write"
-ensure_dir "work"
-
-if [ "$(uname)" != "Darwin" ] ; then
-  # TODO handle linux
-  bold "Unable to install programs: need MacOS"
-else
-  bold "Starting to install programs"
-  install_basic_tools
-
-  cd "${HOME}/Documents/prog/dotfiles" || exit 1
-
-  install_homebrew
-  install_npm_modules
-  install_vscode_plugins
-  install_specials
+if ! command -v python3 >/dev/null 2>&1; then
+  case "$(uname -s)" in
+    Darwin)
+      BREW_BIN="$(command -v brew || true)"
+      if [ -z "$BREW_BIN" ] && [ -x /opt/homebrew/bin/brew ]; then
+        BREW_BIN=/opt/homebrew/bin/brew
+      elif [ -z "$BREW_BIN" ] && [ -x /usr/local/bin/brew ]; then
+        BREW_BIN=/usr/local/bin/brew
+      fi
+      if [ -z "$BREW_BIN" ]; then
+        echo "Homebrew is required to install Python 3: https://brew.sh" >&2
+        exit 1
+      fi
+      "$BREW_BIN" install python3
+      PATH="$(dirname -- "$BREW_BIN"):$PATH"
+      export PATH
+      ;;
+    Linux)
+      if [ ! -r /etc/os-release ]; then
+        echo "Cannot detect this Linux distribution to install Python 3." >&2
+        exit 1
+      fi
+      # shellcheck disable=SC1091
+      . /etc/os-release
+      case "${ID:-}" in
+        fedora) run_as_root dnf install -y python3 ;;
+        debian)
+          run_as_root apt-get update
+          run_as_root apt-get install -y python3
+          ;;
+        *)
+          echo "Unsupported Linux distribution '${ID:-unknown}'; install Python 3 and rerun." >&2
+          exit 1
+          ;;
+      esac
+      ;;
+    *)
+      echo "Unsupported platform; install Python 3 and rerun." >&2
+      exit 1
+      ;;
+  esac
 fi
-
-# Get current dir (so run this script from anywhere)
-DOTFILES_DIR="${HOME}/Documents/prog/dotfiles"
-export DOTFILES_DIR
-
-# Bunch of symlinks
-bold "Creating Symlinks to access dotfiles from anywhere in user path";
-ln -sfv "${DOTFILES_DIR}/git/.gitconfig" ~
-# Make GitHub CLI configs accessible
-if [ -f "~/.config/gh/config.yml" ] ; then
-  ln -sfv ~/.config/gh/config.yml "${DOTFILES_DIR}/git/gh.link.yaml"
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "Python 3 installation completed but python3 is still not available in PATH." >&2
+  exit 1
 fi
-
-# Copying bashrc and zshenv beacause symlinks doesn't work for those
-cp "${DOTFILES_DIR}/run/bash_profile.template.bash" ~/.bashrc
-cp "${DOTFILES_DIR}/run/bash_profile.template.bash" ~/.bash_profile
-cp "${DOTFILES_DIR}/run/zprofile.template.zsh" ~/.zprofile
-cp "${DOTFILES_DIR}/run/zshenv.template.zsh" ~/.zshenv
-cp "${DOTFILES_DIR}/apps/finicky.template.js" ~/.finicky.js
-
-# Add a link to easily access the running copies
-ln -sfv ~/.bashrc "${DOTFILES_DIR}/run/bashrc.link.bash"
-ln -sfv ~/.bash_profile "${DOTFILES_DIR}/run/bash_profile.link.bash"
-ln -sfv ~/.zprofile "${DOTFILES_DIR}/run/zprofile.link.zsh"
-ln -sfv ~/.zshenv "${DOTFILES_DIR}/run/zshenv.link.zsh"
-ln -sfv ~/.finicky.js "${DOTFILES_DIR}/apps/finicky.link.js"
-
-# Reload
-bold "Finished, reset shell session"
-exec "${SHELL}" -l
+exec python3 "$DOTFILES_ROOT/scripts/install.py" "$@"

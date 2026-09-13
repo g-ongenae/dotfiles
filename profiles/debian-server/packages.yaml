@@ -1,0 +1,66 @@
+# Native baseline and prerequisites for building latest stable Git.
+native:
+  - ca-certificates
+  - git
+  - git-lfs
+  - git-delta
+  - gh
+  - zsh
+  - zsh-common
+  - zsh-doc
+  - bash-completion
+  - bat
+  - less
+  - most
+  - wdiff
+  - tree
+  - fd-find
+  - pcre2-utils
+  - fzf
+  - procps
+  - debianutils
+  - gnupg
+  - curl
+  - wget
+  - ed
+  - sed
+  - gawk
+  - grep
+  - ripgrep
+  - jq
+  - unzip
+  - gzip
+  - xz-utils
+  - patch
+  - make
+  - automake
+  - gdb
+  - openssl
+  - libreadline-dev
+  - rlwrap
+  - coreutils
+  - cloc
+  - vim
+  - gcc
+  - g++
+  - pkg-config
+  - python3
+  - python3-venv
+  - shellcheck
+  - openssh-client
+# This machine is already reached by SSH. Do not install/restart sshd here.
+  - iproute2
+  - golang-go
+  - libcurl4-openssl-dev
+  - libssl-dev
+  - libexpat1-dev
+  - zlib1g-dev
+  - gettext
+  - bsdextrautils
+  - chromium
+  - libfuse2t64
+binary-releases:
+  - pingdotgg/t3code t3-code T3-Code-*-x86_64.AppImage
+notes:
+  - 'The existing sshd configuration is preserved.'
+  - 'Chromium is for headless automation. Pass PUPPETEER_EXECUTABLE_PATH to puppeteer-core explicitly.'

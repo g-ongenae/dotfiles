@@ -1,31 +1,27 @@
-#!/bin/sh
-
-# Devcontainer
-
-cd ~/Documents/work || exit 1
-
-if [[ -z "$1" ]]; then
-  echo "Usage: dev <command>"
-  echo "Commands:"
-  echo "  build - Build the devcontainer"
-  echo "  up - Run the devcontainer"
-  echo "  shell - Open a shell in the devcontainer"
-  echo "  ai - Open a shell in the devcontainer and run claude"
-  echo "  clean - Clean the devcontainer"
-  return 1
+#!/usr/bin/env bash
+set -euo pipefail
+action="${1:-}"
+workspace="${2:-$PWD}"
+if [ ! -d "$workspace" ]; then
+  echo "Workspace does not exist: $workspace" >&2
+  exit 1
 fi
-
-case "$1" in
-  build) devcontainer build --workspace-folder . ;;
-  up) devcontainer up --workspace-folder . ;;
-  shell) devcontainer exec --workspace-folder . zsh ;;
-  ai) devcontainer exec --workspace-folder . claude ;;
+workspace="$(cd -- "$workspace" && pwd)"
+case "$action" in
+  build|up) devcontainer "$action" --workspace-folder "$workspace" ;;
+  shell) devcontainer exec --workspace-folder "$workspace" zsh ;;
+  ai) devcontainer exec --workspace-folder "$workspace" claude ;;
   clean)
-    docker rm -f $(docker ps -a -q | grep 'features' | awk '{print $1}' | head -n 1)
-    docker rmi -f $(docker images -a | grep 'features' | awk '{print $2}' | head -n 1)
+    # Match this workspace exactly. Never delete unrelated containers/images.
+    ids="$(docker ps -aq --filter "label=devcontainer.local_folder=$workspace")"
+    while IFS= read -r id; do
+      if [ -n "$id" ]; then
+        docker rm -f "$id"
+      fi
+    done <<< "$ids"
     ;;
   *)
-    echo "Invalid command. Use 'dev build', 'dev up', 'dev shell', 'dev ai', or 'dev clean'."
-    return 1
+    echo "Usage: dev {build|up|shell|ai|clean} [workspace-directory]" >&2
+    exit 1
     ;;
 esac

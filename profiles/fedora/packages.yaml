@@ -1,0 +1,85 @@
+# Fedora Workstation (dnf), not Fedora Atomic/rpm-ostree.
+native:
+  - ca-certificates
+  - git
+  - git-lfs
+  - git-delta
+  - gh
+  - zsh
+  - bash-completion
+  - bat
+  - less
+  - most
+  - wdiff
+  - tree
+  - fd-find
+  - pcre2-tools
+  - fzf
+  - procps-ng
+  - which
+  - gnupg2
+  - curl
+  - wget
+  - ed
+  - sed
+  - gawk
+  - grep
+  - ripgrep
+  - jq
+  - unzip
+  - gzip
+  - xz
+  - patch
+  - make
+  - automake
+  - gdb
+  - openssl
+  - readline-devel
+  - rlwrap
+  - coreutils
+  - cloc
+  - vim-enhanced
+  - gcc
+  - gcc-c++
+  - pkgconf-pkg-config
+  - python3
+  - ShellCheck
+  - openssh-clients
+  - iproute
+  - hostname
+  - golang
+  - libcurl-devel
+  - openssl-devel
+  - expat-devel
+  - zlib-devel
+  - gettext
+  - util-linux
+  - flatpak
+  - fuse-libs
+  - firefox
+  - flameshot
+copr:
+  - quadratech188/vicinae
+copr-packages:
+  - vicinae
+rpm-releases:
+  - VSCodium/vscodium codium codium-*-el8.{arch}.rpm
+  - shiftkey/desktop github-desktop GitHubDesktop-linux-{arch}-*.rpm
+appimage-releases:
+  - ProxymanApp/proxyman-windows-linux proxyman Proxyman-*.AppImage
+flatpak:
+  - io.github.alyraffauf.Switchyard
+  - io.gitlab.librewolf-community
+  - app.zen_browser.zen
+  - org.gnome.gitlab.somas.Apostrophe
+  - org.gnome.gitlab.cheywood.Buffer
+  - io.github.revisto.drum-machine
+  - re.sonny.Eloquent
+  - org.gottcode.FocusWriter
+  - com.obsproject.Studio
+  - org.gnome.SoundRecorder
+  - io.github.mfat.sshpilot
+notes:
+  - 'GitHub Desktop for Linux is the shiftkey community build.'
+  - 'Vicinae uses the upstream-recommended quadratech188/vicinae COPR.'
+  - 'Proxyman Linux currently supplies an x86_64 AppImage only; other architectures fail explicitly.'

@@ -1,0 +1,29 @@
+uv:
+  - git-plus
+  - tldr
+# repository executable asset-pattern. Placeholders are resolved by install.py.
+linux-releases:
+  - starship/starship starship starship-{arch}-unknown-linux-musl.tar.gz
+  - atuinsh/atuin atuin atuin-{arch}-unknown-linux-musl.tar.gz
+  - eza-community/eza eza eza_{arch}-unknown-linux-gnu.tar.gz
+  - Wilfred/difftastic difft difft-{arch}-unknown-linux-gnu.tar.gz
+  - skim-rs/skim sk skim-{arch}-unknown-linux-musl.tar.xz
+  - ajeetdsouza/zoxide zoxide zoxide-*-{arch}-unknown-linux-musl.tar.gz
+  - Schniz/fnm fnm fnm-{fnm}.zip
+  - astral-sh/uv uv uv-{arch}-unknown-linux-musl.tar.gz
+  - hadolint/hadolint hadolint hadolint-linux-{arm}
+  - mikefarah/yq yq yq_linux_{debarch}
+linux-go:
+  - github.com/andreazorzetto/yh@latest
+linux-source:
+  - git-latest
+  - zsh-completions
+  - zsh-lovers
+agents:
+  - claude
+fedora-agents:
+  - codex
+debian-server-agents:
+  - codex
+notes:
+  - 'delta/git-delta and sk/skim are single tools. base64 is supplied by coreutils.'
