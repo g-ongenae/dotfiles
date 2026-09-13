@@ -1,7 +1,0 @@
-language: bash
-
-# Use container-based infrastructure for quicker build start-up
-sudo: false
-
-script:
-  - shellcheck **/*.sh *.sh
