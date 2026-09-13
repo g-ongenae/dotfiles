@@ -41,6 +41,8 @@ native:
   - vim-enhanced
   - gcc
   - gcc-c++
+  - rust
+  - cargo
   - pkgconf-pkg-config
   - python3
   - ShellCheck
