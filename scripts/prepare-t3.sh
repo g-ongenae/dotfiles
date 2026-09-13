@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Install dependencies
 sudo apt-get install git curl libfuse2 build-essential python3

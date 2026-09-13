@@ -1,4 +1,3 @@
 eslint
-swagger-editor-live
 typescript
 npm-ls-scripts

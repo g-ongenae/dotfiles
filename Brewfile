@@ -13,7 +13,6 @@ cask 'librewolf'
 
 # Environment-related
 
-cask 'alt-tab'
 cask 'raycast'
 
 # Shells
@@ -101,9 +100,6 @@ brew 'helm'
 tap 'hashicorp/tap'
 brew 'hashicorp/tap/terraform'
 
-tap 'dbt-labs/dbt-cli'
-brew 'dbt'
-
 # Fonts
 
 brew 'fontconfig'
@@ -121,6 +117,5 @@ brew 'uv'
 
 # Linters
 
-brew 'pandoc', link: true
 brew 'shellcheck'
 brew 'hadolint'

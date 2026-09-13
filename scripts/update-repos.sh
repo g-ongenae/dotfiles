@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 
 # Documentation for git-multi
 # https://github.com/tkrajina/git-plus

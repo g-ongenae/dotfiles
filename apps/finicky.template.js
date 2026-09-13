@@ -8,28 +8,30 @@
  * List of Apps installed on my computer
  * which are accessible through https? request
  */
-const Apps = {
-  SLACK: "Slack",
-  // @not-installed
-  // FIGMA: "Figma",
-  // NOTION: "Notion",
-};
+// @not-installed<
+// const Apps = {
+//   SLACK: "Slack",
+//   FIGMA: "Figma",
+//   NOTION: "Notion",
+// };
 
 /**
  * List of browser installed on my computer
  */
 const Browsers = {
-  BRAVE: "Brave Browser",
+  FIREFOX: "Firefox",
   LIBRE_WOLF: "LibreWolf",
   SAFARI: "Safari",
   // @not-installed
+  // ARC: "Arc",
+  // BRAVE: "Brave Browser",
   // BLISK: "Blisk", // (blisk.io)
   // CHROMIUM: "Chromium",
   // CHROME: "Google Chrome",
-  // FIREFOX: "Firefox",
   // MIN: "Min Browser", // (minbrowser.org)
   // TOR: "Tor Browser",
   // VIVALDI: "Vivaldi",
+  // ZEN: "Zen",
 };
 
 /**
@@ -53,10 +55,6 @@ export default {
   ],
   handlers: [
     {
-      browser: Apps.SLACK,
-      match: ["*.slack.com*"],
-    },
-    {
       // To override specific handlers with more specific handler
       // redirecting it to the default browser
       browser: Browsers.LIBRE_WOLF,
@@ -64,7 +62,7 @@ export default {
     },
     {
       // Default connected browser
-      browser: Browsers.BRAVE,
+      browser: Browsers.FIREFOX,
       match: [
         "https://app.datadoghq.eu*",
         "*github.com*",

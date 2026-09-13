@@ -6,7 +6,7 @@
 eval "$(fzf --bash)"
 
 # Change default starship.toml file location
-export STARSHIP_CONFIG="${HOME}/Documents/prog/dotfiles/run/starship.toml"
+export STARSHIP_CONFIG="${HOME}/Documents/prog/dotfiles/secret/starship.toml"
 
 # Initialize starship prompting
 eval "$(starship init bash)"
@@ -27,15 +27,7 @@ else
 fi
 
 # source the dotfiles
-for DOTFILE in "$DOTFILES_DIR"/system/{function,env,alias}.sh ; do
-	[ -f "$DOTFILE" ] && source "$DOTFILE"
-done
-
-for DOTFILE in "$DOTFILES_DIR"/git/{function,alias}.sh ; do
-	[ -f "$DOTFILE" ] && source "$DOTFILE"
-done
-
-for DOTFILE in "$DOTFILES_DIR"/secret/{function,alias}.sh ; do
+for DOTFILE in "$DOTFILES_DIR"/system/{env,alias}.sh ; do
 	[ -f "$DOTFILE" ] && source "$DOTFILE"
 done
 
@@ -60,5 +52,21 @@ PATH="${KREW_ROOT:-$HOME/.krew}/bin:${PATH}"
 
 ## Homebrew binaries
 PATH="/opt/homebrew/bin:${PATH}"
+
+# pnpm
+export PNPM_HOME="/Users/go/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME/bin:"*) ;;
+  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+esac
+
+# Socket CLI completion for "socket"
+if [ -f "/Users/go/.local/share/socket/completion/socket-completion.bash" ]; then
+  # Load the tab completion script
+  source "/Users/go/.local/share/socket/completion/socket-completion.bash"
+  # Tell bash to use this function for tab completion of this function
+  complete -F _socket_completion socket
+fi
+
 
 export PATH

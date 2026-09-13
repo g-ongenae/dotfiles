@@ -29,8 +29,6 @@
   ## Commit...
   a = add
   c = commit
-    # Commit with committizen (git-cz)
-  cz = "!sh -c \"cd "$(git root || echo .)" ; [ -f package.json ] && npm run commit || make commit ; cd - 1> /dev/null\""
   co = checkout
     # Checkout a branch from a specific remote (by default origin/develop)
   ct = "!sh -c \"git checkout --track "${1:-origin}/${2:-develop}"\" -"
@@ -54,14 +52,6 @@
   head = "!sh -c \"git checkout $(git head-name)\" -"
   # head = !f() { if [[ -z \"$(git current-branch | tr -d ' ' | grep -Eq  '^(master|main|develop|beta)$')\" ]] ; then git checkout "$(git head-name)" ; fi ; }; f"
   head-name = "!sh -c \"git remote show origin | grep -E 'Branche HEAD :|HEAD branch:|Hauptbranch:' | cut -d':' -f2\" -"
-    # Create a new feature branch
-  feat = "!sh -c \"git checkout "$(git head-name)" ; \
-    git pull origin "$(git head-name)" ; \
-    git checkout -b "feature/${1}"\" -"
-    # Create a new hotfix branch
-  hotfix = "!sh -c \"git checkout "$(git head-name)" ; \
-    git pull origin "$(git head-name)" ; \
-    git checkout -b "hotfix/${1}"\" -"
   m = merge
     # Print the last commit of each branch, order by date, source: https://stackoverflow.com/a/30076212
   recent = "!sh -c \"git for-each-ref --sort=-committerdate refs/heads \
@@ -126,21 +116,18 @@
   unst-hard = reset --hard HEAD                     # Unstage changes and throw
 
   ## Bisection
-  bi = bisect                                       # Run with start or run
-  bid = bisect bad                                  # Please do not make a "bide"
-  big = bisect good                                 # Man, it's good, that's big!
+  bi = bisect                                       # Run with start or run (bad or good) and then run with skip or reset
 
   ## Miscellaneous
     # Remove the git lock - see: https://stackoverflow.com/questions/7860751
   unlock = "!sh -c \"rm -f "$(git rev-parse --show-toplevel || echo .)/.git/index.lock"\""
   fork = "!sh -c \"gh repo fork "$(git config --get remote.origin.url)"\""
-  f = flow                                          # For gitflow, see: https://github.com/nvie/gitflow
   k = "!sh -c \"open -a 'github desktop'\""         # To open GitHub Desktop, name k for gitk
   root = rev-parse --show-toplevel                  # Get root directory of the current git repository
     # Open the current repository remote
   open = "!sh -c \"git remote get-url origin | sed -e 's#:#/#' -e 's#git@#https:////#' | xargs open\" -"
   ok = "!sh -c \"sl\""                              # Slow down, you wanted to write "g pl" (git pull)
-   # Statistics about the repository
+    # Statistics about the repository
   count-files = "!sh -c \"git ls-files | wc -l\""
   count-lines = "!sh -c \"git ls-files | xargs wc -l\""
   count-total-lines = "!sh -c \"git ls-files | xargs wc -l | tail -n 1\""

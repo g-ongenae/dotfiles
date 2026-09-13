@@ -116,7 +116,7 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
 # Change default starship.toml file location
-export STARSHIP_CONFIG=${HOME}/Documents/prog/dotfiles/run/starship.toml
+export STARSHIP_CONFIG=${HOME}/Documents/prog/dotfiles/secret/starship.toml
 
 # Initialize starship prompting
 eval "$(starship init zsh)"
@@ -145,4 +145,11 @@ case ":$PATH:" in
   *":$PNPM_HOME/bin:"*) ;;
   *) export PATH="$PNPM_HOME/bin:$PATH" ;;
 esac
-# pnpm end
+
+# Socket CLI completion for "socket"
+if [ -f "/Users/go/.local/share/socket/completion/socket-completion.bash" ]; then
+  # Load the tab completion script
+  source "/Users/go/.local/share/socket/completion/socket-completion.bash"
+  # Tell bash to use this function for tab completion of this function
+  complete -F _socket_completion socket
+fi

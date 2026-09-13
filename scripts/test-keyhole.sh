@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 
 # Check Go lang is installed
 if [ "$(which go)" ] ; then
@@ -18,7 +18,7 @@ git clone --depth 1 https://github.com/simagix/keyhole.git
 cd keyhole || exit 1
 ./build.sh
 
-# Installing 
+# Installing
 go mod download github.com/simagix/gox
 ./keyhole --version
 

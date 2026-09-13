@@ -3,7 +3,6 @@ MS-CEINTL.vscode-language-pack-fr
 rafmsou.nicer-high-contrast
 redhat.vscode-commons
 redhat.vscode-yaml
-RescueTime.rescuetime
 rintoj.blank-line-organizer
 shardulm94.trailing-spaces
 streetsidesoftware.code-spell-checker
@@ -17,3 +16,4 @@ nhoizey.gremlins
 bierner.markdown-mermaid
 bpruitt-goddard.mermaid-markdown-syntax-highlighting
 nrwl.angular-console
+Arjun.swagger-viewer
