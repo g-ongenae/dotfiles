@@ -1,16 +1,3 @@
-[user]
-  name = Guillaume Ongenae
-  email = guillaume.ongenae@gmail.com
-
-[github]
-  user = g-ongenae
-
-[gitlab]
-  user = g-ongenae
-
-[bitbucket]
-  user = g_ongenae
-
 [help]
    # Automatically correct and execute mistyped commands
    # See: https://blog.gitbutler.com/why-is-git-autocorrect-too-fast-for-formula-one-drivers/

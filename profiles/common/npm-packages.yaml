@@ -9,6 +9,9 @@ common:
   - typescript
 macos:
   - '@devcontainers/cli'
+  - t3
+fedora:
+  - t3
 # Use system Chromium, without downloading a second browser.
 debian-server:
   - puppeteer-core

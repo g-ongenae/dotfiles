@@ -25,8 +25,5 @@ fedora-agents:
   - codex
 debian-server-agents:
   - codex
-macos-manual:
-  - 'Chromium is not installed. Homebrew disabled the cask on 2026-09-01 because it fails Gatekeeper checks. Choose a trusted distribution manually; this installer will not disable Gatekeeper.'
 notes:
-  - 'PCRE++ is obsolete and unavailable in current repositories; PCRE2 tools are installed. No pretend pcre++ package is installed.'
   - 'delta/git-delta and sk/skim are single tools. base64 is supplied by coreutils.'

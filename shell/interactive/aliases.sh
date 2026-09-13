@@ -21,5 +21,5 @@ root() {
     unset dotfiles_git_root
 }
 update_repos() { bash "$DOTFILES_DIR/scripts/update-repos.sh" "$@"; }
-update_deps() { bash "$DOTFILES_DIR/scripts/update-deps.sh" "$@"; }
+update_deps() { bash "$DOTFILES_DIR/install.sh" --update "$@"; }
 :

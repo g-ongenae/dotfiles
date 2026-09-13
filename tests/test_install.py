@@ -31,12 +31,20 @@ class InstallerTests(unittest.TestCase):
         self.args = argparse.Namespace(home=self.home, profile='debian-server',
                                        apply=True, only=['shell'], firefox_policy=False)
         self.install = installer.Installer(self.args)
+        self.install.identity = self.home / '.gitconfig.local'
         self.output = io.StringIO()
         self.silence = contextlib.redirect_stdout(self.output)
         self.silence.__enter__()
         self.addCleanup(self.silence.__exit__, None, None, None)
 
     def shell(self):
+        if not self.install.identity.exists():
+            self.install.identity.write_text(
+                '[user]\n  name = "Test User"\n  email = "preserved@example.test"\n\n'
+                '[github]\n  user = "github-test"\n\n'
+                '[gitlab]\n  user = "gitlab-test"\n\n'
+                '[bitbucket]\n  user = "bitbucket-test"\n'
+            )
         with patch.object(self.install, 'run'):
             self.install.shell()
 
@@ -71,6 +79,38 @@ class InstallerTests(unittest.TestCase):
         run.assert_not_called()
         self.assertFalse(self.install.config.exists())
 
+    def test_t3_install_strategy_is_profile_specific(self):
+        packages = installer.manifest(ROOT / 'profiles/common/npm-packages.yaml')
+        self.assertIn('t3', packages['macos'])
+        self.assertIn('t3', packages['fedora'])
+        self.assertNotIn('t3', packages['debian-server'])
+        self.assertTrue(any('pingdotgg/t3code' in item for item in self.install.profile['binary-releases']))
+
+    def test_private_identity_is_prompted_and_written(self):
+        answers = iter(('Test User', 'test@example.test', 'octocat', 'gitlabcat', 'bucketcat'))
+        with patch.object(installer.sys.stdin, 'isatty', return_value=True), \
+             patch('builtins.input', side_effect=lambda _: next(answers)):
+            self.install.ensure_identity()
+        content = self.install.identity.read_text()
+        self.assertIn('email = "test@example.test"', content)
+        self.assertIn('user = "octocat"', content)
+        self.assertEqual(self.install.identity.stat().st_mode & 0o777, 0o600)
+
+    def test_missing_identity_requires_an_interactive_terminal(self):
+        with patch.object(installer.sys.stdin, 'isatty', return_value=False), self.assertRaisesRegex(ValueError, 'interactive terminal'):
+            self.install.ensure_identity()
+        self.assertFalse(self.install.identity.exists())
+
+    def test_update_selects_package_apply_mode(self):
+        observed = {}
+        with patch.object(installer, 'detect_profile', return_value='debian-server'), \
+             patch.object(installer.Installer, 'execute', autospec=True,
+                          side_effect=lambda instance: observed.update(vars(instance.args)) or 0):
+            self.assertEqual(installer.main(['--update']), 0)
+        self.assertTrue(observed['apply'])
+        self.assertTrue(observed['update'])
+        self.assertEqual(observed['only'], ['packages'])
+
     def test_write_backs_up_without_touching_symlink_target(self):
         source = self.home / 'original'
         source.write_text('keep me')
@@ -98,7 +138,7 @@ class InstallerTests(unittest.TestCase):
     def test_shell_is_idempotent_and_preserves_user_settings(self):
         rc = self.home / '.bashrc'
         rc.write_text('# user settings\nexport MY_SETTING=kept\n')
-        (self.home / '.gitconfig').write_text('[user]\n  email = preserved@example.test\n')
+        (self.home / '.gitconfig').write_text('[user]\n  email = old@example.test\n')
         self.shell()
         snapshot = {p.relative_to(self.home): p.read_bytes() for p in self.home.rglob('*') if p.is_file()}
         self.shell()
@@ -110,6 +150,7 @@ class InstallerTests(unittest.TestCase):
         for key, expected in (('user.email', 'preserved@example.test'), ('core.editor', 'vim'), ('core.excludesFile', str(ROOT / 'git/.gitignore_global'))):
             result = subprocess.run(['git', 'config', '--file', str(config), '--includes', '--get', key], env=env, text=True, capture_output=True, check=True)
             self.assertEqual(result.stdout.strip(), expected)
+        self.assertNotIn('[user]', (ROOT / 'git/.gitconfig').read_text())
 
     def test_new_bash_login_preserves_distribution_profile(self):
         (self.home / '.profile').write_text('export FROM_PROFILE=preserved\n')

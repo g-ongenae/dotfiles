@@ -58,6 +58,9 @@ native:
   - gettext
   - bsdextrautils
   - chromium
+  - libfuse2t64
+binary-releases:
+  - pingdotgg/t3code t3-code T3-Code-*-x86_64.AppImage
 notes:
   - 'The existing sshd configuration is preserved.'
   - 'Chromium is for headless automation. Pass PUPPETEER_EXECUTABLE_PATH to puppeteer-core explicitly.'

@@ -7,8 +7,9 @@ One checkout, three profiles: macOS desktop, Fedora Workstation desktop, and Deb
 Clone this repository into its permanent location. The installer uses that checkout;
 it does not clone another copy, switch branches, or assume a Documents directory.
 
-Prerequisites: Git and Python 3.9+, plus Homebrew and Xcode command-line tools on
-macOS. Linux package installation needs sudo. Run as your normal user, not root.
+Prerequisites: Git, plus Homebrew and Xcode command-line tools on macOS. If
+Python 3 is missing, `install.sh` installs it with Homebrew, dnf, or apt. Linux
+package installation needs sudo. Run as your normal user, not root.
 
 ```bash
 ./install.sh                                  # detect this machine, preview only
@@ -16,12 +17,15 @@ macOS. Linux package installation needs sudo. Run as your normal user, not root.
 ./install.sh --profile fedora
 ./install.sh --profile debian-server
 ./install.sh --apply                           # install the detected profile
+./install.sh --update                          # update its managed packages
 ```
 
-Preview mode does not write files, launch installers, or access the network.
+Once Python is available, preview mode does not write files, launch installers,
+or access the network.
 Applying a profile for a different OS is rejected. Fedora means dnf-based
 Workstation, not Atomic/rpm-ostree. Linux release binaries support x86_64 and
-aarch64; the Fedora Proxyman AppImage currently supports only x86_64.
+aarch64 except the current Fedora Proxyman and Debian T3 Code AppImages, which
+are x86_64-only.
 
 Run selected steps independently:
 
@@ -104,11 +108,12 @@ No uninstalled macOS locale is forced onto Linux.
 | --- | --- | --- | --- |
 | Browser routing | Finicky | Switchyard (Flatpak) | — |
 | Launcher | Raycast | Vicinae (COPR) | — |
-| Browsers | LibreWolf, Firefox, Zen, Chrome; Chromium manual | LibreWolf, Firefox, Zen | Chromium for headless use |
+| Browsers | LibreWolf, Firefox, Zen, Chrome, Ungoogled Chromium | LibreWolf, Firefox, Zen | Chromium for headless use |
 | Editor | VS Code | VSCodium | Vim |
 | Git GUI | GitHub Desktop | shiftkey's GitHub Desktop | — |
 | Proxy inspector | Proxyman | Proxyman AppImage | — |
 | Agents | Claude Code | Codex, Claude Code | Codex, Claude Code |
+| T3 Code | npm package | npm package | upstream AppImage |
 
 The Fedora Flatpak list also contains Apostrophe, Buffer, Drum Machine, Eloquent,
 FocusWriter, OBS Studio, Sound Recorder, and SSH Pilot. Flameshot comes from dnf.
@@ -134,12 +139,6 @@ Name mappings and exceptions:
   unprefixed names where Homebrew provides a `gnubin` directory.
 - Debian names bat and fd executables `batcat` and `fdfind`; interactive aliases
   provide `bat` and `fd`. Scripts should use the distro executable names.
-- PCRE++ is obsolete/unavailable. These profiles install PCRE2 tools rather than
-  claiming to install that old C++ wrapper or its incompatible API.
-- Homebrew [disabled Chromium](https://formulae.brew.sh/cask/chromium) on
-  2026-09-01 because it fails Gatekeeper checks. The macOS installer completes
-  other work, reports this outstanding manual action, and exits nonzero.
-  It does not bypass Gatekeeper or silently substitute another browser.
 
 Git is upgraded through Homebrew on macOS. On Linux the installer resolves the
 latest stable upstream Git tag and builds it under `~/.local`, ahead of the
@@ -185,10 +184,12 @@ users able to remove extensions. No browser profile is overwritten.
 
 ## Existing configuration and backups
 
-Managed blocks preserve unrelated shell and Git settings. Existing Git identity
-overrides remain in place; a generated include supplies the current checkout
-path and profile-specific defaults. The old Git-config symlink is converted
-to a regular include file without changing its source.
+Managed blocks preserve unrelated shell and Git settings. On the first shell
+install, the installer asks for your name, email, and GitHub/GitLab/Bitbucket
+usernames, then writes them to the ignored root file `.gitconfig.local` with
+mode 0600. A generated include supplies that identity, the current checkout path,
+and profile-specific defaults. The old Git-config symlink is converted to a
+regular include file without changing its source.
 
 Untouched copies of the previous Bash/Zsh startup templates migrate automatically.
 Customized legacy startup files or custom `ZDOTDIR` assignments stop the shell
@@ -227,15 +228,14 @@ parsing, dry-run isolation, migration, backups, repeat runs, SSH environment,
 browser selection and download verification. Full native installations still
 need testing on disposable macOS/Fedora/Debian machines.
 
-`scripts/update-deps.sh` reuses the package manifests (preview by default; pass
-`--apply`). `scripts/prepare-t3.sh` is a compatibility wrapper for the Debian
-profile, not a T3 deployment script. `dev {build|up|shell|ai|clean} [directory]`
-uses the chosen workspace; clean targets only containers bearing that workspace's
-Dev Container label, never unrelated images.
+`dev {build|up|shell|ai|clean} [directory]` uses the chosen workspace; clean
+targets only containers bearing that workspace's Dev Container label, never
+unrelated images.
 
 Package-source references:
 [Vicinae](https://docs.vicinae.com/install/linux),
 [Switchyard](https://github.com/alyraffauf/switchyard),
 [GitHub Desktop for Linux](https://github.com/shiftkey/desktop),
 [Proxyman Linux](https://github.com/ProxymanApp/proxyman-windows-linux),
+[T3 Code](https://github.com/pingdotgg/t3code),
 [Homebrew](https://brew.sh).

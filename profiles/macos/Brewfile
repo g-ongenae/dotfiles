@@ -60,7 +60,7 @@ cask 'librewolf'
 cask 'firefox'
 cask 'zen'
 cask 'google-chrome'
-# Chromium's cask is disabled upstream (Gatekeeper); see common/packages.yaml.
+cask 'ungoogled-chromium'
 cask 'visual-studio-code'
 cask 'github'
 cask 'proxyman'

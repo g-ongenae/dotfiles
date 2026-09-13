@@ -1,5 +1,9 @@
 alias b='brew'
 alias vscode='code'
+if [ -n "${ZSH_VERSION:-}" ]; then
+    alias p='nocorrect pnpm'
+    alias nx='nocorrect pnpm exec nx'
+fi
 q() { osascript -e 'tell application "Terminal" to quit'; }
 alias local_ip='ipconfig getifaddr en0'
 alias rp='lsof -nP -iTCP -sTCP:LISTEN'

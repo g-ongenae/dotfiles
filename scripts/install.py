@@ -104,6 +104,7 @@ class Installer:
         self.config = self.home / '.config/dotfiles'
         self.data = self.home / '.local/share/dotfiles'
         self.bin = self.home / '.local/bin'
+        self.identity = ROOT / '.gitconfig.local'
         self.common = manifest(ROOT / 'profiles/common/packages.yaml')
         self.profile = {} if args.profile == 'macos' else manifest(ROOT / f'profiles/{args.profile}/packages.yaml')
         self.env = os.environ.copy()
@@ -140,7 +141,11 @@ class Installer:
                 raise ValueError(f'Refusing to replace directory {path}')
             old = path.read_bytes() if path.exists() else str(path.readlink()).encode()
             digest = hashlib.sha256(old).hexdigest()[:16]
-            backup = self.data / 'backups' / (str(path.relative_to(self.home)).replace('/', '__') + '.' + digest)
+            try:
+                backup_name = str(path.relative_to(self.home)).replace('/', '__')
+            except ValueError:
+                backup_name = 'external__' + hashlib.sha256(str(path).encode()).hexdigest()[:16]
+            backup = self.data / 'backups' / (backup_name + '.' + digest)
             backup.parent.mkdir(parents=True, exist_ok=True)
             if not backup.exists():
                 backup.write_bytes(old)
@@ -176,14 +181,61 @@ class Installer:
             if re.search(r'^[^#\n]*(?:ZDOTDIR\s*=|/(?:run|system)/(?:env|alias|\.zshrc))', text, re.M):
                 raise ValueError(f'{path} has customized legacy startup/ZDOTDIR settings. Back it up and remove those settings before applying the shell step.')
 
+    def ensure_identity(self):
+        fields = (
+            ('user.name', 'Name'),
+            ('user.email', 'Email'),
+            ('github.user', 'GitHub username'),
+            ('gitlab.user', 'GitLab username'),
+            ('bitbucket.user', 'Bitbucket username'),
+        )
+        if self.identity.exists():
+            missing = []
+            for key, _ in fields:
+                result = subprocess.run(('git', 'config', '--file', str(self.identity), '--get', key),
+                                        env=self.env, capture_output=True, text=True)
+                if result.returncode or not result.stdout.strip():
+                    missing.append(key)
+            if missing:
+                raise ValueError(f'{self.identity} is missing: {", ".join(missing)}')
+            if self.args.apply and not self.identity.is_symlink():
+                self.identity.chmod(0o600)
+            return
+        print(f'Create private Git identity: {self.identity}')
+        if not self.args.apply:
+            return
+        if not sys.stdin.isatty():
+            raise ValueError(f'{self.identity} is missing; run the shell step from an interactive terminal to create it')
+        values = {}
+        for key, label in fields:
+            current = subprocess.run(('git', 'config', '--global', '--get', key), env=self.env,
+                                     capture_output=True, text=True).stdout.strip()
+            prompt = f'{label}' + (f' [{current}]' if current else '') + ': '
+            value = input(prompt).strip() or current
+            if not value or '\n' in value or '\r' in value:
+                raise ValueError(f'{label} cannot be empty or contain a newline')
+            values[key] = value
+        content = (
+            '[user]\n'
+            f'  name = {json.dumps(values["user.name"], ensure_ascii=False)}\n'
+            f'  email = {json.dumps(values["user.email"], ensure_ascii=False)}\n\n'
+            '[github]\n'
+            f'  user = {json.dumps(values["github.user"], ensure_ascii=False)}\n\n'
+            '[gitlab]\n'
+            f'  user = {json.dumps(values["gitlab.user"], ensure_ascii=False)}\n\n'
+            '[bitbucket]\n'
+            f'  user = {json.dumps(values["bitbucket.user"], ensure_ascii=False)}\n'
+        )
+        self.write(self.identity, content)
+
     def release(self, spec, kind='binary'):
         repo, name, pattern = shlex.split(spec)
         arch = platform.machine()
         arch = {'arm64': 'aarch64', 'amd64': 'x86_64'}.get(arch, arch)
         if arch not in ('x86_64', 'aarch64'):
             raise ValueError(f'Unsupported release architecture: {arch}')
-        if name == 'proxyman' and arch != 'x86_64':
-            raise ValueError('Proxyman does not publish an ARM Linux AppImage')
+        if name in ('proxyman', 't3-code') and arch != 'x86_64':
+            raise ValueError(f'{name} does not publish an ARM Linux AppImage')
         pattern = pattern.format(arch=arch, arm='arm64' if arch == 'aarch64' else arch,
                                  debarch='arm64' if arch == 'aarch64' else 'amd64',
                                  fnm='arm64' if arch == 'aarch64' else 'linux')
@@ -286,13 +338,19 @@ class Installer:
             self.env['PATH'] = str(Path(brew).parent) + os.pathsep + self.env['PATH']
             self.run(brew, 'update')
             self.run(brew, 'bundle', '--file', ROOT / 'profiles/macos/Brewfile')
-            self.run(brew, 'upgrade', 'git')
+            if getattr(self.args, 'update', False):
+                self.run(brew, 'upgrade')
+                self.run(brew, 'cleanup')
+            else:
+                self.run(brew, 'upgrade', 'git')
             self.env['PATH'] = '/Applications/Visual Studio Code.app/Contents/Resources/app/bin:' + self.env['PATH']
         else:
             manager = 'apt-get' if self.args.profile == 'debian-server' else 'dnf'
             self.sudo(manager, 'update' if manager == 'apt-get' else 'makecache')
             self.sudo(manager, 'install', '-y', *self.profile['native'])
             for spec in self.common['linux-releases']:
+                self.release(spec)
+            for spec in self.profile.get('binary-releases', []):
                 self.release(spec)
             for spec in self.common['linux-go']:
                 env = dict(self.env, GOBIN=str(self.bin))
@@ -312,12 +370,12 @@ class Installer:
                 self.run('flatpak', 'install', '--user', '--noninteractive', '-y', 'flathub', *self.profile['flatpak'])
         for tool in self.common['uv']:
             self.run('uv', 'tool', 'install', '--upgrade', tool)
+        if getattr(self.args, 'update', False):
+            self.run('tldr', '--update')
         self.node()
-        for action in self.common.get(self.args.profile + '-manual', []):
-            self.failures.append(action)
-
     def shell(self):
         self.preflight_shell()
+        self.ensure_identity()
         session = f'export DOTFILES_DIR={shlex.quote(str(ROOT))}\nexport DOTFILES_PROFILE={shlex.quote(self.args.profile)}\n'
         self.write(self.config / 'session.sh', session)
         hook = 'if [ -r "$HOME/.config/dotfiles/session.sh" ]; then\n  . "$HOME/.config/dotfiles/session.sh"\n  . "$DOTFILES_DIR/shell/common/init.sh"\nfi'
@@ -331,8 +389,12 @@ class Installer:
         if not login.exists():
             self.write(login, '# Preserve distribution login setup.\nif [ -r "$HOME/.profile" ]; then\n  . "$HOME/.profile"\nfi\n')
         self.hook(login, hook + '\n' + bash_hook)
-        # Preserve unrelated global Git settings, including existing identities.
-        gitconfig = '[include]\n  path = ' + json.dumps(str(ROOT / 'git/.gitconfig'), ensure_ascii=False) + '\n[core]\n  excludesFile = ' + json.dumps(str(ROOT / 'git/.gitignore_global'), ensure_ascii=False) + '\n  editor = vim\n'
+        # Preserve unrelated global settings; the ignored identity include wins.
+        gitconfig = (
+            '[include]\n  path = ' + json.dumps(str(ROOT / 'git/.gitconfig'), ensure_ascii=False) + '\n'
+            '[include]\n  path = ' + json.dumps(str(self.identity), ensure_ascii=False) + '\n'
+            '[core]\n  excludesFile = ' + json.dumps(str(ROOT / 'git/.gitignore_global'), ensure_ascii=False) + '\n  editor = vim\n'
+        )
         if self.args.profile != 'debian-server':
             gitconfig += '[core]\n  editor = ' + ('code' if self.args.profile == 'macos' else 'codium') + ' --wait\n'
         gitconfig += '[alias]\n  ci = !gh run list --limit 5\n'
@@ -345,7 +407,7 @@ class Installer:
         global_git = self.home / '.gitconfig'
         if global_git.is_symlink() and global_git.resolve() == ROOT / 'git/.gitconfig':
             self.write(global_git, '')
-        self.hook(global_git, '[include]\n  path = ' + json.dumps(str(self.config / 'gitconfig'), ensure_ascii=False), prepend=True)
+        self.hook(global_git, '[include]\n  path = ' + json.dumps(str(self.config / 'gitconfig'), ensure_ascii=False))
         if self.args.profile == 'macos':
             self.write(self.home / '.finicky.js', (ROOT / 'apps/finicky.template.js').read_bytes())
         self.run('git', 'submodule', 'update', '--init', '--',
@@ -431,10 +493,14 @@ def main(argv=None):
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--apply', action='store_true', help='perform installation (default is a dry run)')
     mode.add_argument('--dry-run', action='store_true', help='print the plan without writes/network')
+    mode.add_argument('--update', action='store_true', help='apply package updates for the detected profile')
     parser.add_argument('--home', type=Path, default=Path.home(), help='configuration destination; package installs still affect the host')
     parser.add_argument('--only', default=','.join(STEPS), help='comma-separated: packages,shell,extensions,browsers')
     parser.add_argument('--firefox-policy', action='store_true', help='also generate an optional Firefox extension policy')
     args = parser.parse_args(argv)
+    if args.update:
+        args.apply = True
+        args.only = 'packages'
     if not args.profile:
         parser.error('Cannot detect a supported OS; choose --profile to preview')
     args.only = args.only.split(',')
