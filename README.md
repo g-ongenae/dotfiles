@@ -125,6 +125,7 @@ Send a packet with `wakeonlan <MAC-address>` on Debian or `wol <MAC-address>` on
 | Proxy inspector | Proxyman | Proxyman AppImage | — |
 | Agents | Claude Code, Gemini CLI | Codex, Claude Code, Gemini CLI | Codex, Claude Code, Gemini CLI |
 | Antigravity | Homebrew desktop app | Official RPM repository | — |
+| Tailscale | Standalone desktop app | Official stable RPM repository | Official stable APT repository |
 | T3 Code | npm package | npm package | upstream AppImage |
 
 The Fedora Flatpak list also contains Apostrophe, Buffer, Drum Machine, Eloquent,
@@ -137,6 +138,14 @@ and Fedora; the Debian server stays headless. Fedora uses Google's
 [official repository](https://antigravity.google/download/linux), which currently
 disables RPM signature checks in its published configuration. Agent sign-in
 remains a manual first-run step.
+
+Tailscale uses the `tailscale-app` Homebrew cask on macOS and the
+[official stable repositories](https://pkgs.tailscale.com/stable/) on Linux.
+Linux enables `tailscaled` after installation; it does not run `tailscale up`,
+enable Tailscale SSH, or configure routes. Join the tailnet yourself by opening
+the Tailscale app on macOS or running `sudo tailscale up` on Linux. The Debian
+repository key is scoped with `signed-by`, and Fedora uses upstream's signed
+repository metadata configuration.
 
 macOS additionally installs the requested Google Cloud, Kubernetes, Terraform,
 Helm, Telepresence, minikube, Wireshark, macFUSE, Docker Desktop, Insomnia, Volta,

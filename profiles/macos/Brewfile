@@ -75,6 +75,7 @@ cask 'visual-studio-code'
 cask 'github'
 cask 'proxyman'
 cask 'antigravity'
+cask 'tailscale-app'
 
 # macOS-only operations tools.
 cask 'gcloud-cli'

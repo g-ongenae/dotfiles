@@ -86,6 +86,24 @@ class InstallerTests(unittest.TestCase):
         self.assertNotIn('t3', packages['debian-server'])
         self.assertTrue(any('pingdotgg/t3code' in item for item in self.install.profile['binary-releases']))
 
+    def test_vendor_repositories_precede_tailscale_install_without_enrollment(self):
+        for profile in ('debian-server', 'fedora'):
+            with self.subTest(profile=profile):
+                self.args.profile = profile
+                install = installer.Installer(self.args)
+                with patch.object(installer, 'fetch', return_value=b'repository data'), \
+                        patch.object(install, 'run', return_value='') as run:
+                    install.vendor_packages()
+                calls = [call.args for call in run.call_args_list]
+                package_call = next(i for i, call in enumerate(calls)
+                                    if call[:3] in (('sudo', 'apt-get', 'install'), ('sudo', 'dnf', 'install')))
+                repository_calls = [i for i, call in enumerate(calls) if call[:2] == ('sudo', 'install')]
+                self.assertTrue(repository_calls)
+                self.assertLess(max(repository_calls), package_call)
+                self.assertIn('tailscale', calls[package_call])
+                self.assertEqual(calls[-1], ('sudo', 'systemctl', 'enable', '--now', 'tailscaled'))
+                self.assertFalse(any(call[:2] == ('sudo', 'tailscale') for call in calls))
+
     def test_private_identity_is_prompted_and_written(self):
         answers = iter(('Test User', 'test@example.test', 'octocat', 'gitlabcat', 'bucketcat'))
         with patch.object(installer.sys.stdin, 'isatty', return_value=True), \

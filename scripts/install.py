@@ -339,6 +339,25 @@ class Installer:
         if 'codex' in agents:
             self.run('npm', 'install', '--global', '@openai/codex')
 
+    def vendor_packages(self):
+        for entry in self.profile.get('repositories', []):
+            url, destination = shlex.split(entry)
+            source = self.data / 'repositories' / Path(destination).name
+            print(f'Download repository configuration: {url}')
+            self.write(source, fetch(url) if self.args.apply else b'')
+            self.sudo('install', '-D', '-m', '644', source, destination)
+        for repo in sorted((ROOT / f'profiles/{self.args.profile}').glob('*.repo')):
+            self.sudo('install', '-m', '644', repo, '/etc/yum.repos.d/' + repo.name)
+        packages = self.profile.get('vendor-packages', [])
+        if packages:
+            if self.args.profile == 'debian-server':
+                self.sudo('apt-get', 'update')
+                self.sudo('apt-get', 'install', '-y', *packages)
+            else:
+                self.sudo('dnf', 'install', '--refresh', '-y', *packages)
+        for service in self.profile.get('services', []):
+            self.sudo('systemctl', 'enable', '--now', service)
+
     def packages(self):
         if self.args.profile == 'macos':
             brew = shutil.which('brew')
@@ -373,11 +392,7 @@ class Installer:
                           '/etc/systemd/system/dotfiles-wakeonlan.service')
                 self.sudo('systemctl', 'daemon-reload')
                 self.sudo('systemctl', 'enable', '--now', 'dotfiles-wakeonlan.service')
-            if self.args.profile == 'fedora':
-                for repo in sorted((ROOT / 'profiles/fedora').glob('*.repo')):
-                    self.sudo('install', '-m', '644', repo, '/etc/yum.repos.d/' + repo.name)
-                if self.profile.get('vendor-packages'):
-                    self.sudo('dnf', 'install', '--refresh', '-y', *self.profile['vendor-packages'])
+            self.vendor_packages()
             for spec in self.common['linux-releases']:
                 self.release(spec)
             for spec in self.profile.get('binary-releases', []):

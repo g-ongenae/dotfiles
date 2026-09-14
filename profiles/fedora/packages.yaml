@@ -67,6 +67,11 @@ copr-packages:
   - vicinae
 vendor-packages:
   - antigravity
+  - tailscale
+repositories:
+  - https://pkgs.tailscale.com/stable/fedora/tailscale.repo /etc/yum.repos.d/tailscale.repo
+services:
+  - tailscaled
 rpm-releases:
   - VSCodium/vscodium codium codium-*-el8.{arch}.rpm
   - shiftkey/desktop github-desktop GitHubDesktop-linux-{arch}-*.rpm
