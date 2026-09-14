@@ -348,6 +348,11 @@ class Installer:
             manager = 'apt-get' if self.args.profile == 'debian-server' else 'dnf'
             self.sudo(manager, 'update' if manager == 'apt-get' else 'makecache')
             self.sudo(manager, 'install', '-y', *self.profile['native'])
+            if self.args.profile == 'fedora':
+                for repo in sorted((ROOT / 'profiles/fedora').glob('*.repo')):
+                    self.sudo('install', '-m', '644', repo, '/etc/yum.repos.d/' + repo.name)
+                if self.profile.get('vendor-packages'):
+                    self.sudo('dnf', 'install', '--refresh', '-y', *self.profile['vendor-packages'])
             for spec in self.common['linux-releases']:
                 self.release(spec)
             for spec in self.profile.get('binary-releases', []):

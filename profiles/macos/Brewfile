@@ -65,6 +65,7 @@ cask 'ungoogled-chromium'
 cask 'visual-studio-code'
 cask 'github'
 cask 'proxyman'
+cask 'antigravity'
 
 # macOS-only operations tools.
 cask 'gcloud-cli'

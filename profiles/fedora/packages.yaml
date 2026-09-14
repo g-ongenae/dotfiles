@@ -64,6 +64,8 @@ copr:
   - quadratech188/vicinae
 copr-packages:
   - vicinae
+vendor-packages:
+  - antigravity
 rpm-releases:
   - VSCodium/vscodium codium codium-*-el8.{arch}.rpm
   - shiftkey/desktop github-desktop GitHubDesktop-linux-{arch}-*.rpm

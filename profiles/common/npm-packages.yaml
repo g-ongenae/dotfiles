@@ -1,4 +1,5 @@
 common:
+  - '@google/gemini-cli'
   - can-i-ignore-scripts
   - dpdm
   - eslint

@@ -112,12 +112,20 @@ No uninstalled macOS locale is forced onto Linux.
 | Editor | VS Code | VSCodium | Vim |
 | Git GUI | GitHub Desktop | shiftkey's GitHub Desktop | — |
 | Proxy inspector | Proxyman | Proxyman AppImage | — |
-| Agents | Claude Code | Codex, Claude Code | Codex, Claude Code |
+| Agents | Claude Code, Gemini CLI | Codex, Claude Code, Gemini CLI | Codex, Claude Code, Gemini CLI |
+| Antigravity | Homebrew desktop app | Official RPM repository | — |
 | T3 Code | npm package | npm package | upstream AppImage |
 
 The Fedora Flatpak list also contains Apostrophe, Buffer, Drum Machine, Eloquent,
 FocusWriter, OBS Studio, Sound Recorder, and SSH Pilot. Flameshot comes from dnf.
 Switchyard needs first-run routing setup and selection as the default browser.
+
+Gemini CLI uses the [official npm package](https://geminicli.com/docs/get-started/installation/)
+with fnm's Node on every profile. Antigravity is a desktop application on macOS
+and Fedora; the Debian server stays headless. Fedora uses Google's
+[official repository](https://antigravity.google/download/linux), which currently
+disables RPM signature checks in its published configuration. Agent sign-in
+remains a manual first-run step.
 
 macOS additionally installs the requested Google Cloud, Kubernetes, Terraform,
 Helm, Telepresence, minikube, Wireshark, macFUSE, Docker Desktop, Insomnia, Volta,
