@@ -343,6 +343,11 @@ class Installer:
                 self.run(brew, 'cleanup')
             else:
                 self.run(brew, 'upgrade', 'git')
+            # LibreWolf's unsigned macOS build otherwise appears damaged on
+            # first launch. Also repair already-installed copies on reruns.
+            # https://librewolf.net/docs/faq/#why-is-librewolf-marked-as-broken
+            if not self.args.apply or Path('/Applications/LibreWolf.app').is_dir():
+                self.run('/usr/bin/xattr', '-dr', 'com.apple.quarantine', '/Applications/LibreWolf.app')
             self.env['PATH'] = '/Applications/Visual Studio Code.app/Contents/Resources/app/bin:' + self.env['PATH']
         else:
             manager = 'apt-get' if self.args.profile == 'debian-server' else 'dnf'

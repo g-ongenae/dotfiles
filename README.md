@@ -149,6 +149,13 @@ MongoDB taps using Homebrew's
 The latter two support existing workstation installations during upgrades;
 their packages and database services are not added automatically.
 
+After Homebrew installation/upgrades, the macOS packages step removes
+`com.apple.quarantine` from `/Applications/LibreWolf.app`, following the
+[LibreWolf first-launch fix](https://librewolf.net/docs/faq/#why-is-librewolf-marked-as-broken).
+This also repairs an existing installation when rerun. If you installed LibreWolf
+in a custom application directory, apply `xattr -dr com.apple.quarantine` to that
+app's path yourself.
+
 Shared tools use native package managers where appropriate, plus upstream Linux
 releases for Starship, Atuin, eza, difftastic, skim, zoxide, fnm, uv, hadolint and
 yq. Linux yh uses Go; git-plus and tldr use isolated uv tool environments; fx
