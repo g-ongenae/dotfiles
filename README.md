@@ -184,6 +184,13 @@ Volta is installed on macOS, but fnm's selected Node has PATH priority; the old
 Volta shell plugin is not loaded. Global npm packages belong to the selected
 Node version and are installed again when the LTS changes.
 
+pnpm is installed through npm alongside fnm's default Node, ahead of old Volta
+shims. Global npm installs explicitly target that Node's prefix, even if an old
+npm configuration points elsewhere. Rerun `./install.sh --apply --only packages` and open a new
+shell to repair an older setup where `node --version` and pnpm report different
+Node versions. `command -v pnpm` should resolve under fnm's Node installation,
+not `~/.volta/bin`.
+
 The Debian npm profile includes `puppeteer-core`, paired with distro Chromium
 (no separate browser download). Puppeteer Core requires an explicit
 `executablePath: process.env.PUPPETEER_EXECUTABLE_PATH` when launching.

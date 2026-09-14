@@ -5,6 +5,7 @@ common:
   - eslint
   - fx
   - npm-ls-scripts
+  - pnpm
   - socket
   - typescript-language-server
   - typescript

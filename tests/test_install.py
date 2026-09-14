@@ -213,6 +213,33 @@ class InstallerTests(unittest.TestCase):
         self.assertTrue(result.stdout.startswith(str(node) + ':'))
         self.assertEqual(result.stdout.count(str(node)), 1)
 
+    def test_pnpm_install_uses_fnm_even_with_an_inherited_npm_prefix(self):
+        node_bin = self.home / '.local/share/fnm/node-versions/v24/installation/bin'
+        node_bin.mkdir(parents=True)
+        self.install.common['agents'] = []
+        self.install.common['debian-server-agents'] = []
+        self.install.env['npm_config_prefix'] = str(self.home / '.volta')
+        self.install.env['NPM_CONFIG_PREFIX'] = str(self.home / 'old-global')
+        observed = []
+
+        def run(*argv, **kwargs):
+            if argv[:2] == ('fnm', 'exec'):
+                return str(node_bin / 'node') + '\n'
+            if argv[0] == 'npm':
+                observed.append((argv, self.install.env.copy()))
+            return ''
+
+        with patch.object(self.install, 'run', side_effect=run):
+            self.install.node()
+        self.assertEqual(len(observed), 1)
+        argv, env = observed[0]
+        self.assertIn('pnpm', argv)
+        self.assertEqual(env['PATH'].split(os.pathsep)[0], str(node_bin))
+        self.assertEqual(env['npm_config_prefix'], str(node_bin.parent))
+        self.assertNotIn('NPM_CONFIG_PREFIX', env)
+        result = self.bash('. "$DOTFILES_DIR/shell/common/init.sh"; printf "%s" "$PATH"')
+        self.assertTrue(result.stdout.startswith(str(node_bin) + ':'))
+
     def zsh(self, interactive=False):
         binary = os.environ.get('DOTFILES_TEST_ZSH') or shutil.which('zsh')
         if not binary:

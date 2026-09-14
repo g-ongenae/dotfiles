@@ -310,6 +310,10 @@ class Installer:
             # fnm exec's child gets the selected Node without shell eval.
             output = self.run('fnm', 'exec', '--log-level=quiet', '--using=lts-latest', 'node', '-p', 'process.execPath', capture=True)
             self.env['PATH'] = str(Path(output.strip()).parent) + os.pathsep + self.env['PATH']
+            # Keep global tools with fnm even if an old npmrc/manager overrides
+            # npm's prefix; otherwise pnpm can still fall through to Volta.
+            self.env['npm_config_prefix'] = str(Path(output.strip()).parent.parent)
+            self.env.pop('NPM_CONFIG_PREFIX', None)
             self.write(self.config / 'node-path.sh', 'dotfiles_prepend_path ' + shlex.quote(str(Path(output.strip()).parent)) + '\n')
         packages = manifest(ROOT / 'profiles/common/npm-packages.yaml')
         selected = packages['common'] + packages.get(self.args.profile, [])
