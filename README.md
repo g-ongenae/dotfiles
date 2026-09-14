@@ -102,6 +102,17 @@ All profiles use Vim as the shell's terminal editor. Git uses VS Code on macOS,
 VSCodium on Fedora, and Vim on the server. Linux `ip` is left intact.
 No uninstalled macOS locale is forced onto Linux.
 
+Debian installs `wakeonlan` for sending magic packets and enables wake on supported
+physical Ethernet adapters with `ethtool`. The `dotfiles-wakeonlan.service` unit
+reapplies this after networking starts at boot; it does not restart networking.
+Check results with `journalctl -u dotfiles-wakeonlan.service` and
+`sudo ethtool <interface>` (look for `Wake-on: g`). Firmware/BIOS must also permit
+Wake-on-LAN, and the machine must retain Ethernet power while asleep/off.
+If a network manager later resets the setting, rerun
+`sudo systemctl start dotfiles-wakeonlan.service`.
+Fedora installs only the `wol` sender; macOS skips Wake-on-LAN setup.
+Send a packet with `wakeonlan <MAC-address>` on Debian or `wol <MAC-address>` on Fedora.
+
 ## Package choices
 
 | Component | macOS | Fedora | Debian server |

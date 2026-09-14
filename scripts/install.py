@@ -348,6 +348,13 @@ class Installer:
             manager = 'apt-get' if self.args.profile == 'debian-server' else 'dnf'
             self.sudo(manager, 'update' if manager == 'apt-get' else 'makecache')
             self.sudo(manager, 'install', '-y', *self.profile['native'])
+            if self.args.profile == 'debian-server':
+                self.sudo('install', '-D', '-m', '755', ROOT / 'scripts/wakeonlan.py',
+                          '/usr/local/libexec/dotfiles-wakeonlan.py')
+                self.sudo('install', '-m', '644', ROOT / 'profiles/debian-server/dotfiles-wakeonlan.service',
+                          '/etc/systemd/system/dotfiles-wakeonlan.service')
+                self.sudo('systemctl', 'daemon-reload')
+                self.sudo('systemctl', 'enable', '--now', 'dotfiles-wakeonlan.service')
             if self.args.profile == 'fedora':
                 for repo in sorted((ROOT / 'profiles/fedora').glob('*.repo')):
                     self.sudo('install', '-m', '644', repo, '/etc/yum.repos.d/' + repo.name)

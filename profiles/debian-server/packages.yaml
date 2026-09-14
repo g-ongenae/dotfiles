@@ -52,6 +52,8 @@ native:
   - openssh-client
 # This machine is already reached by SSH. Do not install/restart sshd here.
   - iproute2
+  - wakeonlan
+  - ethtool
   - golang-go
   - libcurl4-openssl-dev
   - libssl-dev

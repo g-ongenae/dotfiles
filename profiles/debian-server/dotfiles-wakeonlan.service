@@ -1,0 +1,11 @@
+[Unit]
+Description=Enable Wake-on-LAN on supported Ethernet adapters
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/libexec/dotfiles-wakeonlan.py
+
+[Install]
+WantedBy=multi-user.target

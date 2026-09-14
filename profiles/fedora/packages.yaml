@@ -48,6 +48,7 @@ native:
   - ShellCheck
   - openssh-clients
   - iproute
+  - wol
   - hostname
   - golang
   - libcurl-devel
