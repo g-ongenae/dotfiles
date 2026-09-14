@@ -61,7 +61,7 @@ brew 'uv'
 brew 'shellcheck'
 brew 'hadolint'
 brew 'fnm'
-brew 'openssh'
+# Use Apple's /usr/bin SSH tools for UseKeychain and ssh-add Keychain support.
 
 # Workstation applications.
 cask 'finicky'

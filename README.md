@@ -200,6 +200,18 @@ shell to repair an older setup where `node --version` and pnpm report different
 Node versions. `command -v pnpm` should resolve under fnm's Node installation,
 not `~/.volta/bin`.
 
+macOS uses Apple's `/usr/bin/ssh` and `/usr/bin/ssh-add` so existing `UseKeychain`
+settings work. The packages step unlinks Homebrew OpenSSH left by older installs
+after package upgrades. It preserves SSH configuration and keys. If the old SSH
+client prevents pulling these fixes, run this from the checkout on your Mac:
+
+```bash
+GIT_SSH_COMMAND=/usr/bin/ssh git pull --ff-only
+./install.sh --apply --only packages,shell
+```
+
+Open a new terminal afterward; `command -v ssh` should show `/usr/bin/ssh`.
+
 The Debian npm profile includes `puppeteer-core`, paired with distro Chromium
 (no separate browser download). Puppeteer Core requires an explicit
 `executablePath: process.env.PUPPETEER_EXECUTABLE_PATH` when launching.

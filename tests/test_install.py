@@ -104,6 +104,35 @@ class InstallerTests(unittest.TestCase):
                 self.assertEqual(calls[-1], ('sudo', 'systemctl', 'enable', '--now', 'tailscaled'))
                 self.assertFalse(any(call[:2] == ('sudo', 'tailscale') for call in calls))
 
+    def test_macos_packages_unlink_old_openssh_after_upgrades(self):
+        ssh_config = self.home / '.ssh/config'
+        ssh_config.parent.mkdir()
+        content = 'Host github.com\n  AddKeysToAgent yes\n  UseKeychain yes\n  IdentityFile ~/.ssh/id_ed25519\n'
+        ssh_config.write_text(content)
+        for update in (False, True):
+            for installed in ('git\nopenssh\n', 'git\n'):
+                with self.subTest(update=update, installed=installed):
+                    self.args.profile = 'macos'
+                    self.args.update = update
+                    install = installer.Installer(self.args)
+
+                    def run(*argv, **kwargs):
+                        return installed if argv[1:] == ('list', '--formula') else ''
+
+                    with patch.object(installer.shutil, 'which', return_value='/opt/homebrew/bin/brew'), \
+                            patch.object(install, 'run', side_effect=run) as calls, \
+                            patch.object(install, 'node'):
+                        install.packages()
+                    commands = [call.args for call in calls.call_args_list]
+                    unlink = ('/opt/homebrew/bin/brew', 'unlink', 'openssh')
+                    if 'openssh' in installed:
+                        self.assertIn(unlink, commands)
+                        upgrades = [i for i, call in enumerate(commands) if call[1] == 'upgrade']
+                        self.assertGreater(commands.index(unlink), max(upgrades))
+                    else:
+                        self.assertNotIn(unlink, commands)
+                    self.assertEqual(ssh_config.read_text(), content)
+
     def test_private_identity_is_prompted_and_written(self):
         answers = iter(('Test User', 'test@example.test', 'octocat', 'gitlabcat', 'bucketcat'))
         with patch.object(installer.sys.stdin, 'isatty', return_value=True), \

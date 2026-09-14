@@ -375,6 +375,12 @@ class Installer:
                 self.run(brew, 'cleanup')
             else:
                 self.run(brew, 'upgrade', 'git')
+            # The previous profile shadowed Apple's SSH client with Homebrew
+            # OpenSSH, which cannot read UseKeychain. Unlink after upgrades too,
+            # since upgrading an old installed copy can restore its symlinks.
+            installed_formulae = self.run(brew, 'list', '--formula', capture=True).splitlines()
+            if not self.args.apply or 'openssh' in installed_formulae:
+                self.run(brew, 'unlink', 'openssh')
             # LibreWolf's unsigned macOS build otherwise appears damaged on
             # first launch. Also repair already-installed copies on reruns.
             # https://librewolf.net/docs/faq/#why-is-librewolf-marked-as-broken
