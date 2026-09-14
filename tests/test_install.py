@@ -332,6 +332,16 @@ class InstallerTests(unittest.TestCase):
         self.assertIn("alias g='git'", result.stdout)
         self.assertIn("alias rp='ss -ltnp'", result.stdout)
 
+    def test_macos_bash_startup_loads_all_reported_aliases(self):
+        self.args.profile = 'macos'
+        self.shell()
+        for filename in ('.bashrc', '.bash_profile'):
+            with self.subTest(filename=filename):
+                result = self.bash('. "$HOME/' + filename + '"; alias d nx p nr', interactive=True)
+                for name, command in (('d', 'docker'), ('nx', 'pnpm exec nx'),
+                                      ('p', 'pnpm'), ('nr', 'npm run')):
+                    self.assertIn(f"alias {name}='{command}'", result.stdout)
+
     def test_archive_extraction_does_not_follow_paths_or_links(self):
         archive = self.home / 'test.tar.gz'
         with tarfile.open(archive, 'w:gz') as stream:
