@@ -502,7 +502,14 @@ class Installer:
             output = self.run('fnm', 'exec', '--log-level=quiet', '--using=default', 'node', '-p', 'process.execPath', capture=True)
             self.env['PATH'] = str(Path(output.strip()).parent) + os.pathsep + self.env['PATH']
         config = manifest(ROOT / 'profiles/common/vscode-extension.yaml')
+        installed = set()
+        if self.args.apply:
+            installed = {extension.casefold() for extension in
+                         self.run(command, '--list-extensions', capture=True).splitlines()}
         for extension in config['common'] + config.get(self.args.profile, []):
+            if extension.casefold() in installed:
+                print(f'Skip installed extension: {extension}')
+                continue
             try:
                 self.run(command, '--install-extension', extension)
             except subprocess.CalledProcessError:

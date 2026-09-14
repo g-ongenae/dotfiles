@@ -79,6 +79,31 @@ class InstallerTests(unittest.TestCase):
         run.assert_not_called()
         self.assertFalse(self.install.config.exists())
 
+    def test_extensions_skip_installed_ids_and_do_not_install_copilot_chat(self):
+        self.args.profile = 'macos'
+        self.args.only = ['extensions']
+        install = installer.Installer(self.args)
+        installed = '\n'.join((
+            'github.vscode-pull-request-github',
+            'MS-CEINTL.vscode-language-pack-fr',
+        ))
+        def run(*args, **kwargs):
+            if args[1:] == ('-p', 'process.execPath'):
+                return '/usr/bin/node'
+            if args[1:] == ('--list-extensions',):
+                return installed
+            return ''
+
+        with patch.object(installer.shutil, 'which', return_value='/usr/local/bin/code'), \
+                patch.object(install, 'run', side_effect=run) as run_mock:
+            install.extensions()
+
+        calls = [call.args for call in run_mock.call_args_list]
+        self.assertEqual(calls[1], ('code', '--list-extensions'))
+        installed_calls = [call for call in calls if call[1:] == ('--install-extension', 'GitHub.vscode-pull-request-github')]
+        self.assertFalse(installed_calls)
+        self.assertFalse(any('copilot' in ' '.join(map(str, call)).casefold() for call in calls))
+
     def test_t3_install_strategy_is_profile_specific(self):
         packages = installer.manifest(ROOT / 'profiles/common/npm-packages.yaml')
         self.assertIn('t3', packages['macos'])
@@ -378,6 +403,15 @@ class InstallerTests(unittest.TestCase):
         result = self.bash('. "$DOTFILES_DIR/shell/common/init.sh"; . "$DOTFILES_DIR/shell/interactive/init.bash"; alias g rp; ! alias b 2>/dev/null', interactive=True)
         self.assertIn("alias g='git'", result.stdout)
         self.assertIn("alias rp='ss -ltnp'", result.stdout)
+
+    def test_shared_t3_replaces_old_bashrc_helper_at_the_prompt(self):
+        (self.home / '.bashrc').write_text(
+            't3() { printf "old helper"; }\n'
+            'case $- in *i*) ;; *) return ;; esac\n')
+        self.shell()
+        result = self.bash('. "$HOME/.bashrc"; t3 --help', interactive=True)
+        self.assertIn('connect|disconnect', result.stdout)
+        self.assertNotIn('old helper', result.stdout)
 
     def test_macos_bash_startup_loads_all_reported_aliases(self):
         self.args.profile = 'macos'

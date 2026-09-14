@@ -19,8 +19,6 @@ common:
   - nrwl.angular-console
   - Arjun.swagger-viewer
   - bruno-api-client.bruno
-macos:
-  - GitHub.copilot
 # Build an unpublished extension at this inspected commit into a VSIX.
 source:
   - g-ongenae/mermaid-jsdoc-viewer 0efa248facf4b5b7e2e2307be63756caefa986ae
