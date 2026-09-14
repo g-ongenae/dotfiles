@@ -33,7 +33,8 @@ class T3Tests(unittest.TestCase):
                 'from pathlib import Path\n'
                 'with open(os.environ["CALL_LOG"], "a") as output:\n'
                 '    output.write(json.dumps([Path(sys.argv[0]).name] + sys.argv[1:]) + "\\n")\n'
-                'if Path(sys.argv[0]).name == "t3": print("  serve  Run the server")\n'
+                'if Path(sys.argv[0]).name == "t3":\n'
+                '    print("Pairing URL: https://server:3773/#token=code\\nToken: code\\nQR: ▄█" if sys.argv[1] == "pair" else "  serve  Run the server")\n'
                 'sys.exit(int(os.environ.get("COMMAND_EXIT", "0")))\n')
             tool.chmod(0o755)
 
@@ -75,8 +76,65 @@ class T3Tests(unittest.TestCase):
         self.assertEqual(self.run_t3('disconnect').returncode, 0)
         self.assertEqual(self.calls(), [
             ['sudo', 'tailscale', 'serve', '--bg', '--https=3773', 'http://127.0.0.1:3773'],
+            ['t3', 'pair', '--tailscale', '--tailscale-serve-port', '3773'],
             ['sudo', 'tailscale', 'serve', '--https=3773', 'off'],
         ])
+
+    def test_pairing_output_on_all_profiles(self):
+        for profile in ('fedora', 'debian-server', 'macos'):
+            result = self.run_t3('connect', DOTFILES_PROFILE=profile)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            for text in ('Pairing URL:', 'Token: code', 'QR: ▄█'):
+                self.assertIn(text, result.stdout)
+
+    def test_failed_serve_does_not_mint_credentials(self):
+        result = self.run_t3('connect', COMMAND_EXIT='1')
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(len(self.calls()), 1)
+
+    def test_remote_connect_runs_pairing_on_server(self):
+        result = self.run_t3('connect', T3_HOST='g@fujitsu')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        call = self.calls()[0]
+        self.assertEqual(call[:4], ['ssh', '-t', '--', 'g@fujitsu'])
+        # Execute the payload under a clean shell, as on the SSH server.
+        result = subprocess.run([str(self.bin / 'bash'), '-c', call[4]],
+                                env=self.env, text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Pairing URL:', result.stdout)
+        self.assertIn('QR: ▄█', result.stdout)
+        self.assertEqual(self.calls()[-1],
+                         ['t3', 'pair', '--tailscale', '--tailscale-serve-port', '3773'])
+
+    def test_pairing_supports_wrapper_and_extracted_appimage(self):
+        (self.bin / 't3').rename(self.bin / 't3code-server')
+        self.assertEqual(self.run_t3('connect').returncode, 0)
+        self.assertEqual(self.calls()[-1][0], 't3code-server')
+        runtime = self.home / '.local/share/dotfiles/t3/appimage'
+        runtime.mkdir(parents=True)
+        (self.bin / 't3code-server').rename(runtime / 't3code')
+        self.assertEqual(self.run_t3('connect').returncode, 0)
+        self.assertEqual(self.calls()[-1], [
+            't3code', str(runtime / 'resources/app.asar/apps/server/dist/bin.mjs'),
+            'pair', '--tailscale', '--tailscale-serve-port', '3773'])
+
+    def test_missing_discovery_state_explains_recovery_without_restarting(self):
+        tool = self.bin / 't3'
+        tool.write_text(tool.read_text().replace(
+            'sys.exit(int(os.environ.get("COMMAND_EXIT", "0")))',
+            'print("NoRunningServerError: No running T3 Code server found."); sys.exit(1)'))
+        result = self.run_t3('connect')
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('t3 restart', result.stderr)
+        self.assertIn('T3CODE_HOME', result.stderr)
+        self.assertNotIn('NoRunningServerError', result.stderr)
+        self.assertFalse(any(call[0] == 'systemctl' for call in self.calls()))
+
+    def test_pairing_failure_is_propagated(self):
+        tool = self.bin / 't3'
+        tool.write_text(tool.read_text().replace(
+            'sys.exit(int(os.environ.get("COMMAND_EXIT", "0")))', 'sys.exit(9)'))
+        self.assertEqual(self.run_t3('connect').returncode, 9)
 
     def test_remote_disconnect_has_a_terminal_for_sudo(self):
         result = self.run_t3('disconnect', T3_HOST='g@fujitsu', COMMAND_EXIT='1')
@@ -97,6 +155,7 @@ class T3Tests(unittest.TestCase):
         self.assertEqual(self.run_t3('start', DOTFILES_PROFILE='macos', T3_HOST='g@fujitsu').returncode, 0)
         self.assertEqual(self.calls(), [
             ['tailscale', 'serve', '--bg', '--https=3773', 'http://127.0.0.1:3773'],
+            ['t3', 'pair', '--tailscale', '--tailscale-serve-port', '3773'],
             ['tailscale', 'serve', '--https=3773', 'off'],
             ['ssh', '--', 'g@fujitsu', 'systemctl --user start t3code.service'],
         ])

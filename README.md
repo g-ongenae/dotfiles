@@ -185,9 +185,21 @@ bypasses the shell helper when you need the npm CLI's own commands.
 an SSH terminal for the sudo prompt when remote. On macOS they use the Tailscale
 CLI or the CLI bundled in `/Applications/Tailscale.app`. Both devices must already be
 connected to the tailnet, and SSH access must already work. `connect` prints
-the HTTPS URL and may prompt to enable tailnet HTTPS. Port 3773 is reserved for
+a fresh pairing URL, pairing code (`Token`), and terminal QR code on Linux,
+macOS, and remote SSH connections. Scan the QR code or copy the pairing URL
+to the other device; the code can also be entered manually. It uses the server's
+T3 CLI `pair` command, so a current CLI supporting `pair --tailscale` is required
+(including for AppImage installations). Tokens expire after five minutes by
+default; run `t3 connect` again for a fresh one. Tailscale may prompt to enable
+tailnet HTTPS. Port 3773 is reserved for
 this helper; it leaves listeners on other ports alone. See the
 [Tailscale Serve command reference](https://tailscale.com/docs/reference/tailscale-cli/serve).
+If pairing cannot discover a running service, check `t3 status`. Start a stopped
+service with `t3 start`, or use `t3 restart` to recreate a running service's missing
+runtime discovery file, then retry `t3 connect`. Restarting briefly interrupts
+connections. If the service uses a custom data directory, set `T3CODE_HOME` to
+that same directory when connecting.
+
 Sharing persists across service restarts until `t3 disconnect`; `t3 stop`
 only stops the T3 service. Disconnecting removes the Serve listener, not the
 machine's tailnet membership or direct access to a T3 server bound to
