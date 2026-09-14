@@ -1,6 +1,8 @@
 case $- in *i*) ;; *) return 0 ;; esac
 [ "${DOTFILES_BASH_INITIALIZED:-}" = 1 ] && return 0
 DOTFILES_BASH_INITIALIZED=1
+# Supersede older t3 definitions in the user's existing .bashrc.
+. "$DOTFILES_DIR/shell/common/t3.sh"
 . "$DOTFILES_DIR/shell/interactive/aliases.sh"
 HISTSIZE=50000
 HISTFILESIZE=100000

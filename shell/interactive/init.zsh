@@ -1,6 +1,7 @@
 [[ -o interactive ]] || return 0
 [[ ${DOTFILES_ZSH_INITIALIZED:-} = 1 ]] && return 0
 DOTFILES_ZSH_INITIALIZED=1
+. "$DOTFILES_DIR/shell/common/t3.sh"
 . "$DOTFILES_DIR/shell/interactive/aliases.sh"
 HISTFILE="$HOME/.zsh_history"
 HISTSIZE=50000

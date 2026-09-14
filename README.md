@@ -147,6 +147,62 @@ the Tailscale app on macOS or running `sudo tailscale up` on Linux. The Debian
 repository key is scoped with `signed-by`, and Fedora uses upstream's signed
 repository metadata configuration.
 
+### T3 server helper
+
+All three profiles load the Fujitsu's `t3` Bash helper in Bash and Zsh. It
+controls a local server by default: `t3code.service` on Linux, or
+`com.dotfiles.t3code` through launchd on macOS. To create a service on a new
+machine after installing its packages, run `t3 setup`, then `t3 start`.
+Setup preserves an existing service and does not start a new one. New servers
+listen on `127.0.0.1:3773`. macOS/Fedora use the installed T3 CLI; Debian uses
+an existing `t3code-server` wrapper or extracts the installed AppImage.
+
+To control the Fujitsu from any machine instead, point the helper at its
+Tailscale name or an SSH config alias (replace the example with your actual host):
+
+```bash
+export T3_HOST=g@your-fujitsu-tailnet-name
+t3                  # inspect the service (also: t3 inspect or t3 status)
+t3 start
+t3 restart
+t3 logs             # follow the last 100 log lines; Ctrl-C exits
+t3 connect          # share http://127.0.0.1:3773 over Tailscale HTTPS :3773
+t3 disconnect       # remove that HTTPS listener
+t3 stop
+```
+
+Save `export T3_HOST=...` in `~/.config/dotfiles/local.bash` or `local.zsh`
+for interactive shells. Leave it unset on the server to manage the local
+service; `T3_HOST= t3 start` controls the local server for one command, and
+`unset T3_HOST` returns to local control persistently. Remote commands use the
+existing SSH configuration and authenticate as the user owning the service.
+Remote targets are Linux servers and do not need this checkout for control.
+Run `t3 setup` locally on each host that needs a service. An existing upstream
+T3 launch agent on macOS is preserved and used automatically. `command t3`
+bypasses the shell helper when you need the npm CLI's own commands.
+
+`connect` and `disconnect` run `sudo tailscale serve` on Linux, requesting
+an SSH terminal for the sudo prompt when remote. On macOS they use the Tailscale
+CLI or the CLI bundled in `/Applications/Tailscale.app`. Both devices must already be
+connected to the tailnet, and SSH access must already work. `connect` prints
+the HTTPS URL and may prompt to enable tailnet HTTPS. Port 3773 is reserved for
+this helper; it leaves listeners on other ports alone. See the
+[Tailscale Serve command reference](https://tailscale.com/docs/reference/tailscale-cli/serve).
+Sharing persists across service restarts until `t3 disconnect`; `t3 stop`
+only stops the T3 service. Disconnecting removes the Serve listener, not the
+machine's tailnet membership or direct access to a T3 server bound to
+`0.0.0.0`. Bind T3 to `127.0.0.1` if access should go exclusively through Serve.
+
+Apply with `./install.sh --apply --only shell` and open a new terminal, or
+try it now with `bash scripts/t3.sh --help`. This installs the helper without
+creating a T3 service or changing a running server or Tailscale connection.
+`t3 setup` is a separate, explicit action. On Linux, enable the unit with
+`systemctl --user enable t3code.service` if you want automatic startup; keeping
+it running after logout also needs user lingering. macOS starts a configured
+service at login and requires a logged-in desktop session for launchd control.
+The generated launcher loads this checkout's shared environment so agents get
+the configured Node and tool paths.
+
 macOS additionally installs the requested Google Cloud, Kubernetes, Terraform,
 Helm, Telepresence, minikube, Wireshark, macFUSE, Docker Desktop, Insomnia, Volta,
 and Dev Container CLI tools. Approve applications, system extensions, licenses,

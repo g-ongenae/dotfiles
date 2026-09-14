@@ -1,6 +1,7 @@
 # Shared environment for Bash and Zsh, including noninteractive SSH commands.
 # Keep this POSIX-compatible, silent, and free of subprocesses or prompt hooks.
 [ -n "${DOTFILES_DIR:-}" ] || return 0
+. "$DOTFILES_DIR/shell/common/t3.sh"
 
 dotfiles_prepend_path() {
     [ -d "$1" ] || return 0
