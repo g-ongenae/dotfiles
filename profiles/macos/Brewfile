@@ -1,3 +1,10 @@
+# Explicit trust for the third-party taps used on this workstation, including
+# existing Multi-Gitter/MongoDB installs handled by brew upgrade.
+tap 'telepresenceio/telepresence', trusted: true
+tap 'hashicorp/tap', trusted: true
+tap 'lindell/multi-gitter', trusted: true
+tap 'mongodb/brew', trusted: true
+
 # Common command-line tools. Duplicates/aliases are installed once.
 brew 'zsh'
 brew 'zsh-completions'
@@ -70,12 +77,10 @@ cask 'antigravity'
 # macOS-only operations tools.
 cask 'gcloud-cli'
 cask 'macfuse'
-tap 'telepresenceio/telepresence'
 brew 'telepresenceio/telepresence/telepresence-oss'
 brew 'minikube'
 brew 'kubernetes-cli'
 brew 'kube-ps1'
-tap 'hashicorp/tap'
 brew 'hashicorp/tap/terraform'
 brew 'helm'
 cask 'wireshark-app'

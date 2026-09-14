@@ -143,6 +143,12 @@ Helm, Telepresence, minikube, Wireshark, macFUSE, Docker Desktop, Insomnia, Volt
 and Dev Container CLI tools. Approve applications, system extensions, licenses,
 and any debugger code-signing prompts yourself.
 
+The Brewfile explicitly trusts the Telepresence, HashiCorp, Multi-Gitter and
+MongoDB taps using Homebrew's
+[`trusted: true` declarations](https://docs.brew.sh/Brew-Bundle-and-Brewfile#trusted).
+The latter two support existing workstation installations during upgrades;
+their packages and database services are not added automatically.
+
 Shared tools use native package managers where appropriate, plus upstream Linux
 releases for Starship, Atuin, eza, difftastic, skim, zoxide, fnm, uv, hadolint and
 yq. Linux yh uses Go; git-plus and tldr use isolated uv tool environments; fx
