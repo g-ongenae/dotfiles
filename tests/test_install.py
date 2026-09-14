@@ -414,6 +414,43 @@ class InstallerTests(unittest.TestCase):
             self.install.release('example/tool tool tool')
         self.assertFalse(self.install.bin.exists())
 
+    def test_antigravity_native_install_across_profiles_and_architectures(self):
+        stream = io.BytesIO()
+        with tarfile.open(fileobj=stream, mode='w:gz') as archive:
+            entry = tarfile.TarInfo('antigravity')
+            entry.size = 4
+            archive.addfile(entry, io.BytesIO(b'tool'))
+        payload = stream.getvalue()
+        metadata = {'version': '1.2.2', 'url': 'https://example.test/cli.tar.gz',
+                    'sha512': hashlib.sha512(payload).hexdigest()}
+        for profile in installer.PROFILES:
+            for machine, arch in (('x86_64', 'amd64'), ('aarch64', 'arm64')):
+                with self.subTest(profile=profile, machine=machine):
+                    self.args.profile = profile
+                    install = installer.Installer(self.args)
+                    self.assertIn('antigravity', install.common['agents'])
+                    with patch.object(installer.platform, 'machine', return_value=machine), \
+                            patch.object(installer, 'fetch', side_effect=[json.dumps(metadata).encode(), payload]) as fetch, \
+                            patch.object(installer.subprocess, 'run', side_effect=AssertionError('unexpected installer execution')):
+                        install.antigravity()
+                    system = 'darwin' if profile == 'macos' else 'linux'
+                    self.assertTrue(fetch.call_args_list[0].args[0].endswith(f'/manifests/{system}_{arch}.json'))
+                    self.assertEqual((install.bin / 'agy').read_bytes(), b'tool')
+                    self.assertEqual((install.bin / 'agy').stat().st_mode & 0o777, 0o755)
+                    self.assertFalse((self.home / '.bashrc').exists())
+                    self.assertFalse((self.home / '.zshrc').exists())
+
+    def test_antigravity_checksum_failure_preserves_existing_binary(self):
+        self.install.bin.mkdir(parents=True)
+        binary = self.install.bin / 'agy'
+        binary.write_bytes(b'previous version')
+        metadata = {'version': '1.2.2', 'url': 'https://example.test/cli.tar.gz', 'sha512': '0' * 128}
+        with patch.object(installer.platform, 'machine', return_value='x86_64'), \
+                patch.object(installer, 'fetch', side_effect=[json.dumps(metadata).encode(), b'bad']), \
+                self.assertRaisesRegex(ValueError, 'Checksum mismatch'):
+            self.install.antigravity()
+        self.assertEqual(binary.read_bytes(), b'previous version')
+
     def test_browser_extensions_are_profile_specific(self):
         self.args.profile = 'fedora'
         self.install.browsers()

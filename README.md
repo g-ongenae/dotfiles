@@ -124,7 +124,7 @@ Send a packet with `wakeonlan <MAC-address>` on Debian or `wol <MAC-address>` on
 | Git GUI | GitHub Desktop | shiftkey's GitHub Desktop | — |
 | Proxy inspector | Proxyman | Proxyman AppImage | — |
 | Agents | Claude Code, Gemini CLI | Codex, Claude Code, Gemini CLI | Codex, Claude Code, Gemini CLI |
-| Antigravity | Homebrew desktop app | Official RPM repository | — |
+| Antigravity | CLI | CLI | CLI |
 | Tailscale | Standalone desktop app | Official stable RPM repository | Official stable APT repository |
 | T3 Code | npm package | npm package | upstream AppImage |
 
@@ -133,11 +133,11 @@ FocusWriter, OBS Studio, Sound Recorder, and SSH Pilot. Flameshot comes from dnf
 Switchyard needs first-run routing setup and selection as the default browser.
 
 Gemini CLI uses the [official npm package](https://geminicli.com/docs/get-started/installation/)
-with fnm's Node on every profile. Antigravity is a desktop application on macOS
-and Fedora; the Debian server stays headless. Fedora uses Google's
-[official repository](https://antigravity.google/download/linux), which currently
-disables RPM signature checks in its published configuration. Agent sign-in
-remains a manual first-run step.
+with fnm's Node on every profile. Antigravity CLI uses the native release manifest
+published through Google's [official installer](https://antigravity.google/cli/install.sh)
+on every profile. It verifies the release's SHA-512 checksum and installs `agy`
+under `~/.local/bin`, without invoking upstream's shell-profile editing step.
+Run `agy` to start the CLI; agent sign-in remains a manual first-run step.
 
 Tailscale uses the `tailscale-app` Homebrew cask on macOS and the
 [official stable repositories](https://pkgs.tailscale.com/stable/) on Linux.

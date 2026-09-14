@@ -1,7 +1,0 @@
-# Official repository: https://antigravity.google/download/linux
-[antigravity-rpm]
-name=Antigravity RPM Repository
-baseurl=https://us-central1-yum.pkg.dev/projects/antigravity-auto-updater-dev/antigravity-rpm
-enabled=1
-# Upstream does not currently publish RPM signatures.
-gpgcheck=0

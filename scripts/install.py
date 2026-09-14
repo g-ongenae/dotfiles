@@ -338,6 +338,33 @@ class Installer:
                     self.run('bash', installer, 'stable')
         if 'codex' in agents:
             self.run('npm', 'install', '--global', '@openai/codex')
+        if 'antigravity' in agents:
+            self.antigravity()
+
+    def antigravity(self):
+        print('Install Antigravity CLI from the official native release manifest')
+        if not self.args.apply:
+            return
+        arch = {'x86_64': 'amd64', 'amd64': 'amd64', 'arm64': 'arm64',
+                'aarch64': 'arm64'}.get(platform.machine().lower())
+        if not arch:
+            raise ValueError('Antigravity CLI requires x86_64 or arm64')
+        system = 'darwin' if self.args.profile == 'macos' else 'linux'
+        # Source and SHA-512 verification match Google's cli/install.sh. Install
+        # the binary directly to avoid its native shell-profile editing handoff.
+        base = 'https://antigravity-cli-auto-updater-974169037036.us-central1.run.app'
+        release = json.loads(fetch(f'{base}/manifests/{system}_{arch}.json'))
+        payload = fetch(release['url'])
+        digest = hashlib.sha512(payload).hexdigest()
+        if digest != release['sha512']:
+            raise ValueError('Checksum mismatch for Antigravity CLI')
+        with tempfile.TemporaryDirectory(prefix='dotfiles-antigravity-') as directory:
+            archive = Path(directory) / 'release'
+            archive.write_bytes(payload)
+            self.write(self.bin / 'agy', extract_binary(archive, 'antigravity'), executable=True)
+        self.write(self.data / 'versions/antigravity.json',
+                   json.dumps({'version': release['version'], 'url': release['url'],
+                               'sha512': digest}, indent=2) + '\n')
 
     def vendor_packages(self):
         for entry in self.profile.get('repositories', []):
@@ -346,8 +373,6 @@ class Installer:
             print(f'Download repository configuration: {url}')
             self.write(source, fetch(url) if self.args.apply else b'')
             self.sudo('install', '-D', '-m', '644', source, destination)
-        for repo in sorted((ROOT / f'profiles/{self.args.profile}').glob('*.repo')):
-            self.sudo('install', '-m', '644', repo, '/etc/yum.repos.d/' + repo.name)
         packages = self.profile.get('vendor-packages', [])
         if packages:
             if self.args.profile == 'debian-server':

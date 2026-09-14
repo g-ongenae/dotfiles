@@ -21,6 +21,7 @@ linux-source:
   - zsh-lovers
 agents:
   - claude
+  - antigravity
 fedora-agents:
   - codex
 debian-server-agents:
