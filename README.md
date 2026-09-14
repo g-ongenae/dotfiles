@@ -231,9 +231,18 @@ and profile-specific defaults. The old Git-config symlink is converted to a
 regular include file without changing its source.
 
 Untouched copies of the previous Bash/Zsh startup templates migrate automatically.
+The exact old Bash template also migrates when other tools appended settings or
+an earlier installer surrounded it with managed blocks; those additions survive.
 Customized legacy startup files or custom `ZDOTDIR` assignments stop the shell
 step with an explanation; review and remove those old hooks before retrying.
 The new setup uses standard `~/.zshenv` / `~/.zshrc` locations.
+
+macOS installs Homebrew Bash and `bash-completion@2`, replacing the old conflicting
+`bash-completion` formula. Open a new terminal and run `bash` to use it. Explicit
+`/bin/bash` sessions still get environment and aliases, but skip modern prompt and
+completion integrations that require Bash 4.2+. Completions load through their
+framework entrypoint; individual files in `bash_completion.d` are never sourced
+as a startup loop. Rerun `./install.sh --apply --only packages,shell` to migrate.
 
 Before replacing existing content, the installer saves it under
 `~/.local/share/dotfiles/backups/` with restrictive permissions. Names contain

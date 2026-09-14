@@ -97,6 +97,18 @@ def extract_binary(path, name):
     raise ValueError(f'Expected exactly one {name} binary in {path.name}')
 
 
+def migrate_startup(filename, text):
+    if filename in ('.bashrc', '.bash_profile'):
+        # The old installer symlinked this template. Other tools often appended
+        # startup snippets, defeating the whole-file hash check. Remove only
+        # the exact known template and preserve additions and managed blocks.
+        legacy = (ROOT / 'scripts/legacy/bash_profile.bash').read_text().rstrip()
+        text = text.replace(legacy, '')
+    if hashlib.sha256(text.encode()).hexdigest() == LEGACY_HASHES.get(filename):
+        return ''
+    return text
+
+
 class Installer:
     def __init__(self, args):
         self.args = args
@@ -161,8 +173,7 @@ class Installer:
     def hook(self, path, body, prepend=False, label='managed'):
         start, end = f'# >>> dotfiles {label} >>>', f'# <<< dotfiles {label} <<<'
         text = path.read_text() if path.exists() else ''
-        if hashlib.sha256(text.encode()).hexdigest() == LEGACY_HASHES.get(path.name):
-            text = ''  # write() still backs up the original file on disk
+        text = migrate_startup(path.name, text)  # write() backs up the original
         if text.count(start) != text.count(end) or text.count(start) > 1:
             raise ValueError(f'Malformed managed block in {path}; refusing to overwrite')
         if start in text:
@@ -175,10 +186,8 @@ class Installer:
             path = self.home / filename
             if not path.exists():
                 continue
-            text = path.read_text()
-            if hashlib.sha256(text.encode()).hexdigest() == LEGACY_HASHES.get(filename):
-                continue
-            if re.search(r'^[^#\n]*(?:ZDOTDIR\s*=|/(?:run|system)/(?:env|alias|\.zshrc))', text, re.M):
+            text = migrate_startup(filename, path.read_text())
+            if re.search(r'^[^#\n]*(?:ZDOTDIR\s*=|/(?:run|system)/(?:\{?env|alias|\.zshrc)|CURRENT_SCRIPT=\$BASH_SOURCE|for completion_file in)', text, re.M):
                 raise ValueError(f'{path} has customized legacy startup/ZDOTDIR settings. Back it up and remove those settings before applying the shell step.')
 
     def ensure_identity(self):
@@ -402,7 +411,9 @@ class Installer:
         hook = 'if [ -r "$HOME/.config/dotfiles/session.sh" ]; then\n  . "$HOME/.config/dotfiles/session.sh"\n  . "$DOTFILES_DIR/shell/common/init.sh"\nfi'
         self.hook(self.home / '.zshenv', hook)
         self.hook(self.home / '.zshrc', hook + '\nif [ -n "${DOTFILES_DIR:-}" ]; then\n  . "$DOTFILES_DIR/shell/interactive/init.zsh"\nfi')
-        bash_hook = 'case $- in *i*) . "$DOTFILES_DIR/shell/interactive/init.bash" ;; esac'
+        # User startup snippets can overwrite DOTFILES_DIR/PATH. Restore the
+        # installed session immediately before loading prompt integrations.
+        bash_hook = 'case $- in\n  *i*)\n' + hook + '\n    if [ -n "${DOTFILES_DIR:-}" ]; then\n      . "$DOTFILES_DIR/shell/interactive/init.bash"\n    fi\n    ;;\nesac'
         # Debian's .bashrc returns early over SSH; put only environment above it.
         self.hook(self.home / '.bashrc', hook, prepend=True, label='environment')
         self.hook(self.home / '.bashrc', bash_hook)

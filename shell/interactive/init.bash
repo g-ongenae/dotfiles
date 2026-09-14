@@ -7,24 +7,30 @@ HISTFILESIZE=100000
 HISTCONTROL=ignoreboth
 shopt -s histappend
 
-if [ -r /usr/share/bash-completion/bash_completion ]; then
-    . /usr/share/bash-completion/bash_completion
-elif [ -r "${HOMEBREW_PREFIX:-}/etc/profile.d/bash_completion.sh" ]; then
-    . "$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh"
-fi
-command -v fnm >/dev/null 2>&1 && eval "$(fnm env --use-on-cd --shell bash)"
-if command -v fzf >/dev/null 2>&1; then
-    if dotfiles_fzf=$(fzf --bash 2>/dev/null); then
-        eval "$dotfiles_fzf"
-    elif [ -r /usr/share/doc/fzf/examples/key-bindings.bash ]; then
-        . /usr/share/doc/fzf/examples/key-bindings.bash
-        . /usr/share/doc/fzf/examples/completion.bash
+# Modern completion/prompt scripts use features unavailable in Apple's Bash
+# 3.2. Keep its environment and aliases usable; `bash` uses Homebrew's version.
+if (( BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2) )); then
+    if [ "${DOTFILES_PROFILE:-}" = macos ]; then
+        if [ -r "${HOMEBREW_PREFIX:-}/etc/profile.d/bash_completion.sh" ]; then
+            . "$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh"
+        fi
+    elif [ -r /usr/share/bash-completion/bash_completion ]; then
+        . /usr/share/bash-completion/bash_completion
     fi
-    unset dotfiles_fzf
+    command -v fnm >/dev/null 2>&1 && eval "$(fnm env --use-on-cd --shell bash)"
+    if command -v fzf >/dev/null 2>&1; then
+        if dotfiles_fzf=$(fzf --bash 2>/dev/null); then
+            eval "$dotfiles_fzf"
+        elif [ -r /usr/share/doc/fzf/examples/key-bindings.bash ]; then
+            . /usr/share/doc/fzf/examples/key-bindings.bash
+            . /usr/share/doc/fzf/examples/completion.bash
+        fi
+        unset dotfiles_fzf
+    fi
+    command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"
+    command -v starship >/dev/null 2>&1 && eval "$(starship init bash)"
+    command -v atuin >/dev/null 2>&1 && eval "$(atuin init bash)"
 fi
-command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"
-command -v starship >/dev/null 2>&1 && eval "$(starship init bash)"
-command -v atuin >/dev/null 2>&1 && eval "$(atuin init bash)"
 case "${DOTFILES_PROFILE:-}" in
     macos) . "$DOTFILES_DIR/shell/macos/interactive.sh" ;;
     fedora|debian-server) . "$DOTFILES_DIR/shell/linux/interactive.sh" ;;

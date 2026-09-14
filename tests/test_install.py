@@ -182,10 +182,70 @@ class InstallerTests(unittest.TestCase):
             self.shell()
         self.assertFalse(self.install.config.exists())
 
+    def test_legacy_bash_with_appended_settings_and_managed_blocks_migrates(self):
+        legacy = (ROOT / 'scripts/legacy/bash_profile.bash').read_text()
+        for filename in ('.bashrc', '.bash_profile'):
+            path = self.home / filename
+            original = ('# >>> dotfiles environment >>>\nDOTFILES_DIR=.\n'
+                        '# <<< dotfiles environment <<<\n' + legacy +
+                        '\nexport PERSONAL_SETTING=preserved\n')
+            path.write_text(original)
+        self.args.profile = 'macos'
+        self.shell()
+        for filename in ('.bashrc', '.bash_profile'):
+            text = (self.home / filename).read_text()
+            self.assertNotIn('for completion_file', text)
+            self.assertNotIn('CURRENT_SCRIPT=', text)
+            self.assertIn('PERSONAL_SETTING=preserved', text)
+            result = self.bash('. "$HOME/' + filename + '"; alias g; printf "%s" "$PERSONAL_SETTING"', interactive=True)
+            self.assertIn("alias g='git'", result.stdout)
+            self.assertTrue(result.stdout.endswith('preserved'))
+            self.assertNotIn('command not found', result.stderr)
+            self.assertNotIn('No such file', result.stderr)
+        self.assertIn(original, [p.read_text() for p in (self.install.data / 'backups').iterdir()])
+        snapshot = (self.home / '.bashrc').read_text()
+        self.shell()
+        self.assertEqual(snapshot, (self.home / '.bashrc').read_text())
+
+    def test_modified_legacy_bash_resolver_is_detected_before_writes(self):
+        (self.home / '.bashrc').write_text('for DOTFILE in "$DOTFILES_DIR"/system/{env,alias}.sh; do\n  . "$DOTFILE"\ndone\n')
+        with self.assertRaisesRegex(ValueError, 'customized legacy'):
+            self.shell()
+        self.assertFalse(self.install.config.exists())
+
+    def test_bash_restores_checkout_path_after_user_startup(self):
+        (self.home / '.bashrc').write_text('DOTFILES_DIR=.\n')
+        self.shell()
+        result = self.bash('. "$HOME/.bashrc"; alias g; printf "%s" "$DOTFILES_DIR"', interactive=True)
+        self.assertIn("alias g='git'", result.stdout)
+        self.assertTrue(result.stdout.endswith(str(ROOT)))
+        self.assertNotIn('No such file', result.stderr)
+
+    def test_bash_integrations_require_a_supported_shell_version(self):
+        self.args.profile = 'macos'
+        fake_bin = self.home / 'bin'
+        fake_bin.mkdir()
+        for tool in ('fnm', 'fzf', 'zoxide', 'starship', 'atuin', 'kubectl'):
+            path = fake_bin / tool
+            path.write_text("#!/bin/sh\nprintf '%s\\n' 'export MODERN_INTEGRATION_CALLED=yes'\n")
+            path.chmod(0o755)
+        completion = self.home / 'brew/etc/profile.d/bash_completion.sh'
+        completion.parent.mkdir(parents=True)
+        completion.write_text('FRAMEWORK_CALLED=yes\n')
+        result = self.bash(
+            'PATH="$HOME/bin:$PATH"; HOMEBREW_PREFIX="$HOME/brew"; '
+            '. "$DOTFILES_DIR/shell/interactive/init.bash"; '
+            'printf "%s:%s:%s:%s" "${BASH_VERSINFO[0]}" "${BASH_VERSINFO[1]}" '
+            '"${FRAMEWORK_CALLED:-no}" "${MODERN_INTEGRATION_CALLED:-no}"', interactive=True)
+        major, minor, framework, integration = result.stdout.split(':')
+        expected = 'yes' if (int(major), int(minor)) >= (4, 2) else 'no'
+        self.assertEqual((framework, integration), (expected, expected))
+
     def bash(self, command, interactive=False):
         env = dict(HOME=str(self.home), PATH='/usr/bin:/bin', TERM='dumb',
                    DOTFILES_DIR=str(ROOT), DOTFILES_PROFILE=self.args.profile)
-        result = subprocess.run(['bash', '--noprofile', '--norc', '-ic' if interactive else '-c', command],
+        binary = os.environ.get('DOTFILES_TEST_BASH', 'bash')
+        result = subprocess.run([binary, '--noprofile', '--norc', '-ic' if interactive else '-c', command],
                                 env=env, text=True, capture_output=True, check=True)
         return result
 

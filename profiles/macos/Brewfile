@@ -6,6 +6,8 @@ tap 'lindell/multi-gitter', trusted: true
 tap 'mongodb/brew', trusted: true
 
 # Common command-line tools. Duplicates/aliases are installed once.
+brew 'bash'
+brew 'bash-completion@2', conflicts_with: ['bash-completion']
 brew 'zsh'
 brew 'zsh-completions'
 brew 'zsh-lovers'
