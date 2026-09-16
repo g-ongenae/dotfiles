@@ -5,6 +5,7 @@ usage() {
     printf '%s\n' 'Usage: t3 [setup|start|restart|stop|inspect|status|logs|connect|disconnect]' \
         'Set T3_HOST=user@tailnet-host to control a remote Linux server.' \
         'connect/disconnect enable/disable Tailscale Serve HTTPS on port 3773.' \
+        'connect [nosleep|--nosleep] also inhibits sleep on the Linux server until disconnect or server exit.' \
         'connect prints a fresh pairing URL, pairing code, and QR code on every platform.'
 }
 
@@ -50,7 +51,40 @@ pair_t3() (
     return "$result"
 )
 
-if [ "$#" -gt 1 ]; then
+# Keep these functions self-contained for remote hosts without dotfiles.
+start_t3_nosleep() {
+    local pid
+    pid=$(systemctl --user show t3code.service --property=MainPID --value) || return "$?"
+    if [[ ! "$pid" =~ ^[1-9][0-9]*$ ]]; then
+        printf 't3: run t3 start before connecting with nosleep.\n' >&2
+        return 1
+    fi
+    systemctl --user is-active --quiet t3code-nosleep.service && return 0
+    systemd-run --user --unit=t3code-nosleep --collect \
+        --property=BindsTo=t3code.service --property=After=t3code.service \
+        systemd-inhibit --what=sleep --why="Waiting for process" \
+        tail --pid="$pid" -f /dev/null
+}
+
+stop_t3_nosleep() {
+    local state
+    state=$(systemctl --user show t3code-nosleep.service --property=LoadState --value) || return "$?"
+    [ "$state" = not-found ] && return 0
+    systemctl --user stop t3code-nosleep.service
+}
+
+disconnect_t3() {
+    local result=0
+    sudo tailscale serve --https=3773 off || result=$?
+    stop_t3_nosleep || return "$?"
+    return "$result"
+}
+
+nosleep=false
+if [ "$#" -eq 2 ] && [ "$1" = connect ] &&
+    { [ "$2" = nosleep ] || [ "$2" = --nosleep ]; }; then
+    nosleep=true
+elif [ "$#" -gt 1 ]; then
     usage >&2
     exit 2
 fi
@@ -75,13 +109,18 @@ esac
 if [ -n "${T3_HOST:-}" ]; then
     # Every remote command word comes from the fixed action table above.
     case "$action" in
-        connect) exec ssh -t -- "$T3_HOST" "$(declare -f pair_t3)
-$* && pair_t3" ;;
-        disconnect) exec ssh -t -- "$T3_HOST" "$*" ;;
+        connect) exec ssh -t -- "$T3_HOST" "$(declare -f pair_t3 start_t3_nosleep)
+$* && { if $nosleep; then start_t3_nosleep; fi; } && pair_t3" ;;
+        disconnect) exec ssh -t -- "$T3_HOST" "$(declare -f stop_t3_nosleep disconnect_t3)
+disconnect_t3" ;;
     esac
     exec ssh -- "$T3_HOST" "$*"
 fi
 if [ "${DOTFILES_PROFILE:-}" = macos ]; then
+    if "$nosleep"; then
+        printf 't3: nosleep requires a Linux server; set T3_HOST=user@tailnet-host.\n' >&2
+        exit 2
+    fi
     case "$action" in
         connect|disconnect)
             if command -v tailscale >/dev/null 2>&1; then
@@ -116,7 +155,14 @@ if ! command -v "$1" >/dev/null 2>&1; then
 fi
 if [ "$action" = connect ]; then
     "$@" || exit "$?"
+    if "$nosleep"; then
+        start_t3_nosleep || exit "$?"
+    fi
     pair_t3
+    exit "$?"
+fi
+if [ "$action" = disconnect ]; then
+    disconnect_t3
     exit "$?"
 fi
 exec "$@"

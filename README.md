@@ -167,7 +167,8 @@ t3 start
 t3 restart
 t3 logs             # follow the last 100 log lines; Ctrl-C exits
 t3 connect          # share http://127.0.0.1:3773 over Tailscale HTTPS :3773
-t3 disconnect       # remove that HTTPS listener
+t3 connect nosleep  # also keep the Linux server awake (alias: --nosleep)
+t3 disconnect       # remove that HTTPS listener and release the sleep inhibitor
 t3 stop
 ```
 
@@ -199,6 +200,13 @@ service with `t3 start`, or use `t3 restart` to recreate a running service's mis
 runtime discovery file, then retry `t3 connect`. Restarting briefly interrupts
 connections. If the service uses a custom data directory, set `T3CODE_HOME` to
 that same directory when connecting.
+
+On Linux, `t3 connect nosleep` starts a `t3code-nosleep` systemd user service
+running `systemd-inhibit --what=sleep` while waiting for the T3 server process.
+It survives closing the terminal or SSH session; repeated calls reuse it.
+`t3 disconnect` releases it, as does stopping or restarting the T3 service.
+After a restart, run `t3 connect nosleep` again to inhibit sleep. With `T3_HOST`,
+the inhibitor runs on the remote Linux server. Local macOS nosleep is unsupported.
 
 Sharing persists across service restarts until `t3 disconnect`; `t3 stop`
 only stops the T3 service. Disconnecting removes the Serve listener, not the

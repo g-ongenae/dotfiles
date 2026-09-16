@@ -25,7 +25,7 @@ class T3Tests(unittest.TestCase):
                         DOTFILES_DIR=str(ROOT), CALL_LOG=str(self.log))
         (self.bin / 'bash').symlink_to(shutil.which('bash'))
         (self.bin / 'python3').symlink_to(sys.executable)
-        for name in ('systemctl', 'journalctl', 'ssh', 'tailscale', 'sudo', 'launchctl', 't3', 'tail'):
+        for name in ('systemctl', 'systemd-run', 'journalctl', 'ssh', 'tailscale', 'sudo', 'launchctl', 't3', 'tail'):
             tool = self.bin / name
             tool.write_text(
                 f'#!{sys.executable}\n'
@@ -33,6 +33,11 @@ class T3Tests(unittest.TestCase):
                 'from pathlib import Path\n'
                 'with open(os.environ["CALL_LOG"], "a") as output:\n'
                 '    output.write(json.dumps([Path(sys.argv[0]).name] + sys.argv[1:]) + "\\n")\n'
+                'if Path(sys.argv[0]).name == "sudo" and "SERVE_EXIT" in os.environ: sys.exit(int(os.environ["SERVE_EXIT"]))\n'
+                'if Path(sys.argv[0]).name == "systemctl":\n'
+                '    if "--property=MainPID" in sys.argv: print(os.environ.get("MAIN_PID", "1234"))\n'
+                '    if "--property=LoadState" in sys.argv: print(os.environ.get("NOSLEEP_STATE", "not-found"))\n'
+                '    if "is-active" in sys.argv: sys.exit(0 if os.environ.get("NOSLEEP_STATE") == "loaded" else 3)\n'
                 'if Path(sys.argv[0]).name == "t3":\n'
                 '    print("Pairing URL: https://server:3773/#token=code\\nToken: code\\nQR: ▄█" if sys.argv[1] == "pair" else "  serve  Run the server")\n'
                 'sys.exit(int(os.environ.get("COMMAND_EXIT", "0")))\n')
@@ -78,6 +83,7 @@ class T3Tests(unittest.TestCase):
             ['sudo', 'tailscale', 'serve', '--bg', '--https=3773', 'http://127.0.0.1:3773'],
             ['t3', 'pair', '--tailscale', '--tailscale-serve-port', '3773'],
             ['sudo', 'tailscale', 'serve', '--https=3773', 'off'],
+            ['systemctl', '--user', 'show', 't3code-nosleep.service', '--property=LoadState', '--value'],
         ])
 
     def test_pairing_output_on_all_profiles(self):
@@ -139,8 +145,53 @@ class T3Tests(unittest.TestCase):
     def test_remote_disconnect_has_a_terminal_for_sudo(self):
         result = self.run_t3('disconnect', T3_HOST='g@fujitsu', COMMAND_EXIT='1')
         self.assertEqual(result.returncode, 1)
-        self.assertEqual(self.calls(), [
-            ['ssh', '-t', '--', 'g@fujitsu', 'sudo tailscale serve --https=3773 off']])
+        self.assertEqual(self.calls()[0][:4], ['ssh', '-t', '--', 'g@fujitsu'])
+        self.assertTrue(self.calls()[0][4].endswith('\ndisconnect_t3'))
+
+    def test_nosleep_starts_inhibitor_for_server_pid(self):
+        result = self.run_t3('connect', 'nosleep')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn([
+            'systemd-run', '--user', '--unit=t3code-nosleep', '--collect',
+            '--property=BindsTo=t3code.service', '--property=After=t3code.service',
+            'systemd-inhibit', '--what=sleep', '--why=Waiting for process',
+            'tail', '--pid=1234', '-f', '/dev/null'], self.calls())
+
+    def test_nosleep_repeated_connect_reuses_inhibitor(self):
+        result = self.run_t3('connect', '--nosleep', NOSLEEP_STATE='loaded')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(call[0] == 'systemd-run' for call in self.calls()))
+
+    def test_nosleep_requires_running_server(self):
+        result = self.run_t3('connect', 'nosleep', MAIN_PID='0')
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('t3 start', result.stderr)
+        self.assertFalse(any(call[0] in ('systemd-run', 't3') for call in self.calls()))
+
+    def test_disconnect_releases_inhibitor_even_if_serve_fails(self):
+        for status in ('0', '1'):
+            result = self.run_t3('disconnect', NOSLEEP_STATE='loaded', SERVE_EXIT=status)
+            self.assertEqual(result.returncode, int(status))
+            self.assertEqual(self.calls()[-1],
+                             ['systemctl', '--user', 'stop', 't3code-nosleep.service'])
+
+    def test_remote_nosleep_and_cleanup_run_on_server(self):
+        for action, args in [('connect', ('--nosleep',)), ('disconnect', ())]:
+            result = self.run_t3(action, *args, T3_HOST='g@fujitsu', DOTFILES_PROFILE='macos')
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = self.calls()[-1][4]
+            result = subprocess.run([str(self.bin / 'bash'), '-c', payload],
+                                    env=dict(self.env, NOSLEEP_STATE='loaded' if action == 'disconnect' else 'not-found'),
+                                    text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(any(call[0] == 'systemd-run' for call in self.calls()))
+        self.assertEqual(self.calls()[-1], ['systemctl', '--user', 'stop', 't3code-nosleep.service'])
+
+    def test_local_macos_nosleep_explains_linux_requirement(self):
+        result = self.run_t3('connect', 'nosleep', DOTFILES_PROFILE='macos')
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('Linux', result.stderr)
+        self.assertEqual(self.calls(), [])
 
     def test_missing_tailscale_does_not_run_sudo(self):
         (self.bin / 'tailscale').unlink()
