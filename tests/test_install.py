@@ -7,6 +7,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import shlex
 import shutil
 import subprocess
@@ -421,6 +422,35 @@ class InstallerTests(unittest.TestCase):
                 result = self.bash('. "$HOME/' + filename + '"; alias d p nr', interactive=True)
                 for name, command in (('d', 'docker'), ('p', 'pnpm'), ('nr', 'npm run')):
                     self.assertIn(f"alias {name}='{command}'", result.stdout)
+
+    def test_loaded_zsh_plugins_are_registered_installed_and_resolvable(self):
+        # These three lists drifted apart before: a plugin was named in
+        # .gitmodules but never initialized by the installer and never sourced,
+        # and the loader only looked for one of the two entrypoint spellings.
+        loader = (ROOT / 'shell/interactive/init.zsh').read_text()
+        names = re.search(r'for dotfiles_plugin in ([^;]+); do', loader)
+        self.assertIsNotNone(names, 'plugin loop not found in init.zsh')
+        plugins = names.group(1).split()
+        self.assertIn('nx-completion', plugins)
+        installer = (ROOT / 'scripts/install.py').read_text()
+        modules = (ROOT / '.gitmodules').read_text()
+        for name in plugins:
+            with self.subTest(plugin=name):
+                self.assertIn(f"'zsh/plugins/{name}'", installer)
+                self.assertIn(f'path = zsh/plugins/{name}\n', modules)
+                directory = ROOT / 'zsh/plugins' / name
+                if not directory.is_dir() or not any(directory.iterdir()):
+                    continue  # submodule not checked out; wiring is still verified
+                self.assertTrue(
+                    (directory / f'{name}.zsh').is_file()
+                    or (directory / f'{name}.plugin.zsh').is_file(),
+                    f'{name} has no {name}.zsh or {name}.plugin.zsh entrypoint')
+
+    def test_removed_volta_plugin_is_not_referenced_anywhere(self):
+        # Brew's volta formula ships _volta; the plugin only fought fnm for PATH.
+        self.assertNotIn('volta', (ROOT / '.gitmodules').read_text())
+        self.assertNotIn('volta', (ROOT / 'shell/interactive/init.zsh').read_text())
+        self.assertFalse((ROOT / 'zsh/plugins/volta').exists())
 
     def test_nx_is_a_function_running_the_nearest_workspace_binary(self):
         # It must not be an alias: nx-completion calls `nx --help` from inside a

@@ -81,13 +81,18 @@ lists of strings. Quote strings containing `: ` or ` #`; nested objects,
 anchors and inline comments are rejected. No PyYAML bootstrap is needed.
 
 `zsh/plugins/` retains the existing pinned submodule paths. Autosuggestions,
-syntax highlighting and nx-completion are the plugins initialized and loaded;
-Oh My Zsh, pipenv, jq and Volta plugins are not required by the new shell setup.
+syntax highlighting, nx-completion and jq are the plugins initialized and loaded;
+Oh My Zsh and pipenv plugins are not required by the new shell setup.
 The loader accepts either `<plugin>/<plugin>.zsh` or `<plugin>/<plugin>.plugin.zsh`
 as an entrypoint, so adding a plugin means cloning it as a submodule under
 `zsh/plugins/` and naming it in the loop in `shell/interactive/init.zsh` plus the
-`git submodule update --init` call in `scripts/install.py`. nx-completion needs
-`jq`, already in every profile's package list.
+`git submodule update --init` call in `scripts/install.py`.
+
+Both nx-completion and jq need `jq` itself, and jq additionally needs `fzf`; both
+are in every profile's package list. The jq plugin is a REPL widget, not a
+completion: it binds `alt+j` to an interactive query builder and puts its `bin/`
+(`jq-repl`, `jq-paths`) on PATH. Completion for `jq` comes from zsh's bundled
+`_jq`.
 
 `nx` is a function in `shell/interactive/aliases.sh`, not an alias: it searches
 upwards from the current directory for `node_modules/.bin/nx` so it works from
@@ -276,9 +281,12 @@ few minutes. It does not replace `/usr/bin/git` or build documentation.
 fnm installs the latest Node LTS and selects it as default on every profile.
 A generated Node path makes that version available to noninteractive SSH/builds.
 Run the packages step again after changing/removing the default Node version.
-Volta is installed on macOS, but fnm's selected Node has PATH priority; the old
-Volta shell plugin is not loaded. Global npm packages belong to the selected
-Node version and are installed again when the LTS changes.
+Volta is installed on macOS, but fnm's selected Node has PATH priority. The old
+`cowboyd/zsh-volta` submodule was removed: it contributed no completion (brew's
+volta formula ships `_volta`, found through `fpath`), it put `~/.volta/bin` ahead
+of fnm, and it ran a `curl | bash` installer at shell startup. Global npm
+packages belong to the selected Node version and are installed again when the
+LTS changes.
 
 pnpm is installed through npm alongside fnm's default Node, ahead of old Volta
 shims. Global npm installs explicitly target that Node's prefix, even if an old
