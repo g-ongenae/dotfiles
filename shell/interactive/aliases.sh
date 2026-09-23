@@ -20,6 +20,22 @@ root() {
     cd "$dotfiles_git_root" || return
     unset dotfiles_git_root
 }
+# Run the workspace-local Nx, searching upwards for node_modules/.bin/nx so it
+# works from any package of a monorepo. Deliberately a function, not an alias:
+# the zsh completion plugin runs `nx --help` from inside a function, and aliases
+# are invisible there, which is why completion never fired for `pnpm exec nx`.
+nx() {
+    dotfiles_nx_dir=$PWD
+    while [ -n "$dotfiles_nx_dir" ]; do
+        if [ -x "$dotfiles_nx_dir/node_modules/.bin/nx" ]; then
+            "$dotfiles_nx_dir/node_modules/.bin/nx" "$@"
+            return
+        fi
+        dotfiles_nx_dir=${dotfiles_nx_dir%/*}
+    done
+    echo "nx: no node_modules/.bin/nx found in $PWD or its parents" >&2
+    return 127
+}
 update_repos() { bash "$DOTFILES_DIR/scripts/update-repos.sh" "$@"; }
 update_deps() { bash "$DOTFILES_DIR/install.sh" --update "$@"; }
 :

@@ -418,10 +418,35 @@ class InstallerTests(unittest.TestCase):
         self.shell()
         for filename in ('.bashrc', '.bash_profile'):
             with self.subTest(filename=filename):
-                result = self.bash('. "$HOME/' + filename + '"; alias d nx p nr', interactive=True)
-                for name, command in (('d', 'docker'), ('nx', 'pnpm exec nx'),
-                                      ('p', 'pnpm'), ('nr', 'npm run')):
+                result = self.bash('. "$HOME/' + filename + '"; alias d p nr', interactive=True)
+                for name, command in (('d', 'docker'), ('p', 'pnpm'), ('nr', 'npm run')):
                     self.assertIn(f"alias {name}='{command}'", result.stdout)
+
+    def test_nx_is_a_function_running_the_nearest_workspace_binary(self):
+        # It must not be an alias: nx-completion calls `nx --help` from inside a
+        # completion function, where aliases are invisible.
+        self.args.profile = 'macos'
+        self.shell()
+        binary = self.home / 'workspace/node_modules/.bin/nx'
+        binary.parent.mkdir(parents=True)
+        binary.write_text('#!/bin/sh\nprintf "workspace nx: %s" "$*"\n')
+        binary.chmod(0o755)
+        nested = self.home / 'workspace/packages/app/src'
+        nested.mkdir(parents=True)
+        result = self.bash('. "$HOME/.bashrc"; cd ' + shlex.quote(str(nested)) +
+                           '; printf "%s:" "$(type -t nx)"; nx build app', interactive=True)
+        self.assertEqual(result.stdout, 'function:workspace nx: build app')
+
+    def test_nx_reports_a_clear_error_outside_a_workspace(self):
+        self.args.profile = 'macos'
+        self.shell()
+        outside = self.home / 'elsewhere'
+        outside.mkdir()
+        with self.assertRaises(subprocess.CalledProcessError) as caught:
+            self.bash('. "$HOME/.bashrc"; cd ' + shlex.quote(str(outside)) + '; nx build',
+                      interactive=True)
+        self.assertEqual(caught.exception.returncode, 127)
+        self.assertIn('no node_modules/.bin/nx found', caught.exception.stderr)
 
     def test_archive_extraction_does_not_follow_paths_or_links(self):
         archive = self.home / 'test.tar.gz'

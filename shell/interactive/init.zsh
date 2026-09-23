@@ -34,9 +34,13 @@ case "${DOTFILES_PROFILE:-}" in
     fedora|debian-server) . "$DOTFILES_DIR/shell/linux/interactive.sh" ;;
 esac
 # Keep the existing pinned submodules in their original paths.
-for dotfiles_plugin in zsh-autosuggestions zsh-syntax-highlighting; do
-    dotfiles_plugin_path="$DOTFILES_DIR/zsh/plugins/$dotfiles_plugin/$dotfiles_plugin.zsh"
-    [[ -r "$dotfiles_plugin_path" ]] && . "$dotfiles_plugin_path"
+# Upstreams name their entrypoint either <plugin>.zsh or <plugin>.plugin.zsh.
+for dotfiles_plugin in zsh-autosuggestions zsh-syntax-highlighting nx-completion; do
+    for dotfiles_plugin_path in \
+        "$DOTFILES_DIR/zsh/plugins/$dotfiles_plugin/$dotfiles_plugin.zsh" \
+        "$DOTFILES_DIR/zsh/plugins/$dotfiles_plugin/$dotfiles_plugin.plugin.zsh"; do
+        [[ -r "$dotfiles_plugin_path" ]] && . "$dotfiles_plugin_path" && break
+    done
 done
 unset dotfiles_plugin dotfiles_plugin_path
 if [[ -r "$DOTFILES_DIR/zsh/secret/alias.zsh" ]]; then

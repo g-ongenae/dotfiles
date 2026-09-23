@@ -80,9 +80,20 @@ deliberately use a small subset: top-level sections containing two-space-indente
 lists of strings. Quote strings containing `: ` or ` #`; nested objects,
 anchors and inline comments are rejected. No PyYAML bootstrap is needed.
 
-`zsh/plugins/` retains the existing pinned autosuggestion/highlighting submodule
-paths. Only those two plugins are initialized and loaded; Oh My Zsh, pipenv,
-jq and Volta plugins are not required by the new shell setup.
+`zsh/plugins/` retains the existing pinned submodule paths. Autosuggestions,
+syntax highlighting and nx-completion are the plugins initialized and loaded;
+Oh My Zsh, pipenv, jq and Volta plugins are not required by the new shell setup.
+The loader accepts either `<plugin>/<plugin>.zsh` or `<plugin>/<plugin>.plugin.zsh`
+as an entrypoint, so adding a plugin means cloning it as a submodule under
+`zsh/plugins/` and naming it in the loop in `shell/interactive/init.zsh` plus the
+`git submodule update --init` call in `scripts/install.py`. nx-completion needs
+`jq`, already in every profile's package list.
+
+`nx` is a function in `shell/interactive/aliases.sh`, not an alias: it searches
+upwards from the current directory for `node_modules/.bin/nx` so it works from
+any package of a monorepo. It must stay a function, because nx-completion runs
+`nx --help` from inside a completion function and aliases are not visible
+there — that is why completion never worked against a `pnpm exec nx` alias.
 
 ## What belongs in interactive?
 

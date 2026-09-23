@@ -489,7 +489,8 @@ class Installer:
         if self.args.profile == 'macos':
             self.write(self.home / '.finicky.js', (ROOT / 'apps/finicky.template.js').read_bytes())
         self.run('git', 'submodule', 'update', '--init', '--',
-                 'zsh/plugins/zsh-autosuggestions', 'zsh/plugins/zsh-syntax-highlighting', cwd=ROOT)
+                 'zsh/plugins/zsh-autosuggestions', 'zsh/plugins/zsh-syntax-highlighting',
+                 'zsh/plugins/nx-completion', cwd=ROOT)
 
     def extensions(self):
         if self.args.profile == 'debian-server':

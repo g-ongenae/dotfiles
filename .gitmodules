@@ -10,3 +10,6 @@
 [submodule "zsh/plugins/volta"]
 	path = zsh/plugins/volta
 	url = https://github.com/cowboyd/zsh-volta.git
+[submodule "zsh/plugins/nx-completion"]
+	path = zsh/plugins/nx-completion
+	url = https://github.com/jscutlery/nx-completion.git
