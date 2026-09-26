@@ -64,7 +64,10 @@ export default {
       // Default connected browser
       browser: Browsers.FIREFOX,
       match: [
+        "https://app.perimeter81.com/sign-in?redirectUrl=CheckPointSASE://perimeter81.com/macos/callback",
         "https://app.datadoghq.eu*",
+        "https://app.slack.com/*",
+        "https://wisprflow.ai/*",
         "*github.com*",
         "www.linkedin.com*",
         "docs.google.com*",
