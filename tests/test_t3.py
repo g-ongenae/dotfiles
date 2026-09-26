@@ -232,6 +232,59 @@ class T3Tests(unittest.TestCase):
             self.assertIn('T3_HOST', result.stderr)
         self.assertEqual(self.calls(), [])
 
+    def test_pair_mints_one_labelled_token_per_device(self):
+        # A token is one-time, so a second device is a second call, and the
+        # label is what tells the two apart in the server's own list.
+        self.assertEqual(self.run_t3('pair').returncode, 0)
+        result = self.run_t3('pair', 'phone', DOTFILES_PROFILE='macos')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Pairing URL:', result.stdout)
+        self.assertEqual(self.calls(), [
+            ['t3', 'pair', '--tailscale', '--tailscale-serve-port', '3773'],
+            ['t3', 'pair', '--tailscale', '--tailscale-serve-port', '3773', '--label', 'phone'],
+        ])
+
+    def test_devices_lists_both_kinds_and_revoke_drops_an_id(self):
+        self.assertEqual(self.run_t3('devices').returncode, 0)
+        self.assertEqual(self.run_t3('revoke', 'ab12-34').returncode, 0)
+        self.assertEqual(self.calls(), [
+            ['t3', '--log-level', 'none', 'auth', 'session', 'list'],
+            ['t3', '--log-level', 'none', 'auth', 'pairing', 'list'],
+            ['t3', '--log-level', 'none', 'auth', 'session', 'revoke', 'ab12-34'],
+            ['t3', '--log-level', 'none', 'auth', 'pairing', 'revoke', 'ab12-34'],
+        ])
+
+    def test_labels_and_ids_cannot_carry_a_command_to_a_server(self):
+        for argument in ('a;touch /tmp/no', "a'b", 'a b', '$(id)', '--label'):
+            result = self.run_t3('pair', argument, T3_HOST='g@fujitsu')
+            self.assertEqual(result.returncode, 2, argument)
+            self.assertIn('letters, digits', result.stderr)
+            self.assertEqual(self.calls(), [])
+        self.assertEqual(self.run_t3('revoke').returncode, 2)
+        self.assertEqual(self.calls(), [])
+
+    def test_pair_and_the_lists_reach_a_server_over_ssh(self):
+        for action, args, terminal in [('pair', ('laptop',), True),
+                                       ('devices', (), False),
+                                       ('revoke', ('ab12-34',), False)]:
+            self.assertEqual(self.run_t3(action, *args, T3_HOST='g@fujitsu').returncode, 0)
+            call = self.calls()[-1]
+            self.assertEqual(call[:4] if terminal else call[:3],
+                             ['ssh', '-t', '--', 'g@fujitsu'] if terminal else ['ssh', '--', 'g@fujitsu'])
+            payload = call[-1]
+            self.assertIn('t3_cli ()', payload)
+            # Execute the payload under a clean shell, as on the SSH server.
+            result = subprocess.run([str(self.bin / 'bash'), '-c', payload],
+                                    env=self.env, text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual([call for call in self.calls() if call[0] == 't3'], [
+            ['t3', 'pair', '--tailscale', '--tailscale-serve-port', '3773', '--label', 'laptop'],
+            ['t3', '--log-level', 'none', 'auth', 'session', 'list'],
+            ['t3', '--log-level', 'none', 'auth', 'pairing', 'list'],
+            ['t3', '--log-level', 'none', 'auth', 'session', 'revoke', 'ab12-34'],
+            ['t3', '--log-level', 'none', 'auth', 'pairing', 'revoke', 'ab12-34'],
+        ])
+
     def test_update_runs_the_updater_here_and_ships_it_to_a_server(self):
         # A machine with none of the tools installed updates nothing and,
         # having nothing to look up, reaches no network.

@@ -7,32 +7,61 @@
 #   * on Linux, systemctl/journalctl against the t3code.service user unit;
 #   * on macOS, scripts/t3-service.py, which drives launchd;
 #   * connect/disconnect, which publish the local server over Tailscale Serve;
-#   * update, which runs scripts/t3-update.py here or on the server.
+#   * update, which runs scripts/t3-update.py here or on the server;
+#   * pair/devices/revoke, which ask the server's own T3 CLI about the devices
+#     allowed to reach it.
 #
 # With T3_HOST set, the chosen command is sent to that host over SSH instead of
 # being run here.
 
 usage() {
-  printf '%s\n' 'Usage: t3 [setup|start|restart|stop|inspect|status|logs|connect|disconnect|update]' \
+  printf '%s\n' 'Usage: t3 [setup|start|restart|stop|inspect|status|logs|update]' \
+    '       t3 [connect [nosleep]|disconnect|pair [label]|devices|revoke <id>]' \
     'Set T3_HOST=user@tailnet-host to control a remote Linux server.' \
     'update updates the T3 CLI and the agents installed on the machine.' \
     'connect/disconnect enable/disable Tailscale Serve HTTPS on port 3773.' \
     'connect [nosleep|--nosleep] also inhibits sleep on the Linux server until disconnect or server exit.' \
-    'connect prints a fresh pairing URL, pairing code, and QR code on every platform.'
+    'connect prints a fresh pairing URL, pairing code, and QR code on every platform.' \
+    'A pairing token is one-time, so every device needs its own: pair [label] mints one.' \
+    'devices lists paired sessions and unused tokens; revoke <id> drops one of them.'
 }
 
 # --- Helpers shipped to remote hosts -----------------------------------------
 #
-# The three functions below are serialized with `declare -f` and sent over SSH,
-# so each one must stand on its own: no shared state, no dotfiles on the far end.
+# The functions below are serialized with `declare -f` and sent over SSH, so
+# each one must stand on its own: no shared state, no dotfiles on the far end.
+# Only t3_cli is shared, and every payload that needs it says so.
 
-# Print the pairing URL, code and QR code for the running server.
+# Run the server's own T3 CLI: the npm package, the Debian wrapper, or the
+# extracted AppImage, whose Electron binary has to be run as plain Node.
+#
+# Runs in a subshell -- `(` rather than `{` -- so that ELECTRON_RUN_AS_NODE
+# reaches the command that needs it and nothing else.
+t3_cli() (
+  local runtime="$HOME/.local/share/dotfiles/t3/appimage"
+  local -a cli
+  if command -v t3 > /dev/null 2>&1; then
+    cli=(t3)
+  elif command -v t3code-server > /dev/null 2>&1; then
+    cli=(t3code-server)
+  elif [ -x "$runtime/t3code" ]; then
+    export ELECTRON_RUN_AS_NODE=1
+    cli=("$runtime/t3code" "$runtime/resources/app.asar/apps/server/dist/bin.mjs")
+  else
+    printf 't3: install a current T3 CLI on the server to pair devices or list them.\n' >&2
+    return 127
+  fi
+
+  command "${cli[@]}" "$@"
+)
+
+# Print the pairing URL, code and QR code for the running server, for one
+# device. The token is one-time, so a second device needs a second call; an
+# optional label is what tells them apart in `t3 devices`.
 #
 # Runs in a subshell -- `(` rather than `{` -- so the PATH change and the EXIT
 # trap below cannot leak into the caller.
 pair_t3() (
-  local runtime="$HOME/.local/share/dotfiles/t3/appimage"
-
   # Upstream pair invokes lowercase `tailscale`, whereas the app bundles
   # an uppercase executable (also support case-sensitive macOS volumes).
   if ! command -v tailscale > /dev/null 2>&1 &&
@@ -44,23 +73,12 @@ pair_t3() (
     export PATH="$shim:$PATH"
   fi
 
-  # Find a T3 CLI: the npm package, the Debian wrapper, or the extracted
-  # AppImage, whose Electron binary has to be run as plain Node.
-  if command -v t3 > /dev/null 2>&1; then
-    set -- t3
-  elif command -v t3code-server > /dev/null 2>&1; then
-    set -- t3code-server
-  elif [ -x "$runtime/t3code" ]; then
-    export ELECTRON_RUN_AS_NODE=1
-    set -- "$runtime/t3code" "$runtime/resources/app.asar/apps/server/dist/bin.mjs"
-  else
-    printf 't3: install a current T3 CLI with the pair command on the server to print pairing details.\n' >&2
-    return 127
-  fi
+  local -a label=()
+  [ -n "${1:-}" ] && label=(--label "$1")
 
   # Capture both streams: a failure has to be inspected before it is shown.
   local output result
-  output=$(command "$@" pair --tailscale --tailscale-serve-port 3773 2>&1)
+  output=$(t3_cli pair --tailscale --tailscale-serve-port 3773 "${label[@]}" 2>&1)
   result=$?
 
   if [ "$result" -eq 0 ]; then
@@ -77,6 +95,22 @@ pair_t3() (
   fi
 
   return "$result"
+)
+
+# List every device that can reach this server: the sessions devices hold once
+# paired, then any token minted and not yet used. Neither reveals a secret.
+t3_devices() (
+  t3_cli --log-level none auth session list || return "$?"
+  t3_cli --log-level none auth pairing list
+)
+
+# Drop one id, from whichever of those two lists it came.
+#
+# The CLI reports an id it does not hold rather than failing, so both lists are
+# asked and one of the two answers is a line saying it held nothing.
+t3_revoke() (
+  t3_cli --log-level none auth session revoke "$1" || return "$?"
+  t3_cli --log-level none auth pairing revoke "$1"
 )
 
 # Keep these functions self-contained for remote hosts without dotfiles.
@@ -121,17 +155,46 @@ disconnect_t3() {
 
 # --- Argument parsing --------------------------------------------------------
 
-# `connect nosleep` is the only two-word invocation accepted.
+# Three invocations take a second word: `connect nosleep`, the label `pair`
+# accepts, and the id `revoke` requires. Everything else is a single action.
 nosleep=false
-if [ "$#" -eq 2 ] && [ "$1" = connect ] &&
-  { [ "$2" = nosleep ] || [ "$2" = --nosleep ]; }; then
-  nosleep=true
-elif [ "$#" -gt 1 ]; then
+argument=
+if [ "$#" -eq 2 ]; then
+  case "$1" in
+    connect)
+      if [ "$2" = nosleep ] || [ "$2" = --nosleep ]; then
+        nosleep=true
+      else
+        usage >&2
+        exit 2
+      fi
+      ;;
+    pair | revoke) argument=$2 ;;
+    *)
+      usage >&2
+      exit 2
+      ;;
+  esac
+elif [ "$#" -gt 2 ]; then
   usage >&2
   exit 2
 fi
 
 action=${1:-inspect}
+
+# A label or an id is the only part of a command that does not come from this
+# script, and it is pasted into a shell on the far end of an SSH connection.
+# Keep it to characters that cannot end an argument and start a command, and
+# to a first character that the T3 CLI cannot read as a flag of its own.
+if [ -n "$argument" ] && [[ ! "$argument" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+  printf 't3: a label or id starts with a letter or digit, then takes letters, digits, dot, dash and underscore.\n' >&2
+  exit 2
+fi
+
+if [ "$action" = revoke ] && [ -z "$argument" ]; then
+  printf 't3: revoke needs the id of a session or a token; run t3 devices for them.\n' >&2
+  exit 2
+fi
 
 # --- Map the action onto a command -------------------------------------------
 #
@@ -152,6 +215,9 @@ case "$action" in
   logs) set -- journalctl --user -u t3code.service -n 100 -f ;;
   # The updater stands on its own, so the remote branch can send it a copy.
   update) set -- python3 "${DOTFILES_DIR:?}/scripts/t3-update.py" ;;
+  # Asking the T3 CLI is the same work here and on a server, so these three
+  # map onto a function rather than onto a command to run or forward.
+  pair | devices | revoke) ;;
   connect) set -- sudo tailscale serve --bg --https=3773 http://127.0.0.1:3773 ;;
   disconnect) set -- sudo tailscale serve --https=3773 off ;;
   help | -h | --help)
@@ -173,17 +239,46 @@ if [ -n "${T3_HOST:-}" ]; then
     # connect and disconnect need the helper functions on the far end, so their
     # definitions are sent along with the command. -t allocates a terminal for
     # the sudo password prompt.
-    connect) exec ssh -t -- "$T3_HOST" "$(declare -f pair_t3 start_t3_nosleep)
+    connect) exec ssh -t -- "$T3_HOST" "$(declare -f t3_cli pair_t3 start_t3_nosleep)
 $* && { if $nosleep; then start_t3_nosleep; fi; } && pair_t3" ;;
     disconnect) exec ssh -t -- "$T3_HOST" "$(declare -f stop_t3_nosleep disconnect_t3)
 disconnect_t3" ;;
     # This checkout's updater, read by the server's python3 from the SSH
     # connection, so that the server needs no checkout of its own.
     update) exec ssh -- "$T3_HOST" python3 - < "${DOTFILES_DIR:?}/scripts/t3-update.py" ;;
+    # A label and an id reach the far end inside single quotes, which the
+    # characters allowed above cannot close. pair wants a terminal for its QR
+    # code; the other two only print text.
+    pair) exec ssh -t -- "$T3_HOST" "$(declare -f t3_cli pair_t3)
+pair_t3 '$argument'" ;;
+    devices) exec ssh -- "$T3_HOST" "$(declare -f t3_cli t3_devices)
+t3_devices" ;;
+    revoke) exec ssh -- "$T3_HOST" "$(declare -f t3_cli t3_revoke)
+t3_revoke '$argument'" ;;
   esac
 
   exec ssh -- "$T3_HOST" "$*"
 fi
+
+# --- Local: the T3 CLI's own answers -----------------------------------------
+#
+# Pairing and the lists behind it are the same work on either platform, so they
+# answer here rather than through the launchd and systemd branches below.
+
+case "$action" in
+  pair)
+    pair_t3 "$argument"
+    exit "$?"
+    ;;
+  devices)
+    t3_devices
+    exit "$?"
+    ;;
+  revoke)
+    t3_revoke "$argument"
+    exit "$?"
+    ;;
+esac
 
 # --- Local macOS -------------------------------------------------------------
 
@@ -201,12 +296,12 @@ tailscale_deadline=${T3_TAILSCALE_DEADLINE:-20}
 run_tailscale() (
   set -m
   "$@" &
-  local cli=$!
-  { sleep "$tailscale_deadline" && kill -KILL -"$cli"; } 2> /dev/null &
+  local pid=$!
+  { sleep "$tailscale_deadline" && kill -KILL -"$pid"; } 2> /dev/null &
   local timer=$!
 
   # The redirection drops the shell's own "Killed" job notice, not CLI output.
-  wait "$cli" 2> /dev/null
+  wait "$pid" 2> /dev/null
   local result=$?
   kill -- -"$timer" 2> /dev/null # the group, so the sleep goes with its shell
 
