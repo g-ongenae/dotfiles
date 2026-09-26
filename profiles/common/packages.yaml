@@ -15,6 +15,7 @@ linux-releases:
   - mikefarah/yq yq yq_linux_{debarch}
 linux-go:
   - github.com/andreazorzetto/yh@latest
+  - mvdan.cc/sh/v3/cmd/shfmt@latest
 linux-source:
   - git-latest
   - zsh-completions
@@ -28,3 +29,4 @@ debian-server-agents:
   - codex
 notes:
   - 'delta/git-delta and sk/skim are single tools. base64 is supplied by coreutils.'
+  - 'shfmt formats the shell files of this repository; ShellCheck is a native package everywhere.'

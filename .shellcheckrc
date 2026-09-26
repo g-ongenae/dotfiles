@@ -1,0 +1,23 @@
+# ShellCheck configuration for this repository.
+#
+# Run it through `scripts/lint.sh`, which also applies the shfmt formatting
+# rules declared in `.editorconfig`. Vendored Zsh plugins under `zsh/plugins/`
+# are never linted; `shell/interactive/init.zsh` is skipped because ShellCheck
+# has no Zsh dialect.
+#
+# Files without a shebang (everything that is sourced rather than executed)
+# declare their dialect themselves with a `# shellcheck shell=...` directive on
+# their first line.
+
+# The startup files source each other through $DOTFILES_DIR and pick up
+# optional host files (Homebrew, fzf, kube-ps1, ~/.config/dotfiles/...). Those
+# paths cannot be resolved statically, and checking them is not this repo's job.
+disable=SC1091
+
+# Opt-in checks that match how this repository is written.
+#   avoid-nullary-conditions   `[ -n "$x" ]` rather than the ambiguous `[ $x ]`
+#   deprecate-which            `command -v` rather than the non-standard `which`
+#
+# check-unassigned-uppercase is deliberately left off: the sourced startup files
+# read DOTFILES_DIR, HOMEBREW_PREFIX and friends from the surrounding session.
+enable=avoid-nullary-conditions,deprecate-which

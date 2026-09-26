@@ -1,8 +1,17 @@
 #!/bin/sh
-
-# Echo with colours
+# Echo with colours.
+#
+# Markup is `@<style>[[text]]`, where styles may be combined:
+#
+#   print-pretty.sh '@b@green[[Success]]'
+#   print-pretty.sh '@red[[Failed]] and @u[[underlined]]'
+#
+# The first expression turns `@style[[text]]` into `@style` + text + `@reset`,
+# so every styled run closes itself. The remaining ones replace each `@name`
+# with the terminal escape sequence `tput` reports for it.
+#
 # Corrected for MacOS from: https://stackoverflow.com/a/46331700/6086598
-# Example: print_colourful @b@green[[Success]]@reset
+
 echo "$@" | sed -E \
   -e "s/((@(red|green|yellow|blue|magenta|cyan|white|reset|b|u))+)\[{2}([^]]+)\]{2}/\1\4@reset/g" \
   -e "s/@red/$(tput setaf 1)/g" \

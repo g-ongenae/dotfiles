@@ -1,5 +1,10 @@
 #!/bin/sh
-
+# Update every Git repository in the current directory, exposed as
+# `update_repos` at the prompt.
+#
+#   update_repos            # update all repositories below the current directory
+#   update_repos -e a,b     # except the comma-separated ones
+#
 # Documentation for git-multi
 # https://github.com/tkrajina/git-plus
 
@@ -13,7 +18,8 @@ git multi status
 # Update the list of repos to ignore
 
 # -e for except
-if [ -n "${1}" ] && [ "${1}" == "-e" ] ; then
+# git-multi reads the ignore list from .multigit_ignore, one repository per line.
+if [ -n "${1}" ] && [ "${1}" = "-e" ]; then
   echo "${2}" | sed -e 's/,/\n/g' > .multigit_ignore
 fi
 
@@ -30,16 +36,22 @@ Executing git head
 --------------------------------------------------------------------------------
 "
 
-for DIR in ./*/ ; do
-  if [ -d "${DIR}/.git" ] ; then
+for DIR in ./*/; do
+  # Plain directories and submodule checkouts alike are skipped when they hold
+  # no .git entry.
+  if [ -d "${DIR}/.git" ]; then
     CURRENT_BRANCH=$(git -C "${DIR}" rev-parse --abbrev-ref HEAD)
+
     # Do not change branch if on main, master, develop or beta branches
-    if [ "${CURRENT_BRANCH}" != "main" ] && [ "${CURRENT_BRANCH}" != "master" ] && [ "${CURRENT_BRANCH}" != "develop" ] && [ "${CURRENT_BRANCH}" != "beta" ] ; then
-      echo "Changing branch of ${DIR} from branch ${CURRENT_BRANCH}"
-      git -C "${DIR}" head
-    else
-      echo "Skipping ${DIR} on branch ${CURRENT_BRANCH}"
-    fi
+    case "${CURRENT_BRANCH}" in
+      main | master | develop | beta)
+        echo "Skipping ${DIR} on branch ${CURRENT_BRANCH}"
+        ;;
+      *)
+        echo "Changing branch of ${DIR} from branch ${CURRENT_BRANCH}"
+        git -C "${DIR}" head
+        ;;
+    esac
   fi
 done
 
@@ -54,6 +66,6 @@ git multi branch
 # --------------------------------------------------------------------------------
 # Clean up
 
-if [ -f ".multigit_ignore" ] ; then
+if [ -f ".multigit_ignore" ]; then
   rm .multigit_ignore
 fi

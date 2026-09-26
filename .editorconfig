@@ -8,3 +8,14 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 indent_style = space
 indent_size = 2
+
+# Shell formatting rules. `shfmt` reads these keys directly, so `scripts/lint.sh`
+# and any editor with EditorConfig support agree on the same layout.
+[*.{sh,bash,zsh}]
+indent_size = 2
+# Indent the branches of a `case` statement instead of aligning them with `case`.
+switch_case_indent = true
+# Keep `&&` and `|` at the end of a line, the way the scripts already read.
+binary_next_line = false
+# `> /dev/null`, with a space, so redirections read like the rest of the line.
+space_redirects = true

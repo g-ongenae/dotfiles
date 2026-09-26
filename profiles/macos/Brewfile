@@ -59,6 +59,7 @@ brew 'rust'
 brew 'python3'
 brew 'uv'
 brew 'shellcheck'
+brew 'shfmt'
 brew 'hadolint'
 brew 'fnm'
 # Use Apple's /usr/bin SSH tools for UseKeychain and ssh-add Keychain support.

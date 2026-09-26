@@ -1,18 +1,34 @@
 # dotfiles
 
-One checkout, three profiles: macOS desktop, Fedora Workstation desktop, and Debian 13 SSH/server/builder.
+One checkout, three profiles: macOS desktop, Fedora Workstation desktop, and
+Debian 13 SSH/server/builder.
+
+- [Install](#install)
+- [Layout](#layout)
+- [What belongs in `interactive`?](#what-belongs-in-interactive)
+- [Package choices](#package-choices)
+- [T3 server helper](#t3-server-helper)
+- [Editor and browser extensions](#editor-and-browser-extensions)
+- [Existing configuration and backups](#existing-configuration-and-backups)
+- [Validation](#validation)
 
 ## Install
 
-Clone this repository into its permanent location. The installer uses that checkout;
-it does not clone another copy, switch branches, or assume a Documents directory.
+Clone this repository into its permanent location. The installer uses that
+checkout; it does not clone another copy, switch branches, or assume a
+Documents directory.
 
-Prerequisites: Git, plus Homebrew and Xcode command-line tools on macOS. If
-Python 3 is missing, `install.sh` installs it with Homebrew, dnf, or apt. Linux
-package installation needs sudo. Run as your normal user, not root.
+**Prerequisites**
+
+- Git.
+- Homebrew and the Xcode command-line tools on macOS.
+- Python 3. If it is missing, `install.sh` installs it with Homebrew, dnf or apt.
+- sudo, for Linux package installation. Run as your normal user, not root.
+
+**Commands**
 
 ```bash
-./install.sh                                  # detect this machine, preview only
+./install.sh                                   # detect this machine, preview only
 ./install.sh --profile macos                   # preview any profile on any OS
 ./install.sh --profile fedora
 ./install.sh --profile debian-server
@@ -22,12 +38,13 @@ package installation needs sudo. Run as your normal user, not root.
 
 Once Python is available, preview mode does not write files, launch installers,
 or access the network.
-Applying a profile for a different OS is rejected. Fedora means dnf-based
-Workstation, not Atomic/rpm-ostree. Linux release binaries support x86_64 and
-aarch64 except the current Fedora Proxyman and Debian T3 Code AppImages, which
-are x86_64-only.
 
-Run selected steps independently:
+- Applying a profile for a different OS is rejected.
+- Fedora means dnf-based Workstation, not Atomic/rpm-ostree.
+- Linux release binaries support x86_64 and aarch64, except the current Fedora
+  Proxyman and Debian T3 Code AppImages, which are x86_64-only.
+
+### Running selected steps
 
 ```bash
 ./install.sh --apply --only packages
@@ -36,15 +53,21 @@ Run selected steps independently:
 ./install.sh --apply --only browsers --firefox-policy
 ```
 
-`--only extensions` requires the profile's editor and fnm's default Node already
-installed. Steps run in the order supplied. The default is
-`packages,shell,extensions,browsers`. External installer failures stop the run;
-editor-extension failures are collected and produce a nonzero exit status.
-Rerun after correcting the problem. This is not a transactional package rollback.
+Steps run in the order supplied. The default is
+`packages,shell,extensions,browsers`.
 
-Installation does **not** change your login shell, authenticate agents, enroll
-Tailscale, configure firewalls, start T3 Code, or alter sshd. The Debian profile
-installs an SSH client and assumes the server's existing SSH access is managed
+`--only extensions` requires the profile's editor and fnm's default Node to be
+installed already.
+
+External installer failures stop the run. Editor-extension failures are
+collected instead and produce a nonzero exit status. Rerun after correcting the
+problem: this is not a transactional package rollback.
+
+### What installation never does
+
+It does **not** change your login shell, authenticate agents, enroll Tailscale,
+configure firewalls, start T3 Code, or alter sshd. The Debian profile installs
+an SSH client and assumes the server's existing SSH access is managed
 separately. Keep an existing SSH session open when first applying shell changes.
 
 ## Layout
@@ -71,63 +94,92 @@ shell/
   server/                    # terminal editor and headless Chromium environment
 scripts/
   install.py                 # standard-library installer behind install.sh
+  lint.sh                    # shfmt and ShellCheck over every shell file
 tests/
   test_install.py
 ```
 
-Packages live under `profiles/`, including provider/source selection. YAML files
-deliberately use a small subset: top-level sections containing two-space-indented
-lists of strings. Quote strings containing `: ` or ` #`; nested objects,
-anchors and inline comments are rejected. No PyYAML bootstrap is needed.
+### Manifests
+
+Packages live under `profiles/`, including provider/source selection.
+
+YAML files deliberately use a small subset: top-level sections containing
+two-space-indented lists of strings. Quote strings containing `: ` or ` #`;
+nested objects, anchors and inline comments are rejected. No PyYAML bootstrap is
+needed.
+
+### Zsh plugins
 
 `zsh/plugins/` retains the existing pinned submodule paths. Autosuggestions,
-syntax highlighting, nx-completion and jq are the plugins initialized and loaded;
-Oh My Zsh and pipenv plugins are not required by the new shell setup.
-The loader accepts either `<plugin>/<plugin>.zsh` or `<plugin>/<plugin>.plugin.zsh`
-as an entrypoint, so adding a plugin means cloning it as a submodule under
-`zsh/plugins/` and naming it in the loop in `shell/interactive/init.zsh` plus the
-`git submodule update --init` call in `scripts/install.py`.
+syntax highlighting, nx-completion and jq are the plugins initialized and
+loaded; Oh My Zsh and pipenv plugins are not required by the new shell setup.
 
-Both nx-completion and jq need `jq` itself, and jq additionally needs `fzf`; both
-are in every profile's package list. The jq plugin is a REPL widget, not a
+The loader accepts either `<plugin>/<plugin>.zsh` or
+`<plugin>/<plugin>.plugin.zsh` as an entrypoint. Adding a plugin therefore means
+cloning it as a submodule under `zsh/plugins/` and naming it in two places:
+
+1. the loop in `shell/interactive/init.zsh`;
+2. the `git submodule update --init` call in `scripts/install.py`.
+
+Both nx-completion and jq need `jq` itself, and jq additionally needs `fzf`;
+both are in every profile's package list. The jq plugin is a REPL widget, not a
 completion: it binds `alt+j` to an interactive query builder and puts its `bin/`
 (`jq-repl`, `jq-paths`) on PATH. Completion for `jq` comes from zsh's bundled
 `_jq`.
 
-`nx` is a function in `shell/interactive/aliases.sh`, not an alias: it searches
-upwards from the current directory for `node_modules/.bin/nx` so it works from
-any package of a monorepo. It must stay a function, because nx-completion runs
-`nx --help` from inside a completion function and aliases are not visible
-there — that is why completion never worked against a `pnpm exec nx` alias.
+### Why `nx` is a function
 
-## What belongs in interactive?
+`nx` lives in `shell/interactive/aliases.sh` as a function, not an alias: it
+searches upwards from the current directory for `node_modules/.bin/nx` so it
+works from any package of a monorepo.
+
+It must stay a function, because nx-completion runs `nx --help` from inside a
+completion function and aliases are not visible there — that is why completion
+never worked against a `pnpm exec nx` alias.
+
+## What belongs in `interactive`?
 
 Anything needed by a person at a prompt: aliases, completion, keybindings,
 history, Starship, Atuin, fzf, zoxide, and fnm's directory-change integration.
-An interactive SSH session gets these too; “interactive” does not mean “desktop.”
+An interactive SSH session gets these too; “interactive” does not mean
+“desktop.”
 
 `shell/common/` contains environment variables and PATH setup needed by scripts,
 builds, and noninteractive SSH commands. It runs no external commands and prints
-nothing. In Bash its managed block goes before the usual noninteractive
-`.bashrc` early return; prompt setup goes after the user's existing configuration.
-Zsh loads the common environment from `.zshenv` and prompts from `.zshrc`.
-Ordinary noninteractive Bash scripts inherit their parent's environment; no
-global `BASH_ENV` hook is installed.
+nothing.
+
+Load order:
+
+- **Bash** — the managed block goes before the usual noninteractive `.bashrc`
+  early return; prompt setup goes after the user's existing configuration.
+- **Zsh** — `.zshenv` loads the common environment, `.zshrc` the prompt.
+- **Scripts** — ordinary noninteractive Bash scripts inherit their parent's
+  environment; no global `BASH_ENV` hook is installed.
 
 All profiles use Vim as the shell's terminal editor. Git uses VS Code on macOS,
-VSCodium on Fedora, and Vim on the server. Linux `ip` is left intact.
-No uninstalled macOS locale is forced onto Linux.
+VSCodium on Fedora, and Vim on the server. Linux `ip` is left intact. No
+uninstalled macOS locale is forced onto Linux.
 
-Debian installs `wakeonlan` for sending magic packets and enables wake on supported
-physical Ethernet adapters with `ethtool`. The `dotfiles-wakeonlan.service` unit
-reapplies this after networking starts at boot; it does not restart networking.
-Check results with `journalctl -u dotfiles-wakeonlan.service` and
-`sudo ethtool <interface>` (look for `Wake-on: g`). Firmware/BIOS must also permit
-Wake-on-LAN, and the machine must retain Ethernet power while asleep/off.
-If a network manager later resets the setting, rerun
+### Wake-on-LAN
+
+Debian installs `wakeonlan` for sending magic packets and enables wake on
+supported physical Ethernet adapters with `ethtool`. The
+`dotfiles-wakeonlan.service` unit reapplies this after networking starts at
+boot; it does not restart networking.
+
+Check the results with:
+
+```bash
+journalctl -u dotfiles-wakeonlan.service
+sudo ethtool <interface>            # look for `Wake-on: g`
+```
+
+Firmware/BIOS must also permit Wake-on-LAN, and the machine must retain Ethernet
+power while asleep/off. If a network manager later resets the setting, rerun
 `sudo systemctl start dotfiles-wakeonlan.service`.
-Fedora installs only the `wol` sender; macOS skips Wake-on-LAN setup.
-Send a packet with `wakeonlan <MAC-address>` on Debian or `wol <MAC-address>` on Fedora.
+
+Fedora installs only the `wol` sender; macOS skips Wake-on-LAN setup. Send a
+packet with `wakeonlan <MAC-address>` on Debian or `wol <MAC-address>` on Fedora.
 
 ## Package choices
 
@@ -144,37 +196,51 @@ Send a packet with `wakeonlan <MAC-address>` on Debian or `wol <MAC-address>` on
 | Tailscale | Standalone desktop app | Official stable RPM repository | Official stable APT repository |
 | T3 Code | npm package | npm package | upstream AppImage |
 
-The Fedora Flatpak list also contains Apostrophe, Buffer, Drum Machine, Eloquent,
-FocusWriter, OBS Studio, Sound Recorder, and SSH Pilot. Flameshot comes from dnf.
-Switchyard needs first-run routing setup and selection as the default browser.
+The Fedora Flatpak list also contains Apostrophe, Buffer, Drum Machine,
+Eloquent, FocusWriter, OBS Studio, Sound Recorder, and SSH Pilot. Flameshot
+comes from dnf. Switchyard needs first-run routing setup and selection as the
+default browser.
 
-Gemini CLI uses the [official npm package](https://geminicli.com/docs/get-started/installation/)
-with fnm's Node on every profile. Antigravity CLI uses the native release manifest
-published through Google's [official installer](https://antigravity.google/cli/install.sh)
-on every profile. It verifies the release's SHA-512 checksum and installs `agy`
-under `~/.local/bin`, without invoking upstream's shell-profile editing step.
-Run `agy` to start the CLI; agent sign-in remains a manual first-run step.
+### Agents
+
+Gemini CLI uses the
+[official npm package](https://geminicli.com/docs/get-started/installation/)
+with fnm's Node on every profile.
+
+Antigravity CLI uses the native release manifest published through Google's
+[official installer](https://antigravity.google/cli/install.sh) on every
+profile. It verifies the release's SHA-512 checksum and installs `agy` under
+`~/.local/bin`, without invoking upstream's shell-profile editing step. Run
+`agy` to start the CLI; agent sign-in remains a manual first-run step.
+
+### Tailscale
 
 Tailscale uses the `tailscale-app` Homebrew cask on macOS and the
 [official stable repositories](https://pkgs.tailscale.com/stable/) on Linux.
+
 Linux enables `tailscaled` after installation; it does not run `tailscale up`,
 enable Tailscale SSH, or configure routes. Join the tailnet yourself by opening
-the Tailscale app on macOS or running `sudo tailscale up` on Linux. The Debian
-repository key is scoped with `signed-by`, and Fedora uses upstream's signed
-repository metadata configuration.
+the Tailscale app on macOS or running `sudo tailscale up` on Linux.
+
+The Debian repository key is scoped with `signed-by`, and Fedora uses upstream's
+signed repository metadata configuration.
 
 ### T3 server helper
 
-All three profiles load the Fujitsu's `t3` Bash helper in Bash and Zsh. It
-controls a local server by default: `t3code.service` on Linux, or
+All three profiles load the Fujitsu's `t3` Bash helper in Bash and Zsh.
+
+By default it controls a local server: `t3code.service` on Linux, or
 `com.dotfiles.t3code` through launchd on macOS. To create a service on a new
-machine after installing its packages, run `t3 setup`, then `t3 start`.
-Setup preserves an existing service and does not start a new one. New servers
-listen on `127.0.0.1:3773`. macOS/Fedora use the installed T3 CLI; Debian uses
-an existing `t3code-server` wrapper or extracts the installed AppImage.
+machine after installing its packages, run `t3 setup`, then `t3 start`. Setup
+preserves an existing service and does not start a new one. New servers listen
+on `127.0.0.1:3773`. macOS/Fedora use the installed T3 CLI; Debian uses an
+existing `t3code-server` wrapper or extracts the installed AppImage.
+
+#### Controlling a remote server
 
 To control the Fujitsu from any machine instead, point the helper at its
-Tailscale name or an SSH config alias (replace the example with your actual host):
+Tailscale name or an SSH config alias (replace the example with your actual
+host):
 
 ```bash
 export T3_HOST=g@your-fujitsu-tailnet-name
@@ -188,80 +254,103 @@ t3 disconnect       # remove that HTTPS listener and release the sleep inhibitor
 t3 stop
 ```
 
-Save `export T3_HOST=...` in `~/.config/dotfiles/local.bash` or `local.zsh`
-for interactive shells. Leave it unset on the server to manage the local
-service; `T3_HOST= t3 start` controls the local server for one command, and
-`unset T3_HOST` returns to local control persistently. Remote commands use the
-existing SSH configuration and authenticate as the user owning the service.
-Remote targets are Linux servers and do not need this checkout for control.
-Run `t3 setup` locally on each host that needs a service. An existing upstream
-T3 launch agent on macOS is preserved and used automatically. `command t3`
-bypasses the shell helper when you need the npm CLI's own commands.
+Save `export T3_HOST=...` in `~/.config/dotfiles/local.bash` or `local.zsh` for
+interactive shells:
 
-`connect` and `disconnect` run `sudo tailscale serve` on Linux, requesting
-an SSH terminal for the sudo prompt when remote. On macOS they use the Tailscale
-CLI or the CLI bundled in `/Applications/Tailscale.app`. Both devices must already be
-connected to the tailnet, and SSH access must already work. `connect` prints
-a fresh pairing URL, pairing code (`Token`), and terminal QR code on Linux,
-macOS, and remote SSH connections. Scan the QR code or copy the pairing URL
-to the other device; the code can also be entered manually. It uses the server's
-T3 CLI `pair` command, so a current CLI supporting `pair --tailscale` is required
-(including for AppImage installations). Tokens expire after five minutes by
-default; run `t3 connect` again for a fresh one. Tailscale may prompt to enable
-tailnet HTTPS. Port 3773 is reserved for
+- Leave it unset on the server to manage the local service.
+- `T3_HOST= t3 start` controls the local server for one command.
+- `unset T3_HOST` returns to local control persistently.
+
+Remote commands use the existing SSH configuration and authenticate as the user
+owning the service. Remote targets are Linux servers and do not need this
+checkout for control. Run `t3 setup` locally on each host that needs a service.
+
+An existing upstream T3 launch agent on macOS is preserved and used
+automatically. `command t3` bypasses the shell helper when you need the npm
+CLI's own commands.
+
+#### Connecting and pairing
+
+`connect` and `disconnect` run `sudo tailscale serve` on Linux, requesting an
+SSH terminal for the sudo prompt when remote. On macOS they use the Tailscale
+CLI or the CLI bundled in `/Applications/Tailscale.app`. Both devices must
+already be connected to the tailnet, and SSH access must already work.
+
+`connect` prints a fresh pairing URL, pairing code (`Token`), and terminal QR
+code on Linux, macOS, and remote SSH connections. Scan the QR code or copy the
+pairing URL to the other device; the code can also be entered manually. It uses
+the server's T3 CLI `pair` command, so a current CLI supporting
+`pair --tailscale` is required (including for AppImage installations).
+
+Tokens expire after five minutes by default; run `t3 connect` again for a fresh
+one. Tailscale may prompt to enable tailnet HTTPS. Port 3773 is reserved for
 this helper; it leaves listeners on other ports alone. See the
 [Tailscale Serve command reference](https://tailscale.com/docs/reference/tailscale-cli/serve).
+
 If pairing cannot discover a running service, check `t3 status`. Start a stopped
-service with `t3 start`, or use `t3 restart` to recreate a running service's missing
-runtime discovery file, then retry `t3 connect`. Restarting briefly interrupts
-connections. If the service uses a custom data directory, set `T3CODE_HOME` to
-that same directory when connecting.
+service with `t3 start`, or use `t3 restart` to recreate a running service's
+missing runtime discovery file, then retry `t3 connect`. Restarting briefly
+interrupts connections. If the service uses a custom data directory, set
+`T3CODE_HOME` to that same directory when connecting.
+
+#### Keeping the server awake
 
 On Linux, `t3 connect nosleep` starts a `t3code-nosleep` systemd user service
 running `systemd-inhibit --what=sleep` while waiting for the T3 server process.
 It survives closing the terminal or SSH session; repeated calls reuse it.
+
 `t3 disconnect` releases it, as does stopping or restarting the T3 service.
-After a restart, run `t3 connect nosleep` again to inhibit sleep. With `T3_HOST`,
-the inhibitor runs on the remote Linux server. Local macOS nosleep is unsupported.
+After a restart, run `t3 connect nosleep` again to inhibit sleep. With
+`T3_HOST`, the inhibitor runs on the remote Linux server. Local macOS nosleep is
+unsupported.
 
-Sharing persists across service restarts until `t3 disconnect`; `t3 stop`
-only stops the T3 service. Disconnecting removes the Serve listener, not the
-machine's tailnet membership or direct access to a T3 server bound to
-`0.0.0.0`. Bind T3 to `127.0.0.1` if access should go exclusively through Serve.
+#### What disconnecting does not do
 
-Apply with `./install.sh --apply --only shell` and open a new terminal, or
-try it now with `bash scripts/t3.sh --help`. This installs the helper without
-creating a T3 service or changing a running server or Tailscale connection.
-`t3 setup` is a separate, explicit action. On Linux, enable the unit with
-`systemctl --user enable t3code.service` if you want automatic startup; keeping
-it running after logout also needs user lingering. macOS starts a configured
-service at login and requires a logged-in desktop session for launchd control.
-The generated launcher loads this checkout's shared environment so agents get
-the configured Node and tool paths.
+Sharing persists across service restarts until `t3 disconnect`; `t3 stop` only
+stops the T3 service. Disconnecting removes the Serve listener, not the
+machine's tailnet membership or direct access to a T3 server bound to `0.0.0.0`.
+Bind T3 to `127.0.0.1` if access should go exclusively through Serve.
+
+#### Installing the helper
+
+Apply with `./install.sh --apply --only shell` and open a new terminal, or try
+it now with `bash scripts/t3.sh --help`. This installs the helper without
+creating a T3 service or changing a running server or Tailscale connection;
+`t3 setup` is a separate, explicit action.
+
+On Linux, enable the unit with `systemctl --user enable t3code.service` if you
+want automatic startup; keeping it running after logout also needs user
+lingering. macOS starts a configured service at login and requires a logged-in
+desktop session for launchd control. The generated launcher loads this
+checkout's shared environment so agents get the configured Node and tool paths.
+
+### macOS operations tools
 
 macOS additionally installs the requested Google Cloud, Kubernetes, Terraform,
-Helm, Telepresence, minikube, Wireshark, macFUSE, Docker Desktop, Insomnia, Volta,
-and Dev Container CLI tools. Approve applications, system extensions, licenses,
-and any debugger code-signing prompts yourself.
+Helm, Telepresence, minikube, Wireshark, macFUSE, Docker Desktop, Insomnia,
+Volta, and Dev Container CLI tools. Approve applications, system extensions,
+licenses, and any debugger code-signing prompts yourself.
 
 The Brewfile explicitly trusts the Telepresence, HashiCorp, Multi-Gitter and
 MongoDB taps using Homebrew's
 [`trusted: true` declarations](https://docs.brew.sh/Brew-Bundle-and-Brewfile#trusted).
-The latter two support existing workstation installations during upgrades;
-their packages and database services are not added automatically.
+The latter two support existing workstation installations during upgrades; their
+packages and database services are not added automatically.
 
 After Homebrew installation/upgrades, the macOS packages step removes
 `com.apple.quarantine` from `/Applications/LibreWolf.app`, following the
 [LibreWolf first-launch fix](https://librewolf.net/docs/faq/#why-is-librewolf-marked-as-broken).
-This also repairs an existing installation when rerun. If you installed LibreWolf
-in a custom application directory, apply `xattr -dr com.apple.quarantine` to that
-app's path yourself.
+This also repairs an existing installation when rerun. If you installed
+LibreWolf in a custom application directory, apply
+`xattr -dr com.apple.quarantine` to that app's path yourself.
+
+### Where shared tools come from
 
 Shared tools use native package managers where appropriate, plus upstream Linux
-releases for Starship, Atuin, eza, difftastic, skim, zoxide, fnm, uv, hadolint and
-yq. Linux yh uses Go; git-plus and tldr use isolated uv tool environments; fx
-uses npm. Linux zsh-completions comes from its upstream repository and zsh-lovers
-is saved as HTML under `~/.local/share/dotfiles/docs/`.
+releases for Starship, Atuin, eza, difftastic, skim, zoxide, fnm, uv, hadolint
+and yq. Linux yh and shfmt use Go; git-plus and tldr use isolated uv tool
+environments; fx uses npm. Linux zsh-completions comes from its upstream
+repository and zsh-lovers is saved as HTML under `~/.local/share/dotfiles/docs/`.
 
 Name mappings and exceptions:
 
@@ -273,32 +362,42 @@ Name mappings and exceptions:
 - Debian names bat and fd executables `batcat` and `fdfind`; interactive aliases
   provide `bat` and `fd`. Scripts should use the distro executable names.
 
+### Git
+
 Git is upgraded through Homebrew on macOS. On Linux the installer resolves the
 latest stable upstream Git tag and builds it under `~/.local`, ahead of the
-distro Git in PATH. It requires compiler/development packages and can take a
-few minutes. It does not replace `/usr/bin/git` or build documentation.
+distro Git in PATH. It requires compiler/development packages and can take a few
+minutes. It does not replace `/usr/bin/git` or build documentation.
 
-fnm installs the latest Node LTS and selects it as default on every profile.
-A generated Node path makes that version available to noninteractive SSH/builds.
+### Node, fnm and pnpm
+
+fnm installs the latest Node LTS and selects it as default on every profile. A
+generated Node path makes that version available to noninteractive SSH/builds.
 Run the packages step again after changing/removing the default Node version.
+
 Volta is installed on macOS, but fnm's selected Node has PATH priority. The old
 `cowboyd/zsh-volta` submodule was removed: it contributed no completion (brew's
-volta formula ships `_volta`, found through `fpath`), it put `~/.volta/bin` ahead
-of fnm, and it ran a `curl | bash` installer at shell startup. Global npm
+volta formula ships `_volta`, found through `fpath`), it put `~/.volta/bin`
+ahead of fnm, and it ran a `curl | bash` installer at shell startup. Global npm
 packages belong to the selected Node version and are installed again when the
 LTS changes.
 
 pnpm is installed through npm alongside fnm's default Node, ahead of old Volta
 shims. Global npm installs explicitly target that Node's prefix, even if an old
-npm configuration points elsewhere. Rerun `./install.sh --apply --only packages` and open a new
-shell to repair an older setup where `node --version` and pnpm report different
-Node versions. `command -v pnpm` should resolve under fnm's Node installation,
-not `~/.volta/bin`.
+npm configuration points elsewhere. Rerun
+`./install.sh --apply --only packages` and open a new shell to repair an older
+setup where `node --version` and pnpm report different Node versions.
+`command -v pnpm` should resolve under fnm's Node installation, not
+`~/.volta/bin`.
 
-macOS uses Apple's `/usr/bin/ssh` and `/usr/bin/ssh-add` so existing `UseKeychain`
-settings work. The packages step unlinks Homebrew OpenSSH left by older installs
-after package upgrades. It preserves SSH configuration and keys. If the old SSH
-client prevents pulling these fixes, run this from the checkout on your Mac:
+### SSH on macOS
+
+macOS uses Apple's `/usr/bin/ssh` and `/usr/bin/ssh-add` so existing
+`UseKeychain` settings work. The packages step unlinks Homebrew OpenSSH left by
+older installs after package upgrades. It preserves SSH configuration and keys.
+
+If the old SSH client prevents pulling these fixes, run this from the checkout
+on your Mac:
 
 ```bash
 GIT_SSH_COMMAND=/usr/bin/ssh git pull --ff-only
@@ -307,19 +406,23 @@ GIT_SSH_COMMAND=/usr/bin/ssh git pull --ff-only
 
 Open a new terminal afterward; `command -v ssh` should show `/usr/bin/ssh`.
 
+### Headless Chromium on Debian
+
 The Debian npm profile includes `puppeteer-core`, paired with distro Chromium
 (no separate browser download). Puppeteer Core requires an explicit
 `executablePath: process.env.PUPPETEER_EXECUTABLE_PATH` when launching.
+
 For project imports, install `puppeteer-core` in that project: Node does not
-resolve global npm packages as project dependencies. Run as a non-root user;
-the installer does not disable Chromium's sandbox.
+resolve global npm packages as project dependencies. Run as a non-root user; the
+installer does not disable Chromium's sandbox.
 
 ## Editor and browser extensions
 
 The editor manifest includes Bruno. The unpublished
-[mermaid-jsdoc-viewer](https://github.com/g-ongenae/mermaid-jsdoc-viewer)
-is built with npm from a pinned commit, packaged as a VSIX, and installed locally.
+[mermaid-jsdoc-viewer](https://github.com/g-ongenae/mermaid-jsdoc-viewer) is
+built with npm from a pinned commit, packaged as a VSIX, and installed locally.
 Update the commit in the manifest deliberately when you want a newer build.
+
 VSCodium uses Open VSX; if an existing extension is unavailable there, the
 installer reports it instead of changing the marketplace endpoint or silently
 omitting it. Copilot is only selected for VS Code on macOS.
@@ -327,8 +430,8 @@ omitting it. Copilot is only selected for VS Code on macOS.
 Browser installation needs confirmation in each browser. Open
 `~/.config/dotfiles/browser-extensions.html` after the browsers step. It lists
 uBlock Origin, SponsorBlock, Privacy Badger, PR Review Collector and GitHub
-Mermaid JSDoc Viewer for Firefox/LibreWolf/Zen, plus Switchyard on Fedora;
-the macOS page also has the two requested Chrome Web Store extensions.
+Mermaid JSDoc Viewer for Firefox/LibreWolf/Zen, plus Switchyard on Fedora; the
+macOS page also has the two requested Chrome Web Store extensions.
 
 `--firefox-policy` additionally resolves the real AMO IDs and generates
 `~/.config/dotfiles/firefox-policies.json`. This optional policy is **not**
@@ -339,46 +442,86 @@ users able to remove extensions. No browser profile is overwritten.
 
 ## Existing configuration and backups
 
+### Git identity
+
 Managed blocks preserve unrelated shell and Git settings. On the first shell
 install, the installer asks for your name, email, and GitHub/GitLab/Bitbucket
 usernames, then writes them to the ignored root file `.gitconfig.local` with
-mode 0600. A generated include supplies that identity, the current checkout path,
-and profile-specific defaults. The old Git-config symlink is converted to a
-regular include file without changing its source.
+mode 0600.
 
-Untouched copies of the previous Bash/Zsh startup templates migrate automatically.
-The exact old Bash template also migrates when other tools appended settings or
-an earlier installer surrounded it with managed blocks; those additions survive.
+A generated include supplies that identity, the current checkout path, and
+profile-specific defaults. The old Git-config symlink is converted to a regular
+include file without changing its source.
+
+### Migrating old startup files
+
+Untouched copies of the previous Bash/Zsh startup templates migrate
+automatically. The exact old Bash template also migrates when other tools
+appended settings or an earlier installer surrounded it with managed blocks;
+those additions survive.
+
 Customized legacy startup files or custom `ZDOTDIR` assignments stop the shell
-step with an explanation; review and remove those old hooks before retrying.
-The new setup uses standard `~/.zshenv` / `~/.zshrc` locations.
+step with an explanation; review and remove those old hooks before retrying. The
+new setup uses standard `~/.zshenv` / `~/.zshrc` locations.
 
-macOS installs Homebrew Bash and `bash-completion@2`, replacing the old conflicting
-`bash-completion` formula. Open a new terminal and run `bash` to use it. Explicit
-`/bin/bash` sessions still get environment and aliases, but skip modern prompt and
-completion integrations that require Bash 4.2+. Completions load through their
-framework entrypoint; individual files in `bash_completion.d` are never sourced
-as a startup loop. Rerun `./install.sh --apply --only packages,shell` to migrate.
+macOS installs Homebrew Bash and `bash-completion@2`, replacing the old
+conflicting `bash-completion` formula. Open a new terminal and run `bash` to use
+it. Explicit `/bin/bash` sessions still get environment and aliases, but skip
+modern prompt and completion integrations that require Bash 4.2+. Completions
+load through their framework entrypoint; individual files in
+`bash_completion.d` are never sourced as a startup loop. Rerun
+`./install.sh --apply --only packages,shell` to migrate.
+
+### Backups
 
 Before replacing existing content, the installer saves it under
 `~/.local/share/dotfiles/backups/` with restrictive permissions. Names contain
 the original home-relative path (slashes replaced by `__`) and a content hash.
+
 Backups contain file content, not original symlink metadata. Restore a chosen
 backup by copying its content back to the original path; remove managed blocks
 to disconnect the checkout. Package installs are not undone by restoring files.
 
-Keep personal shell additions in `~/.config/dotfiles/local.bash` or
-`local.zsh`. Existing `zsh/secret/alias.zsh` and `secret/starship.toml` are
-still loaded when present, but are never created or committed by the installer.
+### Keeping your own additions
+
+Keep personal shell additions in `~/.config/dotfiles/local.bash` or `local.zsh`.
+Existing `zsh/secret/alias.zsh` and `secret/starship.toml` are still loaded when
+present, but are never created or committed by the installer.
+
+### Upstream binaries
 
 Upstream binaries are downloaded over HTTPS. GitHub SHA-256 digests or matching
 checksum sidecars are verified when published; a missing checksum is explicitly
 reported. Installed release tags, asset names and digests are recorded under
-`~/.local/share/dotfiles/versions/`. Latest-release installs intentionally follow
-upstream rather than a lockfile. Review the manifests before trusting any
+`~/.local/share/dotfiles/versions/`. Latest-release installs intentionally
+follow upstream rather than a lockfile. Review the manifests before trusting any
 third-party package source.
 
 ## Validation
+
+### Shell files
+
+```bash
+./scripts/lint.sh          # report formatting differences and ShellCheck findings
+./scripts/lint.sh --fix    # reformat in place, then run ShellCheck
+```
+
+`scripts/lint.sh` covers every tracked shell file except the vendored plugins
+under `zsh/plugins/`, which belong to their upstreams.
+
+- **Formatting** comes from [shfmt](https://github.com/mvdan/sh), configured by
+  the `[*.{sh,bash,zsh}]` section of `.editorconfig`, so editors with
+  EditorConfig support produce the same layout.
+- **Linting** comes from [ShellCheck](https://www.shellcheck.net), configured by
+  `.shellcheckrc`. Files without a shebang declare their dialect on their first
+  line with `# shellcheck shell=...`. Zsh files are formatted but not linted,
+  because ShellCheck has no Zsh dialect.
+
+Both tools are installed by every profile, and
+[`.github/workflows/lint.yml`](.github/workflows/lint.yml) runs the same script
+on every push and pull request.
+
+### Installer
 
 ```bash
 python3 -m unittest discover -s tests -v
@@ -392,9 +535,13 @@ parsing, dry-run isolation, migration, backups, repeat runs, SSH environment,
 browser selection and download verification. Full native installations still
 need testing on disposable macOS/Fedora/Debian machines.
 
+### Dev Containers
+
 `dev {build|up|shell|ai|clean} [directory]` uses the chosen workspace; clean
 targets only containers bearing that workspace's Dev Container label, never
 unrelated images.
+
+---
 
 Package-source references:
 [Vicinae](https://docs.vicinae.com/install/linux),

@@ -1,0 +1,24 @@
+# Run the same checks as `scripts/lint.sh` on every push and pull request.
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  shell:
+    name: shfmt and ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ShellCheck is preinstalled on the runner; shfmt is not.
+      - name: Install shfmt
+        run: |
+          go install mvdan.cc/sh/v3/cmd/shfmt@latest
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+
+      - name: Check formatting and lint shell files
+        run: ./scripts/lint.sh
+
