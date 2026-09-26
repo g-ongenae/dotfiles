@@ -90,7 +90,11 @@ def mac_action(home, action):
     upstream = home / 'Library/LaunchAgents/com.t3tools.t3code.service.plist'
     if not service.exists() and upstream.exists():
         service = upstream
-    config = plistlib.loads(service.read_bytes()) if service.exists() else {'Label': LABEL}
+    # Without a service, launchctl only reports that the label is unknown.
+    if not service.exists():
+        raise ValueError('No local service on this machine: run t3 setup to create one, '
+                         'or set T3_HOST=user@tailnet-host to control a Linux server.')
+    config = plistlib.loads(service.read_bytes())
     target = f'gui/{os.getuid()}/{config["Label"]}'
     if action in ('inspect', 'status'):
         run('launchctl', 'print', target)
@@ -102,8 +106,6 @@ def mac_action(home, action):
     elif action == 'stop':
         run('launchctl', 'bootout', target)
     elif action in ('start', 'restart'):
-        if not service.exists():
-            raise ValueError('Run t3 setup first to create the local macOS service.')
         loaded = subprocess.run(['launchctl', 'print', target], stdout=subprocess.DEVNULL,
                                 stderr=subprocess.DEVNULL).returncode == 0
         if loaded:

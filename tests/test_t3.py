@@ -25,6 +25,8 @@ class T3Tests(unittest.TestCase):
                         DOTFILES_DIR=str(ROOT), CALL_LOG=str(self.log))
         (self.bin / 'bash').symlink_to(shutil.which('bash'))
         (self.bin / 'python3').symlink_to(sys.executable)
+        # Real sleep: the macOS connect deadline times its own commands with it.
+        (self.bin / 'sleep').symlink_to(shutil.which('sleep'))
         for name in ('systemctl', 'systemd-run', 'journalctl', 'ssh', 'tailscale', 'sudo', 'launchctl', 't3', 'tail'):
             tool = self.bin / name
             tool.write_text(
@@ -210,6 +212,25 @@ class T3Tests(unittest.TestCase):
             ['tailscale', 'serve', '--https=3773', 'off'],
             ['ssh', '--', 'g@fujitsu', 'systemctl --user start t3code.service'],
         ])
+
+    def test_macos_unresponsive_tailscale_gives_up_instead_of_hanging(self):
+        tool = self.bin / 'tailscale'
+        tool.write_text(tool.read_text().replace(
+            'sys.exit(int(os.environ.get("COMMAND_EXIT", "0")))', 'import time\ntime.sleep(60)'))
+        result = self.run_t3('connect', DOTFILES_PROFILE='macos', T3_TAILSCALE_DEADLINE='1')
+        self.assertEqual(result.returncode, 124)
+        self.assertIn('Tailscale app', result.stderr)
+        # Sharing never came up, so no pairing credentials were minted.
+        self.assertEqual(self.calls(), [
+            ['tailscale', 'serve', '--bg', '--https=3773', 'http://127.0.0.1:3773']])
+
+    def test_macos_missing_service_names_setup_and_the_remote_option(self):
+        for action in ('inspect', 'start', 'stop', 'logs'):
+            result = self.run_t3(action, DOTFILES_PROFILE='macos')
+            self.assertEqual(result.returncode, 1)
+            self.assertIn('t3 setup', result.stderr)
+            self.assertIn('T3_HOST', result.stderr)
+        self.assertEqual(self.calls(), [])
 
     def test_local_setup_is_opt_in_preserves_services_and_does_not_start_them(self):
         result = self.run_t3('setup', DOTFILES_PROFILE='fedora')

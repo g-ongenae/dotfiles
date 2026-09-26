@@ -180,6 +180,38 @@ fi
 
 # --- Local macOS -------------------------------------------------------------
 
+# Seconds to wait for the Tailscale CLI before giving up on it; the tests
+# shorten it.
+tailscale_deadline=${T3_TAILSCALE_DEADLINE:-20}
+
+# Run the Tailscale CLI under that deadline. A macOS app that is installed but
+# not running answers its CLI neither with output nor with an error, so an
+# unbounded call hangs the terminal until it is interrupted.
+#
+# Runs in a subshell -- `(` rather than `{` -- so job control stays local, and
+# with it so that the CLI gets a process group of its own: killing that group
+# reaches the app binary behind the /usr/local/bin/tailscale wrapper too.
+run_tailscale() (
+  set -m
+  "$@" &
+  local cli=$!
+  { sleep "$tailscale_deadline" && kill -KILL -"$cli"; } 2> /dev/null &
+  local timer=$!
+
+  # The redirection drops the shell's own "Killed" job notice, not CLI output.
+  wait "$cli" 2> /dev/null
+  local result=$?
+  kill -- -"$timer" 2> /dev/null # the group, so the sleep goes with its shell
+
+  if [ "$result" -eq 137 ]; then
+    printf 't3: Tailscale did not answer within %ss; open the Tailscale app, sign in, then retry.\n' \
+      "$tailscale_deadline" >&2
+    return 124 # what timeout(1) reports, since the command never answered
+  fi
+
+  return "$result"
+)
+
 if [ "${DOTFILES_PROFILE:-}" = macos ]; then
   if "$nosleep"; then
     printf 't3: nosleep requires a Linux server; set T3_HOST=user@tailnet-host.\n' >&2
@@ -200,12 +232,13 @@ if [ "${DOTFILES_PROFILE:-}" = macos ]; then
       fi
 
       if [ "$action" = connect ]; then
-        "$@" || exit "$?"
+        run_tailscale "$@" || exit "$?"
         pair_t3
         exit "$?"
       fi
 
-      exec "$@"
+      run_tailscale "$@"
+      exit "$?"
       ;;
     # launchd, not systemd, runs the service on macOS.
     *) exec python3 "${DOTFILES_DIR:?}/scripts/t3-service.py" "$action" ;;
