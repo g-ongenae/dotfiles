@@ -253,12 +253,37 @@ class T3Tests(unittest.TestCase):
         self.assertIn('ExecStart=/bin/sh', service.read_text())
         launcher = self.home / '.local/share/dotfiles/t3/server.sh'
         self.assertIn('serve --host 127.0.0.1 --port 3773 --no-browser', launcher.read_text())
+        # npm's entry point, not the file behind it, which an update may move.
+        self.assertIn(str(self.bin / 't3') + ' serve', launcher.read_text())
         self.assertIn('shell/common/init.sh', launcher.read_text())
         self.assertEqual(self.calls(), [['t3', '--help'], ['systemctl', '--user', 'daemon-reload']])
+        # A second setup leaves the service alone, but refreshes the launcher
+        # it generated: that is how a machine recovers from an update that
+        # moved the CLI out from under a service still pointing at it.
         service.write_text('Existing Fujitsu service\n')
-        self.assertEqual(self.run_t3('setup', DOTFILES_PROFILE='debian-server').returncode, 0)
+        launcher.write_text('stale\n')
+        result = self.run_t3('setup', DOTFILES_PROFILE='debian-server')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Keeping existing service', result.stdout)
         self.assertEqual(service.read_text(), 'Existing Fujitsu service\n')
-        self.assertEqual(len(self.calls()), 2)
+        self.assertIn('--host 127.0.0.1', launcher.read_text())
+        # Reloading is for a service this just wrote, and it wrote none.
+        self.assertNotIn(['systemctl', '--user', 'daemon-reload'], self.calls()[2:])
+
+    def test_setup_records_the_npm_entry_point_not_the_file_behind_it(self):
+        # npm's entry point is a symlink to an implementation file that a
+        # release is free to move or to ship without an executable bit, as
+        # t3 0.0.42 did; a service outliving the update has to point at the
+        # entry point, which npm maintains.
+        implementation = self.home / 'lib/node_modules/t3/bin/t3.js'
+        implementation.parent.mkdir(parents=True)
+        (self.bin / 't3').rename(implementation)
+        (self.bin / 't3').symlink_to(implementation)
+        result = self.run_t3('setup', DOTFILES_PROFILE='fedora')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        launcher = (self.home / '.local/share/dotfiles/t3/server.sh').read_text()
+        self.assertIn(str(self.bin / 't3') + ' serve', launcher)
+        self.assertNotIn(str(implementation), launcher)
 
     def test_macos_setup_and_local_lifecycle(self):
         result = self.run_t3('setup', DOTFILES_PROFILE='macos')

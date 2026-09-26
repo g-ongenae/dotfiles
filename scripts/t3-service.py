@@ -23,18 +23,20 @@ def setup(home, macos):
     data = home / '.local/share/dotfiles/t3'
     service = (home / 'Library/LaunchAgents' / (LABEL + '.plist') if macos
                else home / '.config/systemd/user/t3code.service')
-    if service.exists() or service.is_symlink():
-        print(f'Keeping existing service: {service}')
-        return
+    existing = service.exists() or service.is_symlink()
     upstream = home / 'Library/LaunchAgents/com.t3tools.t3code.service.plist'
-    if macos and upstream.exists():
+    if macos and not existing and upstream.exists():
         print(f'Keeping existing service: {upstream}')
         return
 
     executable = shutil.which('t3code-server') or shutil.which('t3')
     if executable:
-        # Resolve fnm's per-shell symlink before writing a persistent service.
-        executable = Path(executable).resolve()
+        # Resolve fnm's per-shell symlink, since a service outlives the shell
+        # that created it, but keep npm's own entry point: what that entry
+        # point runs is an implementation file, free to move between releases
+        # and to ship without an executable bit, as t3 0.0.42 did.
+        executable = Path(executable)
+        executable = executable.parent.resolve() / executable.name
         help_text = run(str(executable), '--help', capture_output=True, text=True).stdout
         # Recent CLI releases use `serve`; older AppImage wrappers take flags directly.
         command = [str(executable)] + (['serve'] if re.search(r'^\s*(?:t3\s+)?serve\b', help_text, re.M) else [])
@@ -63,6 +65,13 @@ def setup(home, macos):
                         '. "$DOTFILES_DIR/shell/common/init.sh"\n'
                         f'exec {shlex.join(command)}\n')
     launcher.chmod(0o755)
+    if existing:
+        # The service file is left as it is, but the launcher beside it is
+        # generated, and rewriting it is how a machine recovers when an update
+        # moves the CLI out from under a service that still points at it.
+        print(f'Keeping existing service: {service}')
+        print(f'Refreshed {launcher}. Run t3 restart to run it.')
+        return
     service.parent.mkdir(parents=True, exist_ok=True)
     if macos:
         service.write_bytes(plistlib.dumps({
