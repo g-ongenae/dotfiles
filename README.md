@@ -185,19 +185,18 @@ packet with `wakeonlan <MAC-address>` on Debian or `wol <MAC-address>` on Fedora
 
 | Component | macOS | Fedora | Debian server |
 | --- | --- | --- | --- |
-| Browser routing | Finicky | Switchyard (Flatpak) | — |
-| Launcher | Raycast | Vicinae (COPR) | — |
-| Browsers | LibreWolf, Firefox, Zen, Chrome, Ungoogled Chromium | LibreWolf, Firefox, Zen | Chromium for headless use |
-| Editor | VS Code | VSCodium | Vim |
-| Git GUI | GitHub Desktop | shiftkey's GitHub Desktop | — |
-| Proxy inspector | Proxyman | Proxyman AppImage | — |
-| Agents | Claude Code, Gemini CLI | Codex, Claude Code, Gemini CLI | Codex, Claude Code, Gemini CLI |
-| Antigravity | CLI | CLI | CLI |
-| Tailscale | Standalone desktop app | Official stable RPM repository | Official stable APT repository |
-| T3 Code | npm package | npm package | upstream AppImage |
+| Browser routing | [Finicky] | [Switchyard] (Flatpak) | — |
+| Launcher | [Raycast] | [Vicinae] (COPR) | — |
+| Browsers | [LibreWolf], [Firefox], [Zen], [Chrome], [Ungoogled Chromium] | [LibreWolf], [Firefox], [Zen] | [Chromium] for headless use |
+| Editor | [VS Code] | [VSCodium] | [Vim] |
+| Git GUI | [GitHub Desktop] | [shiftkey's GitHub Desktop] | — |
+| Proxy inspector | [Proxyman] | [Proxyman AppImage] | — |
+| Agents | [Claude Code], [Gemini CLI], [Antigravity CLI] | [Codex], [Claude Code], [Gemini CLI], [Antigravity CLI] | [Codex], [Claude Code], [Gemini CLI] |
+| [Tailscale] | Standalone desktop app | Official stable RPM repository | Official stable APT repository |
+| [T3 Code] | npm package | npm package | upstream AppImage |
 
-The Fedora Flatpak list also contains Apostrophe, Buffer, Drum Machine,
-Eloquent, FocusWriter, OBS Studio, Sound Recorder, and SSH Pilot. Flameshot
+The Fedora Flatpak list also contains [Apostrophe], [Buffer], [Drum Machine],
+[Eloquent], [FocusWriter], [OBS Studio], [Sound Recorder], and [SSH Pilot]. [Flameshot]
 comes from dnf. Switchyard needs first-run routing setup and selection as the
 default browser.
 
@@ -541,12 +540,38 @@ need testing on disposable macOS/Fedora/Debian machines.
 targets only containers bearing that workspace's Dev Container label, never
 unrelated images.
 
----
+<!-- Links -->
 
-Package-source references:
-[Vicinae](https://docs.vicinae.com/install/linux),
-[Switchyard](https://github.com/alyraffauf/switchyard),
-[GitHub Desktop for Linux](https://github.com/shiftkey/desktop),
-[Proxyman Linux](https://github.com/ProxymanApp/proxyman-windows-linux),
-[T3 Code](https://github.com/pingdotgg/t3code),
-[Homebrew](https://brew.sh).
+[Antigravity CLI]: https://antigravity.google/
+[Apostrophe]: https://gitlab.gnome.org/World/apostrophe
+[Buffer]: https://gitlab.gnome.org/cheywood/buffer
+[Chrome]: https://www.google.com/chrome/
+[Chromium]: https://www.chromium.org/chromium-projects/
+[Claude Code]: https://claude.com/fr/product/claude-code
+[Codex]: https://openai.com/fr-FR/codex/
+[Drum Machine]: https://github.com/Revisto/drum-machine
+[Eloquent]: https://github.com/sonnyp/Eloquent
+[Finicky]: https://github.com/johnste/finicky
+[Firefox]: https://www.firefox.com/
+[Flameshot]: https://github.com/flameshot-org/flameshot/
+[FocusWriter]: https://gottcode.org/focuswriter/
+[Gemini CLI]: https://geminicli.com/
+[GitHub Desktop]: https://github.com/apps/desktop
+[Homebrew]: https://brew.sh
+[LibreWolf]: https://librewolf.net/
+[OBS Studio]: https://github.com/obsproject/obs-studio
+[Proxyman]: https://proxyman.com/
+[Proxyman AppImage]: https://github.com/ProxymanApp/proxyman-windows-linux
+[Raycast]: https://www.raycast.com/
+[shiftkey's GitHub Desktop]: https://github.com/shiftkey/desktop
+[Sound Recorder]: https://gitlab.gnome.org/World/vocalis
+[SSH Pilot]: https://github.com/mfat/sshpilot
+[Switchyard]: https://github.com/alyraffauf/switchyard
+[Tailscale]: https://tailscale.com/
+[Ungoogled Chromium]: https://ungoogled-software.github.io/
+[Vicinae]: https://www.vicinae.com
+[Vim]: https://www.vim.org/
+[VS Code]: https://code.visualstudio.com/
+[VSCodium]: https://vscodium.com/
+[Zen]: https://zen-browser.app/
+[T3 Code]: https://github.com/pingdotgg/t3code
