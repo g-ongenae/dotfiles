@@ -24,8 +24,8 @@ if [ -n "${HOMEBREW_PREFIX:-}" ]; then
   unset dotfiles_formula
 fi
 
-# Volta is kept for existing projects, but shell/common/init.sh puts fnm ahead
-# of it afterwards.
+# Volta, which shell/common/init.sh then puts fnm ahead of. Its zsh completion
+# comes from brew's own _volta, found through fpath; no plugin is involved.
 export VOLTA_HOME="$HOME/.volta"
 dotfiles_prepend_path "$VOLTA_HOME/bin"
 

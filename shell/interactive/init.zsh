@@ -64,9 +64,15 @@ esac
 
 # --- Plugins -----------------------------------------------------------------
 
-# Keep the existing pinned submodules in their original paths.
-# Upstreams name their entrypoint either <plugin>.zsh or <plugin>.plugin.zsh,
-# so try both and stop at the first one that exists.
+# Plugins are pinned submodules under zsh/plugins/. Upstreams name their
+# entrypoint either <plugin>.zsh or <plugin>.plugin.zsh, so try both and stop at
+# the first one that exists.
+#
+# nx-completion and jq both need the `jq` binary, and jq additionally needs
+# `fzf`; both are in every profile's package list. The jq plugin is a REPL
+# widget rather than a completion: it binds alt+j to an interactive query
+# builder and puts its bin/ (jq-repl, jq-paths) on PATH. Completion for `jq`
+# itself comes from zsh's bundled _jq.
 for dotfiles_plugin in zsh-autosuggestions zsh-syntax-highlighting nx-completion jq; do
   for dotfiles_plugin_path in \
     "$DOTFILES_DIR/zsh/plugins/$dotfiles_plugin/$dotfiles_plugin.zsh" \

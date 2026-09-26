@@ -40,9 +40,11 @@ root() {
 }
 
 # Run the workspace-local Nx, searching upwards for node_modules/.bin/nx so it
-# works from any package of a monorepo. Deliberately a function, not an alias:
-# the zsh completion plugin runs `nx --help` from inside a function, and aliases
-# are invisible there, which is why completion never fired for `pnpm exec nx`.
+# works from any package of a monorepo.
+#
+# This has to be a function, not an alias: nx-completion runs `nx --help` from
+# inside a completion function, where aliases are invisible, so an alias leaves
+# `nx` with no completion at all.
 nx() {
   dotfiles_nx_dir=$PWD
 
