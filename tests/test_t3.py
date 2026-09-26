@@ -232,6 +232,20 @@ class T3Tests(unittest.TestCase):
             self.assertIn('T3_HOST', result.stderr)
         self.assertEqual(self.calls(), [])
 
+    def test_update_runs_the_updater_here_and_ships_it_to_a_server(self):
+        # A machine with none of the tools installed updates nothing and,
+        # having nothing to look up, reaches no network.
+        result = self.run_t3('update', DOTFILES_PROFILE='macos')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('== T3 Code', result.stdout)
+        self.assertIn('Not installed here, so not updated: claude, codex, gemini, agy',
+                      result.stdout)
+        self.assertEqual(self.calls(), [])
+
+        result = self.run_t3('update', T3_HOST='g@fujitsu')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.calls(), [['ssh', '--', 'g@fujitsu', 'python3', '-']])
+
     def test_local_setup_is_opt_in_preserves_services_and_does_not_start_them(self):
         result = self.run_t3('setup', DOTFILES_PROFILE='fedora')
         self.assertEqual(result.returncode, 0, result.stderr)

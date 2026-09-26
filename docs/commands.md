@@ -102,6 +102,7 @@ wrappers around three of them.
 | `bash scripts/t3.sh …` | the script behind `t3`, usable on a host without this checkout |
 | `bash scripts/print-pretty.sh '@b@green[[Done]]'` | echo with colour markup, for your own scripts |
 | `python3 scripts/t3-service.py setup` | create the T3 Code user service; `t3 setup` calls this |
+| `python3 scripts/t3-update.py` | update the T3 CLI and this machine's agents; `t3 update` calls this |
 | `python3 scripts/wakeonlan.py` | re-enable Wake-on-LAN, run at boot by the systemd unit on Debian |
 
 ## Installed command-line tools

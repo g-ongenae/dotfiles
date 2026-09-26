@@ -6,14 +6,16 @@
 #
 #   * on Linux, systemctl/journalctl against the t3code.service user unit;
 #   * on macOS, scripts/t3-service.py, which drives launchd;
-#   * connect/disconnect, which publish the local server over Tailscale Serve.
+#   * connect/disconnect, which publish the local server over Tailscale Serve;
+#   * update, which runs scripts/t3-update.py here or on the server.
 #
 # With T3_HOST set, the chosen command is sent to that host over SSH instead of
 # being run here.
 
 usage() {
-  printf '%s\n' 'Usage: t3 [setup|start|restart|stop|inspect|status|logs|connect|disconnect]' \
+  printf '%s\n' 'Usage: t3 [setup|start|restart|stop|inspect|status|logs|connect|disconnect|update]' \
     'Set T3_HOST=user@tailnet-host to control a remote Linux server.' \
+    'update updates the T3 CLI and the agents installed on the machine.' \
     'connect/disconnect enable/disable Tailscale Serve HTTPS on port 3773.' \
     'connect [nosleep|--nosleep] also inhibits sleep on the Linux server until disconnect or server exit.' \
     'connect prints a fresh pairing URL, pairing code, and QR code on every platform.'
@@ -148,6 +150,8 @@ case "$action" in
   start | restart | stop) set -- systemctl --user "$1" t3code.service ;;
   inspect | status) set -- systemctl --user status t3code.service --no-pager --full ;;
   logs) set -- journalctl --user -u t3code.service -n 100 -f ;;
+  # The updater stands on its own, so the remote branch can send it a copy.
+  update) set -- python3 "${DOTFILES_DIR:?}/scripts/t3-update.py" ;;
   connect) set -- sudo tailscale serve --bg --https=3773 http://127.0.0.1:3773 ;;
   disconnect) set -- sudo tailscale serve --https=3773 off ;;
   help | -h | --help)
@@ -173,6 +177,9 @@ if [ -n "${T3_HOST:-}" ]; then
 $* && { if $nosleep; then start_t3_nosleep; fi; } && pair_t3" ;;
     disconnect) exec ssh -t -- "$T3_HOST" "$(declare -f stop_t3_nosleep disconnect_t3)
 disconnect_t3" ;;
+    # This checkout's updater, read by the server's python3 from the SSH
+    # connection, so that the server needs no checkout of its own.
+    update) exec ssh -- "$T3_HOST" python3 - < "${DOTFILES_DIR:?}/scripts/t3-update.py" ;;
   esac
 
   exec ssh -- "$T3_HOST" "$*"
@@ -240,6 +247,8 @@ if [ "${DOTFILES_PROFILE:-}" = macos ]; then
       run_tailscale "$@"
       exit "$?"
       ;;
+    # The updater is the same on both platforms.
+    update) exec "$@" ;;
     # launchd, not systemd, runs the service on macOS.
     *) exec python3 "${DOTFILES_DIR:?}/scripts/t3-service.py" "$action" ;;
   esac
