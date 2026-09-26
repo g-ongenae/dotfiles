@@ -22,10 +22,8 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 PROFILES = ('macos', 'fedora', 'debian-server')
 STEPS = ('packages', 'shell', 'extensions', 'browsers')
-# Untouched copies of the previous installer templates can migrate safely.
+# An untouched copy of the previous installer's template can migrate safely.
 LEGACY_HASHES = {
-    '.bashrc': 'a50fed172dd7df8e977d233d1f4ffaa6dc1033b23636261c980cc5357471e053',
-    '.bash_profile': 'a50fed172dd7df8e977d233d1f4ffaa6dc1033b23636261c980cc5357471e053',
     '.zshenv': 'd87ed002bb307efb306258142714c1d66e332dd1b651ca317d25eafb42dddb5f',
 }
 
@@ -98,12 +96,6 @@ def extract_binary(path, name):
 
 
 def migrate_startup(filename, text):
-    if filename in ('.bashrc', '.bash_profile'):
-        # The old installer symlinked this template. Other tools often appended
-        # startup snippets, defeating the whole-file hash check. Remove only
-        # the exact known template and preserve additions and managed blocks.
-        legacy = (ROOT / 'scripts/legacy/bash_profile.bash').read_text().rstrip()
-        text = text.replace(legacy, '')
     if hashlib.sha256(text.encode()).hexdigest() == LEGACY_HASHES.get(filename):
         return ''
     return text
@@ -186,6 +178,8 @@ class Installer:
             path = self.home / filename
             if not path.exists():
                 continue
+            # Legacy Bash profiles are no longer migrated, only refused: a
+            # machine still carrying one is handled by hand.
             text = migrate_startup(filename, path.read_text())
             if re.search(r'^[^#\n]*(?:ZDOTDIR\s*=|/(?:run|system)/(?:\{?env|alias|\.zshrc)|CURRENT_SCRIPT=\$BASH_SOURCE|for completion_file in)', text, re.M):
                 raise ValueError(f'{path} has customized legacy startup/ZDOTDIR settings. Back it up and remove those settings before applying the shell step.')

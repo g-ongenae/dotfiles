@@ -220,16 +220,16 @@ A generated include supplies that identity, the current checkout path, and
 profile-specific defaults. A Git-config symlink found in its place is converted
 to a regular include file without changing its source.
 
-### Migrating your startup files
+### Your startup files
 
 Managed startup files live at the standard `~/.bashrc`, `~/.zshenv` and
-`~/.zshrc` locations. An untouched stock Bash or Zsh template there is migrated
-automatically, as is a Bash template that other tools appended to or that a
-previous run wrapped in managed blocks; those additions survive.
+`~/.zshrc` locations, where the installer adds its managed blocks and leaves
+everything else alone. An untouched stock Zsh template is migrated
+automatically.
 
-A startup file you have customized yourself, or a custom `ZDOTDIR` assignment,
-stops the shell step with an explanation instead. Review and remove those hooks
-before retrying.
+A startup file carrying a custom `ZDOTDIR` assignment, or the startup files of
+the installer this one replaced, stop the shell step with an explanation
+instead. Back those up and remove the old settings by hand before retrying.
 
 macOS installs Homebrew Bash and `bash-completion@2`, which replaces the
 conflicting `bash-completion` formula. Open a new terminal and run `bash` to use

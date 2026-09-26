@@ -48,7 +48,6 @@ scripts/
   update-repos.sh            # the `update_repos` helper
   print-pretty.sh            # colour markup for shell output
   lint.sh                    # shfmt and ShellCheck over every shell file
-  legacy/                    # the previous ~/.bash_profile, kept for reference
 secret/                      # starship.toml, when you keep one here
 zsh/
   plugins/                   # pinned plugin submodules
