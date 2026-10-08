@@ -32,7 +32,15 @@
     # Create a [b]ack[u]p of the current branch (useful to create before a merge or rebase)
   bu = "!sh -c \"git branch -c "backup/$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Remove all merged branch of the current repository
-  bd = "!sh -c \"git branch --merged | grep -i -v -E 'master|main|develop|beta' | grep -i -v '*' | xargs git branch -d\" -"
+    # Handle worktrees, and skip the main branches (master, main, develop, beta)
+  bd = "!f() {\
+    git for-each-ref --merged HEAD --format='%(HEAD)|%(refname:short)|%(worktreepath)' refs/heads | \
+      while IFS='|' read -r head branch wt; do \
+      [ \"$head\" = '*' ] && continue; \
+      case \"$branch\" in master|main|develop|beta) continue;; esac; \
+      [ -n \"$wt\" ] && { git worktree remove \"$wt\" || continue; }; \
+      git branch -d \"$branch\"; done; \
+    }; f"
   cu = current-branch
   current-branch = rev-parse --abbrev-ref HEAD                  # Get the current branch name
     # Get the default (HEAD) branch of the current repository
