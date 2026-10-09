@@ -48,9 +48,17 @@ if ((BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2)));
     unset dotfiles_fzf
   fi
 
-  command -v zoxide > /dev/null 2>&1 && eval "$(zoxide init bash)"
-  command -v starship > /dev/null 2>&1 && eval "$(starship init bash)"
-  command -v atuin > /dev/null 2>&1 && eval "$(atuin init bash)"
+  # A coding agent gets a plain prompt and the builtin `cd`: no prompt
+  # framework, no directory hooks, no history recorder.
+  if [ -z "${DOTFILES_AGENT:-}" ]; then
+    command -v zoxide > /dev/null 2>&1 && eval "$(zoxide init bash)"
+    command -v starship > /dev/null 2>&1 && eval "$(starship init bash)"
+    command -v atuin > /dev/null 2>&1 && eval "$(atuin init bash)"
+  fi
+fi
+
+if [ -n "${DOTFILES_AGENT:-}" ]; then
+  PS1='\w \$ '
 fi
 
 # --- Per-profile and per-machine additions -----------------------------------

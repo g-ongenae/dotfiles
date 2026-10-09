@@ -76,6 +76,20 @@ fi
 
 export PATH
 
+# --- Coding agents -----------------------------------------------------------
+
+# Claude Code, Codex and Gemini CLI mark the commands they run. Codex documents
+# no flag of its own, so rely on the variables it injects into its shell tool.
+if [ -n "${CLAUDECODE:-}" ] || [ -n "${CODEX_THREAD_ID:-}" ] ||
+  [ -n "${CODEX_SANDBOX:-}" ] || [ -n "${GEMINI_CLI:-}" ]; then
+  export DOTFILES_AGENT=1
+fi
+
+# No TTY waits for an agent: no pager, no credential prompt, no colours.
+if [ -n "${DOTFILES_AGENT:-}" ]; then
+  export PAGER=cat GIT_PAGER=cat GIT_TERMINAL_PROMPT=0 NO_COLOR=1
+fi
+
 # Succeed unconditionally: a false last command would make sourcing this file
 # look like a failure to the caller.
 :

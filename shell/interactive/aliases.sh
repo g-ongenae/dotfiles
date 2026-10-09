@@ -15,14 +15,17 @@ alias nr='npm run'
 
 # --- Modern replacements, only when the tool is installed --------------------
 
-command -v eza > /dev/null 2>&1 && alias ls='eza' && alias la='eza --all --long'
+# Coding agents parse `ls` and `cat` output, so they keep the real commands.
+if [ -z "${DOTFILES_AGENT:-}" ]; then
+  command -v eza > /dev/null 2>&1 && alias ls='eza' && alias la='eza --all --long'
 
-# Debian ships bat as `batcat`; give it both names there.
-if command -v bat > /dev/null 2>&1; then
-  alias cat='bat'
-elif command -v batcat > /dev/null 2>&1; then
-  alias bat='batcat'
-  alias cat='batcat'
+  # Debian ships bat as `batcat`; give it both names there.
+  if command -v bat > /dev/null 2>&1; then
+    alias cat='bat'
+  elif command -v batcat > /dev/null 2>&1; then
+    alias bat='batcat'
+    alias cat='batcat'
+  fi
 fi
 
 # Same story for fd, which Debian ships as `fdfind`.

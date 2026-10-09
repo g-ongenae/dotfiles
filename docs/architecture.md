@@ -92,6 +92,12 @@ Load order:
 - **Scripts** — ordinary noninteractive Bash scripts inherit their parent's
   environment; no global `BASH_ENV` hook is installed.
 
+Commands run by a coding agent (Claude Code, Codex or Gemini CLI, detected
+through `CLAUDECODE`, `CODEX_THREAD_ID`, `CODEX_SANDBOX` or `GEMINI_CLI`) set
+`DOTFILES_AGENT=1`. They then get no pager, colour or Git credential prompt, a
+plain prompt, and none of Starship, Atuin, zoxide, the Zsh plugins or the
+`eza`/`bat` aliases.
+
 Each profile then adds its own layer: `shell/macos/`, `shell/linux/` and, for
 the Debian server, `shell/server/`. All profiles use Vim as the shell's terminal
 editor. Git uses VS Code on macOS, VSCodium on Fedora, and Vim on the server.

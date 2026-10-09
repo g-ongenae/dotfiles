@@ -51,9 +51,15 @@ if command -v fzf > /dev/null 2>&1; then
   unset dotfiles_fzf
 fi
 
-command -v zoxide > /dev/null 2>&1 && eval "$(zoxide init zsh)"
-command -v starship > /dev/null 2>&1 && eval "$(starship init zsh)"
-command -v atuin > /dev/null 2>&1 && eval "$(atuin init zsh)"
+# A coding agent gets a plain prompt and the builtin `cd`: no prompt framework,
+# no directory hooks, no history recorder.
+if [[ -n ${DOTFILES_AGENT:-} ]]; then
+  PS1='%~ $ '
+else
+  command -v zoxide > /dev/null 2>&1 && eval "$(zoxide init zsh)"
+  command -v starship > /dev/null 2>&1 && eval "$(starship init zsh)"
+  command -v atuin > /dev/null 2>&1 && eval "$(atuin init zsh)"
+fi
 
 # --- Per-profile additions ---------------------------------------------------
 
@@ -73,14 +79,18 @@ esac
 # widget rather than a completion: it binds alt+j to an interactive query
 # builder and puts its bin/ (jq-repl, jq-paths) on PATH. Completion for `jq`
 # itself comes from zsh's bundled _jq.
-for dotfiles_plugin in zsh-autosuggestions zsh-syntax-highlighting nx-completion jq; do
-  for dotfiles_plugin_path in \
-    "$DOTFILES_DIR/zsh/plugins/$dotfiles_plugin/$dotfiles_plugin.zsh" \
-    "$DOTFILES_DIR/zsh/plugins/$dotfiles_plugin/$dotfiles_plugin.plugin.zsh"; do
-    [[ -r "$dotfiles_plugin_path" ]] && . "$dotfiles_plugin_path" && break
+#
+# A coding agent never types at the prompt, so it loads none of them.
+if [[ -z ${DOTFILES_AGENT:-} ]]; then
+  for dotfiles_plugin in zsh-autosuggestions zsh-syntax-highlighting nx-completion jq; do
+    for dotfiles_plugin_path in \
+      "$DOTFILES_DIR/zsh/plugins/$dotfiles_plugin/$dotfiles_plugin.zsh" \
+      "$DOTFILES_DIR/zsh/plugins/$dotfiles_plugin/$dotfiles_plugin.plugin.zsh"; do
+      [[ -r "$dotfiles_plugin_path" ]] && . "$dotfiles_plugin_path" && break
+    done
   done
-done
-unset dotfiles_plugin dotfiles_plugin_path
+  unset dotfiles_plugin dotfiles_plugin_path
+fi
 
 # --- Uncommitted additions ---------------------------------------------------
 
