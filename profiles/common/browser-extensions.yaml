@@ -10,3 +10,7 @@ fedora-firefox:
 chromium:
   - jhkfjpfhioaoopiapaipleecedggpimi
   - jdkfjefccncegmcelnnbfmmibppjchgi
+# macOS only: private GitHub repositories whose autoconfig/install.sh is run
+# against /Applications/Firefox.app (not LibreWolf or Zen).
+macos-firefox-autoconfig:
+  - g-ongenae/firefox-memory-guard

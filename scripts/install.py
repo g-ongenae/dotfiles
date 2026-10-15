@@ -22,6 +22,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 PROFILES = ('macos', 'fedora', 'debian-server')
 STEPS = ('packages', 'shell', 'extensions', 'browsers')
+FIREFOX_APP = Path('/Applications/Firefox.app')
 # An untouched copy of the previous installer's template can migrate safely.
 LEGACY_HASHES = {
     '.zshenv': 'd87ed002bb307efb306258142714c1d66e332dd1b651ca317d25eafb42dddb5f',
@@ -536,6 +537,8 @@ class Installer:
         if self.args.profile == 'fedora':
             text += '<p>Open Switchyard after installation to configure routing and select it as your default browser.</p>'
         self.write(self.config / 'browser-extensions.html', text + '\n')
+        if self.args.profile == 'macos':
+            self.firefox_autoconfig(config.get('macos-firefox-autoconfig', []))
         # Generate, do not deploy system/browser policies to unknown profile paths.
         if self.args.firefox_policy:
             policy = self.config / 'firefox-policies.json'
@@ -546,6 +549,27 @@ class Installer:
                     addon = json.loads(fetch(f'https://addons.mozilla.org/api/v5/addons/addon/{slug}/'))
                     settings[addon['guid']] = {'installation_mode': 'normal_installed', 'install_url': addon['current_version']['file']['url']}
                 self.write(policy, json.dumps({'policies': {'ExtensionSettings': settings}}, indent=2) + '\n')
+
+    def firefox_autoconfig(self, repos):
+        """Run each private repository's autoconfig/install.sh against Firefox.app.
+
+        Firefox only: LibreWolf ships its own AutoConfig file, which this would
+        replace. The repositories are private, so cloning uses the gh login;
+        a failure is reported instead of stopping the run.
+        """
+        for repo in repos:
+            if self.args.apply and not FIREFOX_APP.is_dir():
+                print(f'Skip {repo}: {FIREFOX_APP} is not installed')
+                continue
+            checkout = self.data / 'firefox-autoconfig' / repo.split('/')[-1]
+            try:
+                if checkout.exists():
+                    self.run('git', '-C', checkout, 'pull', '--ff-only')
+                else:
+                    self.run('gh', 'repo', 'clone', repo, checkout, '--', '--depth=1')
+                self.run('sh', checkout / 'autoconfig/install.sh', FIREFOX_APP)
+            except subprocess.CalledProcessError:
+                self.failures.append(f'Cannot install {repo} into Firefox; check `gh auth status`, then rerun the browsers step')
 
     def execute(self):
         print(f'Profile: {self.args.profile}; mode: {"APPLY" if self.args.apply else "DRY RUN"}; home: {self.home}')
