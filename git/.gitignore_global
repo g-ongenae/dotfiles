@@ -40,4 +40,5 @@ NOTE.md
 documentation/
 .APP_NAME
 settings.local.json
+*.local.md
 docs/investigations/
