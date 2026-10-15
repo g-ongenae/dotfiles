@@ -559,7 +559,7 @@ class InstallerTests(unittest.TestCase):
             checkout.mkdir(parents=True)
             self.install.browsers()
         self.assertEqual([call.args for call in run.call_args_list], [
-            ('gh', 'repo', 'clone', 'g-ongenae/firefox-memory-guard', checkout, '--', '--depth=1'),
+            ('git', 'clone', '--depth=1', 'https://github.com/g-ongenae/firefox-memory-guard.git', checkout),
             ('sh', checkout / 'autoconfig/install.sh', app),
             ('git', '-C', checkout, 'pull', '--ff-only'),
             ('sh', checkout / 'autoconfig/install.sh', app),
@@ -577,12 +577,12 @@ class InstallerTests(unittest.TestCase):
         run.assert_not_called()
         app = self.home / 'Firefox.app'
         app.mkdir()
-        failure = subprocess.CalledProcessError(1, 'gh')
+        failure = subprocess.CalledProcessError(1, 'git')
         with patch.object(installer, 'FIREFOX_APP', app), \
                 patch.object(self.install, 'run', side_effect=failure):
             self.install.browsers()
         self.assertEqual(len(self.install.failures), 1)
-        self.assertIn('gh auth status', self.install.failures[0])
+        self.assertIn('firefox-memory-guard', self.install.failures[0])
 
 
 if __name__ == '__main__':

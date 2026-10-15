@@ -551,11 +551,10 @@ class Installer:
                 self.write(policy, json.dumps({'policies': {'ExtensionSettings': settings}}, indent=2) + '\n')
 
     def firefox_autoconfig(self, repos):
-        """Run each private repository's autoconfig/install.sh against Firefox.app.
+        """Run each repository's autoconfig/install.sh against Firefox.app.
 
         Firefox only: LibreWolf ships its own AutoConfig file, which this would
-        replace. The repositories are private, so cloning uses the gh login;
-        a failure is reported instead of stopping the run.
+        replace. A failure is reported instead of stopping the run.
         """
         for repo in repos:
             if self.args.apply and not FIREFOX_APP.is_dir():
@@ -566,10 +565,10 @@ class Installer:
                 if checkout.exists():
                     self.run('git', '-C', checkout, 'pull', '--ff-only')
                 else:
-                    self.run('gh', 'repo', 'clone', repo, checkout, '--', '--depth=1')
+                    self.run('git', 'clone', '--depth=1', f'https://github.com/{repo}.git', checkout)
                 self.run('sh', checkout / 'autoconfig/install.sh', FIREFOX_APP)
             except subprocess.CalledProcessError:
-                self.failures.append(f'Cannot install {repo} into Firefox; check `gh auth status`, then rerun the browsers step')
+                self.failures.append(f'Cannot install {repo} into Firefox; check the network connection, then rerun the browsers step')
 
     def execute(self):
         print(f'Profile: {self.args.profile}; mode: {"APPLY" if self.args.apply else "DRY RUN"}; home: {self.home}')
