@@ -207,6 +207,28 @@ different policy locations/support. Review and deploy it according to your
 browser's enterprise-policy documentation. It uses `normal_installed`, leaving
 users able to remove extensions. No browser profile is overwritten.
 
+### Firefox Memory Guard (macOS)
+
+On macOS, the browsers step also installs
+[Firefox Memory Guard](https://github.com/g-ongenae/firefox-memory-guard). It
+warns when a tab's process uses more than 1 GB of memory and offers to unload or
+close it. It is an AutoConfig script, because regular Firefox gives extensions
+no access to per-tab memory. The installer clones it into
+`~/.local/share/dotfiles/firefox-autoconfig/` and updates it with `git pull` on
+later runs. It then runs its
+`autoconfig/install.sh` against `/Applications/Firefox.app`. Quit and reopen
+Firefox to activate it.
+
+- Only Firefox is changed: LibreWolf ships its own AutoConfig file, which this
+  would replace.
+- The step is skipped when Firefox is not installed. A clone or install failure
+  (for example, no network) is reported at the end of the run instead of
+  stopping it.
+- A Firefox update can remove the installed files. Rerun
+  `./install.sh --apply --only browsers` to put them back.
+- The repositories come from the `macos-firefox-autoconfig` section of
+  `profiles/common/browser-extensions.yaml`.
+
 ## Your existing configuration
 
 ### Git identity

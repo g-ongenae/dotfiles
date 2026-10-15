@@ -542,11 +542,47 @@ class InstallerTests(unittest.TestCase):
         self.assertIn('/switchyard/', page)
         self.assertNotIn('chromewebstore', page)
         self.args.profile = 'macos'
-        self.install.browsers()
+        with patch.object(self.install, 'run'):
+            self.install.browsers()
         page = (self.install.config / 'browser-extensions.html').read_text()
         self.assertNotIn('/switchyard/', page)
         self.assertIn('jhkfjpfhioaoopiapaipleecedggpimi', page)
         self.assertIn('jdkfjefccncegmcelnnbfmmibppjchgi', page)
+
+    def test_firefox_autoconfig_clones_then_pulls_and_installs_on_macos_only(self):
+        app = self.home / 'Firefox.app'
+        app.mkdir()
+        checkout = self.install.data / 'firefox-autoconfig/firefox-memory-guard'
+        self.args.profile = 'macos'
+        with patch.object(installer, 'FIREFOX_APP', app), patch.object(self.install, 'run') as run:
+            self.install.browsers()
+            checkout.mkdir(parents=True)
+            self.install.browsers()
+        self.assertEqual([call.args for call in run.call_args_list], [
+            ('git', 'clone', '--depth=1', 'https://github.com/g-ongenae/firefox-memory-guard.git', checkout),
+            ('sh', checkout / 'autoconfig/install.sh', app),
+            ('git', '-C', checkout, 'pull', '--ff-only'),
+            ('sh', checkout / 'autoconfig/install.sh', app),
+        ])
+        self.args.profile = 'fedora'
+        with patch.object(self.install, 'run') as run:
+            self.install.browsers()
+        run.assert_not_called()
+
+    def test_firefox_autoconfig_skips_missing_firefox_and_reports_clone_failure(self):
+        self.args.profile = 'macos'
+        with patch.object(installer, 'FIREFOX_APP', self.home / 'missing.app'), \
+                patch.object(self.install, 'run') as run:
+            self.install.browsers()
+        run.assert_not_called()
+        app = self.home / 'Firefox.app'
+        app.mkdir()
+        failure = subprocess.CalledProcessError(1, 'git')
+        with patch.object(installer, 'FIREFOX_APP', app), \
+                patch.object(self.install, 'run', side_effect=failure):
+            self.install.browsers()
+        self.assertEqual(len(self.install.failures), 1)
+        self.assertIn('firefox-memory-guard', self.install.failures[0])
 
 
 if __name__ == '__main__':
