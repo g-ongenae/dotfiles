@@ -26,6 +26,15 @@ Every profile:
 | `cat` | `bat`, or `batcat` on Debian | |
 | `bat` | `batcat` | Debian only, where the executable has that name |
 | `fd` | `fdfind` | Debian only, same reason |
+| `grep` | `grep --color=auto --exclude-dir=…` | skips VCS and tooling directories (`.git`, `.venv`, …) |
+| `history` | `fc -il 1` | Zsh only: the whole history, with timestamps |
+
+Coding agents get none of `ls`, `la`, `cat` or `grep`: they parse the output of
+the real commands.
+
+Zsh runs without a framework such as Oh My Zsh, so it binds the keys the emacs
+keymap leaves unbound: Delete, Home, End, and Ctrl or Alt with Left/Right to
+move by word. Up arrow and Ctrl+R search history through Atuin.
 
 macOS:
 

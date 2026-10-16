@@ -17,8 +17,21 @@ SAVEHIST=100000
 # Share history live between shells, dropping duplicates and space-prefixed lines.
 setopt APPEND_HISTORY SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE
 
+# The whole history with timestamps, not just the last 16 entries.
+alias history='fc -il 1'
+
 # Emacs keybindings, regardless of the value of $EDITOR.
 bindkey -e
+
+# Keys the emacs keymap leaves unbound, so they would print escape codes:
+# Delete, Home and End (normal and application cursor modes), and word jumps
+# with Ctrl or Alt plus an arrow.
+bindkey -M emacs '^[[3~' delete-char
+for dotfiles_key in '^[[H' '^[OH'; do bindkey -M emacs "$dotfiles_key" beginning-of-line; done
+for dotfiles_key in '^[[F' '^[OF'; do bindkey -M emacs "$dotfiles_key" end-of-line; done
+for dotfiles_key in '^[[1;5C' '^[[1;3C'; do bindkey -M emacs "$dotfiles_key" forward-word; done
+for dotfiles_key in '^[[1;5D' '^[[1;3D'; do bindkey -M emacs "$dotfiles_key" backward-word; done
+unset dotfiles_key
 
 # --- Completion --------------------------------------------------------------
 

@@ -15,7 +15,8 @@ alias nr='npm run'
 
 # --- Modern replacements, only when the tool is installed --------------------
 
-# Coding agents parse `ls` and `cat` output, so they keep the real commands.
+# Coding agents parse `ls`, `cat` and `grep` output, so they keep the real
+# commands.
 if [ -z "${DOTFILES_AGENT:-}" ]; then
   command -v eza > /dev/null 2>&1 && alias ls='eza' && alias la='eza --all --long'
 
@@ -26,6 +27,9 @@ if [ -z "${DOTFILES_AGENT:-}" ]; then
     alias bat='batcat'
     alias cat='batcat'
   fi
+
+  # Highlight matches, and skip VCS and tooling directories when recursing.
+  alias grep='grep --color=auto --exclude-dir={.bzr,CVS,.git,.hg,.svn,.idea,.tox,.venv,venv}'
 fi
 
 # Same story for fd, which Debian ships as `fdfind`.
