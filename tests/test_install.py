@@ -390,7 +390,7 @@ class InstallerTests(unittest.TestCase):
         command = ('PATH="$HOME/bin:$PATH"; . "$DOTFILES_DIR/shell/common/init.sh"; '
                    '. "$DOTFILES_DIR/shell/interactive/init.bash"; '
                    'printf "%s:%s:%s:" "${DOTFILES_AGENT:-}" "${GIT_PAGER:-}" "${STARSHIP_LOADED:-no}"; '
-                   'alias ls 2>/dev/null || printf "plain"')
+                   'alias ls grep 2>/dev/null || printf "plain"')
         for variable in ('CLAUDECODE', 'CODEX_THREAD_ID', 'CODEX_SANDBOX', 'GEMINI_CLI'):
             with self.subTest(agent=variable):
                 result = self.bash(f'export {variable}=1; ' + command, interactive=True)
@@ -399,6 +399,7 @@ class InstallerTests(unittest.TestCase):
         result = self.bash(command, interactive=True)
         self.assertTrue(result.stdout.startswith('::'))
         self.assertIn("alias ls='eza'", result.stdout)
+        self.assertIn("alias grep='grep --color=auto", result.stdout)
 
     def test_shared_t3_replaces_old_bashrc_helper_at_the_prompt(self):
         (self.home / '.bashrc').write_text(
