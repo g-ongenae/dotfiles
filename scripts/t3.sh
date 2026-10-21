@@ -9,21 +9,23 @@
 #   * connect/disconnect, which publish the local server over Tailscale Serve;
 #   * update, which runs scripts/t3-update.py here or on the server;
 #   * pair/devices/revoke, which ask the server's own T3 CLI about the devices
-#     allowed to reach it.
+#     allowed to reach it;
+#   * local, which pairs this machine's browser over loopback, without Tailscale.
 #
 # With T3_HOST set, the chosen command is sent to that host over SSH instead of
 # being run here.
 
 usage() {
   printf '%s\n' 'Usage: t3 [setup|start|restart|stop|inspect|status|logs|update]' \
-    '       t3 [connect [nosleep]|disconnect|pair [label]|devices|revoke <id>]' \
+    '       t3 [connect [nosleep]|disconnect|pair [label]|devices|revoke <id>|local]' \
     'Set T3_HOST=user@tailnet-host to control a remote Linux server.' \
     'update updates the T3 CLI and the agents installed on the machine.' \
     'connect/disconnect enable/disable Tailscale Serve HTTPS on port 3773.' \
     'connect [nosleep|--nosleep] also inhibits sleep on the Linux server until disconnect or server exit.' \
     'connect prints a fresh pairing URL, pairing code, and QR code on every platform.' \
     'A pairing token is one-time, so every device needs its own: pair [label] mints one.' \
-    'devices lists paired sessions and unused tokens; revoke <id> drops one of them.'
+    'devices lists paired sessions and unused tokens; revoke <id> drops one of them.' \
+    'local pairs this machine'"'"'s browser with the local server over 127.0.0.1, no Tailscale needed.'
 }
 
 # --- Helpers shipped to remote hosts -----------------------------------------
@@ -114,6 +116,41 @@ t3_revoke() (
 )
 
 # Keep these functions self-contained for remote hosts without dotfiles.
+
+# Pair this machine's browser with the local server: mint a loopback token,
+# which needs no Tailscale, and open its pairing URL. Local only, since a
+# server's 127.0.0.1 is not this machine's.
+open_t3_local() {
+  local output result url
+  output=$(t3_cli pair --label local 2>&1)
+  result=$?
+  if [ "$result" -ne 0 ]; then
+    printf '%s\n' "$output" >&2
+    [[ "$output" == *NoRunningServerError* ]] &&
+      printf 't3: no running T3 server found; run t3 start, then retry t3 local.\n' >&2
+    return "$result"
+  fi
+
+  local line
+  while IFS= read -r line; do
+    [[ "$line" == 'Pairing URL: '* ]] && url=${line#Pairing URL: }
+  done <<< "$output"
+  if [ -z "$url" ]; then
+    printf '%s\n' "$output" >&2
+    printf 't3: the T3 CLI printed no pairing URL.\n' >&2
+    return 1
+  fi
+
+  printf 'Opening %s\n' "$url"
+  if command -v open > /dev/null 2>&1; then
+    open "$url"
+  elif command -v xdg-open > /dev/null 2>&1; then
+    xdg-open "$url"
+  else
+    printf 't3: no browser opener found; open the URL above by hand.\n' >&2
+    return 127
+  fi
+}
 
 # Hold sleep off for as long as the T3 server runs (Linux only).
 start_t3_nosleep() {
@@ -218,6 +255,13 @@ case "$action" in
   # Asking the T3 CLI is the same work here and on a server, so these three
   # map onto a function rather than onto a command to run or forward.
   pair | devices | revoke) ;;
+  local)
+    if [ -n "${T3_HOST:-}" ]; then
+      printf 't3: local pairs this machine'"'"'s own server; unset T3_HOST, or use t3 pair for %s.\n' \
+        "$T3_HOST" >&2
+      exit 2
+    fi
+    ;;
   connect) set -- sudo tailscale serve --bg --https=3773 http://127.0.0.1:3773 ;;
   disconnect) set -- sudo tailscale serve --https=3773 off ;;
   help | -h | --help)
@@ -276,6 +320,10 @@ case "$action" in
     ;;
   revoke)
     t3_revoke "$argument"
+    exit "$?"
+    ;;
+  local)
+    open_t3_local
     exit "$?"
     ;;
 esac

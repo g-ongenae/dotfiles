@@ -27,7 +27,7 @@ class T3Tests(unittest.TestCase):
         (self.bin / 'python3').symlink_to(sys.executable)
         # Real sleep: the macOS connect deadline times its own commands with it.
         (self.bin / 'sleep').symlink_to(shutil.which('sleep'))
-        for name in ('systemctl', 'systemd-run', 'journalctl', 'ssh', 'tailscale', 'sudo', 'launchctl', 't3', 'tail'):
+        for name in ('systemctl', 'systemd-run', 'journalctl', 'ssh', 'tailscale', 'sudo', 'launchctl', 't3', 'tail', 'open'):
             tool = self.bin / name
             tool.write_text(
                 f'#!{sys.executable}\n'
@@ -243,6 +243,23 @@ class T3Tests(unittest.TestCase):
             ['t3', 'pair', '--tailscale', '--tailscale-serve-port', '3773'],
             ['t3', 'pair', '--tailscale', '--tailscale-serve-port', '3773', '--label', 'phone'],
         ])
+
+    def test_local_pairs_over_loopback_and_opens_the_browser(self):
+        result = self.run_t3('local', DOTFILES_PROFILE='macos')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.calls(), [
+            ['t3', 'pair', '--label', 'local'],
+            ['open', 'https://server:3773/#token=code'],
+        ])
+
+    def test_local_refuses_a_remote_host_and_a_failed_pairing(self):
+        result = self.run_t3('local', T3_HOST='g@fujitsu')
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('unset T3_HOST', result.stderr)
+        self.assertEqual(self.calls(), [])
+        # The fake opener fails alike, so a call to it would show in the log.
+        self.assertEqual(self.run_t3('local', COMMAND_EXIT='1').returncode, 1)
+        self.assertEqual(self.calls(), [['t3', 'pair', '--label', 'local']])
 
     def test_devices_lists_both_kinds_and_revoke_drops_an_id(self):
         self.assertEqual(self.run_t3('devices').returncode, 0)
