@@ -16,16 +16,29 @@
 # being run here.
 
 usage() {
-  printf '%s\n' 'Usage: t3 [setup|start|restart|stop|inspect|status|logs|update]' \
-    '       t3 [connect [nosleep]|disconnect|pair [label]|devices|revoke <id>|local]' \
-    'Set T3_HOST=user@tailnet-host to control a remote Linux server.' \
-    'update updates the T3 CLI and the agents installed on the machine.' \
-    'connect/disconnect enable/disable Tailscale Serve HTTPS on port 3773.' \
-    'connect [nosleep|--nosleep] also inhibits sleep on the Linux server until disconnect or server exit.' \
-    'connect prints a fresh pairing URL, pairing code, and QR code on every platform.' \
-    'A pairing token is one-time, so every device needs its own: pair [label] mints one.' \
-    'devices lists paired sessions and unused tokens; revoke <id> drops one of them.' \
-    'local pairs this machine'"'"'s browser with the local server over 127.0.0.1, no Tailscale needed.'
+  printf '%s\n' 'Usage: t3 [action] [argument]' \
+    '' \
+    'Service:' \
+    '  setup              Create the T3 service on this machine; keeps an existing one, does not start it.' \
+    '  start              Start the T3 service.' \
+    '  restart            Restart the T3 service; briefly interrupts connections.' \
+    '  stop               Stop the T3 service; Tailscale sharing stays configured.' \
+    '  inspect, status    Show whether the service is running (the default with no action).' \
+    '  logs               Follow the last 100 log lines; Ctrl-C exits.' \
+    '  update             Update the T3 CLI and installed agents; restarts T3 if it changed.' \
+    '' \
+    'Access:' \
+    '  local              Pair this machine'"'"'s browser over 127.0.0.1 and open it; no Tailscale needed.' \
+    '  connect            Share the server over Tailscale HTTPS :3773 and print a pairing URL, code and QR.' \
+    '  connect nosleep    Same, and keep the Linux server awake until disconnect (alias: --nosleep).' \
+    '  disconnect         Stop sharing over Tailscale and release the sleep inhibitor.' \
+    '  pair [label]       Mint a one-time pairing token for one more device; the label names it.' \
+    '  devices            List paired sessions and unused tokens, without their secrets.' \
+    '  revoke <id>        Drop a session or an unused token, by an id from t3 devices.' \
+    '  help               Show this message.' \
+    '' \
+    'Environment:' \
+    '  T3_HOST=user@host  Control a remote Linux server over SSH instead of this machine.'
 }
 
 # --- Helpers shipped to remote hosts -----------------------------------------
