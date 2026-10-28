@@ -29,6 +29,11 @@ HOME = Path.home()
 BIN = HOME / '.local/bin'
 # The AppImage the Debian service runs, extracted beside the executable itself.
 RUNTIME = HOME / '.local/share/dotfiles/t3/appimage'
+# Copies extracted from the AppImage that something on this machine runs: the
+# one `t3 setup` makes, and the one a hand-installed ~/.local/bin/t3code-server
+# wrapper runs, which `t3 setup` prefers when present. Each is refreshed when it
+# exists, so that the server's own version follows the AppImage's.
+RUNTIMES = (RUNTIME, HOME / '.local/opt/t3code/squashfs-root')
 T3_REPO = 'pingdotgg/t3code'
 T3_ASSET = 'T3-Code-*-x86_64.AppImage'
 LABELS = ('com.dotfiles.t3code', 'com.t3tools.t3code.service')
@@ -104,11 +109,31 @@ def restart_service(target):
         run('systemctl', '--user', 'restart', target)
 
 
-def update_appimage():
-    """Replace the AppImage and the copy the service runs from.
+def extracted_digest(runtime):
+    """The AppImage digest a copy was last extracted from, or None if unknown."""
+    record = runtime.with_name(runtime.name + '.sha256')
+    return record.read_text().strip() if record.exists() else None
 
-    The installer writes the AppImage to ~/.local/bin/t3-code and `t3 setup`
-    extracts it; both have to move together or the service keeps its old code.
+
+def extract(executable, runtime, digest):
+    """Replace one extracted copy with the AppImage's contents, then record it."""
+    with tempfile.TemporaryDirectory(prefix='extract-', dir=runtime.parent) as directory:
+        run(executable, '--appimage-extract', cwd=directory, stdout=subprocess.DEVNULL)
+        previous = runtime.with_name(runtime.name + '.previous')
+        shutil.rmtree(previous, ignore_errors=True)
+        runtime.rename(previous)
+        (Path(directory) / 'squashfs-root').rename(runtime)
+        shutil.rmtree(previous, ignore_errors=True)
+    runtime.with_name(runtime.name + '.sha256').write_text(digest + '\n')
+
+
+def update_appimage():
+    """Replace the AppImage and every copy extracted from it that runs.
+
+    The installer writes the AppImage to ~/.local/bin/t3-code and the server
+    runs a copy extracted from it; both have to move together or the service
+    keeps its old code. A copy with no record of its source counts as stale,
+    so an AppImage already current still refreshes copies left behind.
     """
     release = latest_release(T3_REPO)
     assets = [a for a in release['assets'] if fnmatch.fnmatchcase(a['name'], T3_ASSET)]
@@ -123,29 +148,26 @@ def update_appimage():
         raise ValueError(f'Checksum mismatch for {T3_REPO}/{asset["name"]}')
 
     executable = BIN / 't3-code'
-    if executable.exists() and hashlib.sha256(executable.read_bytes()).hexdigest() == digest:
+    current = executable.exists() and hashlib.sha256(executable.read_bytes()).hexdigest() == digest
+    if current:
         print(f'T3 {release["tag_name"]} is already the installed AppImage')
-        return False
+    else:
+        print(f'Install T3 {release["tag_name"]} from {asset["name"]}')
+        BIN.mkdir(parents=True, exist_ok=True)
+        # Write beside the target and move it into place: the old AppImage may be
+        # executing, and replacing its contents in place would break that process.
+        with tempfile.NamedTemporaryFile(dir=BIN, prefix='.t3-code-', delete=False) as handle:
+            handle.write(content)
+            staged = Path(handle.name)
+        staged.chmod(0o755)
+        staged.replace(executable)
 
-    print(f'Install T3 {release["tag_name"]} from {asset["name"]}')
-    BIN.mkdir(parents=True, exist_ok=True)
-    # Write beside the target and move it into place: the old AppImage may be
-    # executing, and replacing its contents in place would break that process.
-    with tempfile.NamedTemporaryFile(dir=BIN, prefix='.t3-code-', delete=False) as handle:
-        handle.write(content)
-        staged = Path(handle.name)
-    staged.chmod(0o755)
-    staged.replace(executable)
-
-    if RUNTIME.exists():
-        with tempfile.TemporaryDirectory(prefix='extract-', dir=RUNTIME.parent) as directory:
-            run(executable, '--appimage-extract', cwd=directory, stdout=subprocess.DEVNULL)
-            previous = RUNTIME.with_name('appimage.previous')
-            shutil.rmtree(previous, ignore_errors=True)
-            RUNTIME.rename(previous)
-            (Path(directory) / 'squashfs-root').rename(RUNTIME)
-            shutil.rmtree(previous, ignore_errors=True)
-    return True
+    stale = [runtime for runtime in RUNTIMES
+             if runtime.exists() and extracted_digest(runtime) != digest]
+    for runtime in stale:
+        print(f'Extract T3 {release["tag_name"]} to {runtime}')
+        extract(executable, runtime, digest)
+    return not current or bool(stale)
 
 
 def npm_installed(package):
