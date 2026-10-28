@@ -39,8 +39,13 @@ class T3Tests(unittest.TestCase):
                 'if Path(sys.argv[0]).name == "systemctl":\n'
                 '    if "--property=MainPID" in sys.argv: print(os.environ.get("MAIN_PID", "1234"))\n'
                 '    if "--property=LoadState" in sys.argv: print(os.environ.get("NOSLEEP_STATE", "not-found"))\n'
-                '    if "is-active" in sys.argv: sys.exit(0 if os.environ.get("NOSLEEP_STATE") == "loaded" else 3)\n'
-                'if Path(sys.argv[0]).name == "t3":\n'
+                '    if "is-active" in sys.argv and sys.argv[-1] == "t3code-nosleep.service": sys.exit(0 if os.environ.get("NOSLEEP_STATE") == "loaded" else 3)\n'
+                '    if "is-active" in sys.argv: sys.exit(0 if os.environ.get("T3_STATE", "active") == "active" else 3)\n'
+                'if Path(sys.argv[0]).name == "t3" and sys.argv[-3:] == ["connect", "status", "--json"]:\n'
+                '    calls = [json.loads(line) for line in Path(os.environ["CALL_LOG"]).read_text().splitlines()]\n'
+                '    linked = os.environ.get("T3_LINKED") == "1" or any(call[0] == "t3" and "link" in call for call in calls)\n'
+                '    print(json.dumps({"desired": linked, "linked": linked, "revoked": False}, indent=2))\n'
+                'elif Path(sys.argv[0]).name == "t3":\n'
                 '    print("Pairing URL: https://server:3773/#token=code\\nToken: code\\nQR: ▄█" if sys.argv[1] == "pair" else "  serve  Run the server")\n'
                 'sys.exit(int(os.environ.get("COMMAND_EXIT", "0")))\n')
             tool.chmod(0o755)
@@ -73,14 +78,16 @@ class T3Tests(unittest.TestCase):
             ['ssh', '--', 'g@fujitsu', 'systemctl --user restart t3code.service']])
 
     def test_invalid_arguments_and_help_never_execute_commands(self):
-        for args in [('bad',), ('start', 'extra'), ('start; touch /tmp/no',)]:
+        for args in [('bad',), ('start', 'extra'), ('start; touch /tmp/no',), ('tailscale',),
+                     ('tailscale', 'pair'), ('tailscale-connect',), ('tailscale', 'disconnect', 'nosleep'),
+                     ('connect', 'bad')]:
             self.assertEqual(self.run_t3(*args).returncode, 2)
         self.assertEqual(self.run_t3('--help').returncode, 0)
         self.assertEqual(self.calls(), [])
 
     def test_connect_and_disconnect_only_change_the_t3_serve_listener(self):
-        self.assertEqual(self.run_t3('connect').returncode, 0)
-        self.assertEqual(self.run_t3('disconnect').returncode, 0)
+        self.assertEqual(self.run_t3('tailscale', 'connect').returncode, 0)
+        self.assertEqual(self.run_t3('tailscale', 'disconnect').returncode, 0)
         self.assertEqual(self.calls(), [
             ['sudo', 'tailscale', 'serve', '--bg', '--https=3773', 'http://127.0.0.1:3773'],
             ['t3', 'pair', '--tailscale', '--tailscale-serve-port', '3773'],
@@ -90,18 +97,18 @@ class T3Tests(unittest.TestCase):
 
     def test_pairing_output_on_all_profiles(self):
         for profile in ('fedora', 'debian-server', 'macos'):
-            result = self.run_t3('connect', DOTFILES_PROFILE=profile)
+            result = self.run_t3('tailscale', 'connect', DOTFILES_PROFILE=profile)
             self.assertEqual(result.returncode, 0, result.stderr)
             for text in ('Pairing URL:', 'Token: code', 'QR: ▄█'):
                 self.assertIn(text, result.stdout)
 
     def test_failed_serve_does_not_mint_credentials(self):
-        result = self.run_t3('connect', COMMAND_EXIT='1')
+        result = self.run_t3('tailscale', 'connect', COMMAND_EXIT='1')
         self.assertEqual(result.returncode, 1)
         self.assertEqual(len(self.calls()), 1)
 
     def test_remote_connect_runs_pairing_on_server(self):
-        result = self.run_t3('connect', T3_HOST='g@fujitsu')
+        result = self.run_t3('tailscale', 'connect', T3_HOST='g@fujitsu')
         self.assertEqual(result.returncode, 0, result.stderr)
         call = self.calls()[0]
         self.assertEqual(call[:4], ['ssh', '-t', '--', 'g@fujitsu'])
@@ -116,12 +123,12 @@ class T3Tests(unittest.TestCase):
 
     def test_pairing_supports_wrapper_and_extracted_appimage(self):
         (self.bin / 't3').rename(self.bin / 't3code-server')
-        self.assertEqual(self.run_t3('connect').returncode, 0)
+        self.assertEqual(self.run_t3('tailscale', 'connect').returncode, 0)
         self.assertEqual(self.calls()[-1][0], 't3code-server')
         runtime = self.home / '.local/share/dotfiles/t3/appimage'
         runtime.mkdir(parents=True)
         (self.bin / 't3code-server').rename(runtime / 't3code')
-        self.assertEqual(self.run_t3('connect').returncode, 0)
+        self.assertEqual(self.run_t3('tailscale', 'connect').returncode, 0)
         self.assertEqual(self.calls()[-1], [
             't3code', str(runtime / 'resources/app.asar/apps/server/dist/bin.mjs'),
             'pair', '--tailscale', '--tailscale-serve-port', '3773'])
@@ -131,7 +138,7 @@ class T3Tests(unittest.TestCase):
         tool.write_text(tool.read_text().replace(
             'sys.exit(int(os.environ.get("COMMAND_EXIT", "0")))',
             'print("NoRunningServerError: No running T3 Code server found."); sys.exit(1)'))
-        result = self.run_t3('connect')
+        result = self.run_t3('tailscale', 'connect')
         self.assertEqual(result.returncode, 1)
         self.assertIn('t3 restart', result.stderr)
         self.assertIn('T3CODE_HOME', result.stderr)
@@ -142,16 +149,16 @@ class T3Tests(unittest.TestCase):
         tool = self.bin / 't3'
         tool.write_text(tool.read_text().replace(
             'sys.exit(int(os.environ.get("COMMAND_EXIT", "0")))', 'sys.exit(9)'))
-        self.assertEqual(self.run_t3('connect').returncode, 9)
+        self.assertEqual(self.run_t3('tailscale', 'connect').returncode, 9)
 
     def test_remote_disconnect_has_a_terminal_for_sudo(self):
-        result = self.run_t3('disconnect', T3_HOST='g@fujitsu', COMMAND_EXIT='1')
+        result = self.run_t3('tailscale', 'disconnect', T3_HOST='g@fujitsu', COMMAND_EXIT='1')
         self.assertEqual(result.returncode, 1)
         self.assertEqual(self.calls()[0][:4], ['ssh', '-t', '--', 'g@fujitsu'])
-        self.assertTrue(self.calls()[0][4].endswith('\ndisconnect_t3'))
+        self.assertTrue(self.calls()[0][4].endswith('\ndisconnect_t3_tailscale'))
 
     def test_nosleep_starts_inhibitor_for_server_pid(self):
-        result = self.run_t3('connect', 'nosleep')
+        result = self.run_t3('tailscale', 'connect', 'nosleep')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn([
             'systemd-run', '--user', '--unit=t3code-nosleep', '--collect',
@@ -160,26 +167,26 @@ class T3Tests(unittest.TestCase):
             'tail', '--pid=1234', '-f', '/dev/null'], self.calls())
 
     def test_nosleep_repeated_connect_reuses_inhibitor(self):
-        result = self.run_t3('connect', '--nosleep', NOSLEEP_STATE='loaded')
+        result = self.run_t3('tailscale', 'connect', '--nosleep', NOSLEEP_STATE='loaded')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(any(call[0] == 'systemd-run' for call in self.calls()))
 
     def test_nosleep_requires_running_server(self):
-        result = self.run_t3('connect', 'nosleep', MAIN_PID='0')
+        result = self.run_t3('tailscale', 'connect', 'nosleep', MAIN_PID='0')
         self.assertEqual(result.returncode, 1)
         self.assertIn('t3 start', result.stderr)
         self.assertFalse(any(call[0] in ('systemd-run', 't3') for call in self.calls()))
 
     def test_disconnect_releases_inhibitor_even_if_serve_fails(self):
         for status in ('0', '1'):
-            result = self.run_t3('disconnect', NOSLEEP_STATE='loaded', SERVE_EXIT=status)
+            result = self.run_t3('tailscale', 'disconnect', NOSLEEP_STATE='loaded', SERVE_EXIT=status)
             self.assertEqual(result.returncode, int(status))
             self.assertEqual(self.calls()[-1],
                              ['systemctl', '--user', 'stop', 't3code-nosleep.service'])
 
     def test_remote_nosleep_and_cleanup_run_on_server(self):
         for action, args in [('connect', ('--nosleep',)), ('disconnect', ())]:
-            result = self.run_t3(action, *args, T3_HOST='g@fujitsu', DOTFILES_PROFILE='macos')
+            result = self.run_t3('tailscale', action, *args, T3_HOST='g@fujitsu', DOTFILES_PROFILE='macos')
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = self.calls()[-1][4]
             result = subprocess.run([str(self.bin / 'bash'), '-c', payload],
@@ -190,21 +197,21 @@ class T3Tests(unittest.TestCase):
         self.assertEqual(self.calls()[-1], ['systemctl', '--user', 'stop', 't3code-nosleep.service'])
 
     def test_local_macos_nosleep_explains_linux_requirement(self):
-        result = self.run_t3('connect', 'nosleep', DOTFILES_PROFILE='macos')
+        result = self.run_t3('tailscale', 'connect', 'nosleep', DOTFILES_PROFILE='macos')
         self.assertEqual(result.returncode, 2)
         self.assertIn('Linux', result.stderr)
         self.assertEqual(self.calls(), [])
 
     def test_missing_tailscale_does_not_run_sudo(self):
         (self.bin / 'tailscale').unlink()
-        result = self.run_t3('connect')
+        result = self.run_t3('tailscale', 'connect')
         self.assertEqual(result.returncode, 127)
         self.assertIn('install Tailscale', result.stderr)
         self.assertEqual(self.calls(), [])
 
     def test_macos_uses_app_cli_without_sudo_and_can_target_linux_remotely(self):
-        self.assertEqual(self.run_t3('connect', DOTFILES_PROFILE='macos').returncode, 0)
-        self.assertEqual(self.run_t3('disconnect', DOTFILES_PROFILE='macos').returncode, 0)
+        self.assertEqual(self.run_t3('tailscale', 'connect', DOTFILES_PROFILE='macos').returncode, 0)
+        self.assertEqual(self.run_t3('tailscale', 'disconnect', DOTFILES_PROFILE='macos').returncode, 0)
         self.assertEqual(self.run_t3('start', DOTFILES_PROFILE='macos', T3_HOST='g@fujitsu').returncode, 0)
         self.assertEqual(self.calls(), [
             ['tailscale', 'serve', '--bg', '--https=3773', 'http://127.0.0.1:3773'],
@@ -217,7 +224,7 @@ class T3Tests(unittest.TestCase):
         tool = self.bin / 'tailscale'
         tool.write_text(tool.read_text().replace(
             'sys.exit(int(os.environ.get("COMMAND_EXIT", "0")))', 'import time\ntime.sleep(60)'))
-        result = self.run_t3('connect', DOTFILES_PROFILE='macos', T3_TAILSCALE_DEADLINE='1')
+        result = self.run_t3('tailscale', 'connect', DOTFILES_PROFILE='macos', T3_TAILSCALE_DEADLINE='1')
         self.assertEqual(result.returncode, 124)
         self.assertIn('Tailscale app', result.stderr)
         # Sharing never came up, so no pairing credentials were minted.
@@ -231,6 +238,103 @@ class T3Tests(unittest.TestCase):
             self.assertIn('t3 setup', result.stderr)
             self.assertIn('T3_HOST', result.stderr)
         self.assertEqual(self.calls(), [])
+
+    T3_LINK_CHECK = ['t3', '--log-level', 'none', 'connect', 'status', '--json']
+
+    def test_connect_links_t3_connect_and_restarts_to_apply_it(self):
+        result = self.run_t3('connect')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('restarting T3', result.stdout)
+        # No display on this Linux host, so authorization uses the device flow.
+        self.assertEqual(self.calls(), [
+            self.T3_LINK_CHECK,
+            ['t3', 'connect', 'link', '--headless'],
+            ['systemctl', '--user', 'restart', 't3code.service'],
+            self.T3_LINK_CHECK,
+            ['t3', 'connect', 'status'],
+        ])
+        self.assertFalse(any(call[0] in ('sudo', 'tailscale') for call in self.calls()))
+
+    def test_connect_uses_a_browser_at_a_desktop_session(self):
+        self.assertEqual(self.run_t3('connect', DISPLAY=':0').returncode, 0)
+        self.assertIn(['t3', 'connect', 'link'], self.calls())
+
+    def test_connect_already_linked_neither_relinks_nor_restarts(self):
+        result = self.run_t3('connect', 'nosleep', T3_LINKED='1')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any('link' in call or 'restart' in call for call in self.calls()))
+        self.assertTrue(any(call[0] == 'systemd-run' for call in self.calls()))
+        self.assertEqual(self.calls()[-1], ['t3', 'connect', 'status'])
+
+    def test_connect_nosleep_inhibits_after_the_restart(self):
+        result = self.run_t3('connect', '--nosleep')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        names = [call[0] if call[0] != 'systemctl' else call[2] for call in self.calls()]
+        self.assertLess(names.index('restart'), names.index('systemd-run'))
+
+    def test_connect_failed_link_does_not_restart(self):
+        result = self.run_t3('connect', COMMAND_EXIT='1')
+        self.assertEqual(result.returncode, 1)
+        self.assertFalse(any('restart' in call for call in self.calls()))
+
+    def test_connect_reports_a_link_the_server_never_provisions(self):
+        tool = self.bin / 't3'
+        tool.write_text(tool.read_text().replace('"link" in call', '"never" in call'))
+        result = self.run_t3('connect', T3_CONNECT_DEADLINE='0')
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('did not link', result.stderr)
+        self.assertEqual(self.calls()[-1], ['t3', 'connect', 'status'])
+
+    def test_disconnect_unlinks_and_restarts_only_a_running_server(self):
+        result = self.run_t3('disconnect', NOSLEEP_STATE='loaded')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.calls(), [
+            ['t3', 'connect', 'unlink'],
+            ['systemctl', '--user', 'is-active', '--quiet', 't3code.service'],
+            ['systemctl', '--user', 'restart', 't3code.service'],
+            ['systemctl', '--user', 'show', 't3code-nosleep.service', '--property=LoadState', '--value'],
+            ['systemctl', '--user', 'stop', 't3code-nosleep.service'],
+        ])
+        self.log.unlink()
+        self.assertEqual(self.run_t3('disconnect', T3_STATE='inactive').returncode, 0)
+        self.assertNotIn(['systemctl', '--user', 'restart', 't3code.service'], self.calls())
+
+    def test_remote_t3_connect_runs_on_the_server_with_the_device_flow(self):
+        for action, args in [('connect', ('nosleep',)), ('disconnect', ())]:
+            result = self.run_t3(action, *args, T3_HOST='g@fujitsu', DOTFILES_PROFILE='macos')
+            self.assertEqual(result.returncode, 0, result.stderr)
+            call = self.calls()[-1]
+            self.assertEqual(call[:3] if action == 'disconnect' else call[:4],
+                             ['ssh', '--', 'g@fujitsu'] if action == 'disconnect' else ['ssh', '-t', '--', 'g@fujitsu'])
+            # Execute the payload under a clean shell, as on the SSH server.
+            result = subprocess.run([str(self.bin / 'bash'), '-c', call[-1]],
+                                    env=dict(self.env, DISPLAY=':0'), text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+        calls = self.calls()
+        self.assertIn(['t3', 'connect', 'link', '--headless'], calls)
+        self.assertTrue(any(call[0] == 'systemd-run' for call in calls))
+        self.assertEqual(calls[-4:], [
+            ['t3', 'connect', 'unlink'],
+            ['systemctl', '--user', 'is-active', '--quiet', 't3code.service'],
+            ['systemctl', '--user', 'restart', 't3code.service'],
+            ['systemctl', '--user', 'show', 't3code-nosleep.service', '--property=LoadState', '--value'],
+        ])
+
+    def test_macos_t3_connect_restarts_through_launchd(self):
+        self.assertEqual(self.run_t3('setup', DOTFILES_PROFILE='macos').returncode, 0)
+        result = self.run_t3('connect', DOTFILES_PROFILE='macos')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        target = f'gui/{os.getuid()}/com.dotfiles.t3code'
+        self.assertEqual(self.calls()[1:], [
+            self.T3_LINK_CHECK,
+            ['t3', 'connect', 'link'],
+            ['launchctl', 'print', target], ['launchctl', 'kickstart', '-k', target],
+            self.T3_LINK_CHECK,
+            ['t3', 'connect', 'status'],
+        ])
+        result = self.run_t3('connect', 'nosleep', DOTFILES_PROFILE='macos')
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('Linux', result.stderr)
 
     def test_pair_mints_one_labelled_token_per_device(self):
         # A token is one-time, so a second device is a second call, and the

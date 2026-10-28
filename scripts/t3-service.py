@@ -91,7 +91,7 @@ def setup(home, macos):
                            'Restart=on-failure\nRestartSec=5\n\n'
                            '[Install]\nWantedBy=default.target\n')
         run('systemctl', '--user', 'daemon-reload')
-    print(f'Created {service}. Run t3 start, then t3 connect to share it.')
+    print(f'Created {service}. Run t3 start, then t3 connect (or t3 tailscale connect) to share it.')
 
 
 def mac_action(home, action):

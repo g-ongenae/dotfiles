@@ -407,7 +407,7 @@ class InstallerTests(unittest.TestCase):
             'case $- in *i*) ;; *) return ;; esac\n')
         self.shell()
         result = self.bash('. "$HOME/.bashrc"; t3 --help', interactive=True)
-        self.assertIn('connect|disconnect', result.stdout)
+        self.assertIn('tailscale connect', result.stdout)
         self.assertNotIn('old helper', result.stdout)
 
     def test_macos_bash_startup_loads_all_reported_aliases(self):

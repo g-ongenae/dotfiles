@@ -6,7 +6,10 @@
 #
 #   * on Linux, systemctl/journalctl against the t3code.service user unit;
 #   * on macOS, scripts/t3-service.py, which drives launchd;
-#   * connect/disconnect, which publish the local server over Tailscale Serve;
+#   * connect/disconnect, which link the server to T3 Connect, the T3 CLI's
+#     own relay, and restart it so that it applies the change;
+#   * tailscale connect/disconnect, which publish the local server over
+#     Tailscale Serve instead;
 #   * update, which runs scripts/t3-update.py here or on the server;
 #   * pair/devices/revoke, which ask the server's own T3 CLI about the devices
 #     allowed to reach it;
@@ -22,16 +25,21 @@ usage() {
     '  setup              Create the T3 service on this machine; keeps an existing one, does not start it.' \
     '  start              Start the T3 service.' \
     '  restart            Restart the T3 service; briefly interrupts connections.' \
-    '  stop               Stop the T3 service; Tailscale sharing stays configured.' \
+    '  stop               Stop the T3 service; T3 Connect and Tailscale sharing stay configured.' \
     '  inspect, status    Show whether the service is running (the default with no action).' \
     '  logs               Follow the last 100 log lines; Ctrl-C exits.' \
     '  update             Update the T3 CLI and installed agents; restarts T3 if it changed.' \
     '' \
     'Access:' \
     '  local              Pair this machine'"'"'s browser over 127.0.0.1 and open it; no Tailscale needed.' \
-    '  connect            Share the server over Tailscale HTTPS :3773 and print a pairing URL, code and QR.' \
+    '  connect            Link the server to T3 Connect, restarting it to apply the link; then show its status.' \
     '  connect nosleep    Same, and keep the Linux server awake until disconnect (alias: --nosleep).' \
-    '  disconnect         Stop sharing over Tailscale and release the sleep inhibitor.' \
+    '  disconnect         Unlink T3 Connect, restart a running server, and release the sleep inhibitor.' \
+    '  tailscale connect  Share the server over Tailscale HTTPS :3773 and print a pairing URL, code and QR.' \
+    '  tailscale connect nosleep' \
+    '                     Same, and keep the Linux server awake until disconnect (alias: --nosleep).' \
+    '  tailscale disconnect' \
+    '                     Stop sharing over Tailscale and release the sleep inhibitor.' \
     '  pair [label]       Mint a one-time pairing token for one more device; the label names it.' \
     '  devices            List paired sessions and unused tokens, without their secrets.' \
     '  revoke <id>        Drop a session or an unused token, by an id from t3 devices.' \
@@ -104,7 +112,7 @@ pair_t3() (
       't3: Tailscale sharing is enabled, but pairing could not discover the T3 server.' \
       'Run t3 status. If stopped, run t3 start; if already running, run t3 restart' \
       'to recreate its runtime discovery file (this briefly interrupts connections).' \
-      'Then retry t3 connect. For a custom data directory, set T3CODE_HOME to match the service.' >&2
+      'Then retry t3 tailscale connect. For a custom data directory, set T3CODE_HOME to match the service.' >&2
   else
     printf '%s\n' "$output" >&2
   fi
@@ -195,23 +203,108 @@ stop_t3_nosleep() {
   systemctl --user stop t3code-nosleep.service
 }
 
-# Stop sharing and release the inhibitor, reporting the first failure of the two.
-disconnect_t3() {
+# Stop sharing over Tailscale and release the inhibitor, reporting the first
+# failure of the two.
+disconnect_t3_tailscale() {
   local result=0
   sudo tailscale serve --https=3773 off || result=$?
   stop_t3_nosleep || return "$?"
   return "$result"
 }
 
+# Restart the server so that it applies a T3 Connect change; with `running`,
+# only a server that is already up. systemd here and on a remote server; local
+# macOS redefines it for launchd.
+restart_t3_service() {
+  if [ "${1:-}" = running ] && ! systemctl --user is-active --quiet t3code.service; then
+    return 0
+  fi
+  systemctl --user restart t3code.service
+}
+
+# Whether T3 Connect is wanted, provisioned and not revoked.
+t3_connect_linked() {
+  local status
+  status=$(t3_cli --log-level none connect status --json 2> /dev/null) || return 1
+  [[ "$status" =~ \"desired\":[[:space:]]*true ]] &&
+    [[ "$status" =~ \"linked\":[[:space:]]*true ]] &&
+    [[ ! "$status" =~ \"revoked\":[[:space:]]*true ]]
+}
+
+# Link the server to T3 Connect, then show what other devices can reach. The
+# server applies a link only on startup, so a new one costs a restart, after
+# which this waits for the server to provision it. "$1" is true for nosleep,
+# "$2" true to authorize through the OAuth device flow rather than a browser.
+connect_t3() {
+  local nosleep=$1 headless=$2
+  if ! t3_connect_linked; then
+    local -a flags=()
+    "$headless" && flags=(--headless)
+    t3_cli connect link "${flags[@]}" || return "$?"
+
+    printf 't3: restarting T3 to apply the link; this briefly interrupts connections.\n'
+    restart_t3_service || return "$?"
+
+    local waited=0
+    until t3_connect_linked; do
+      if [ "$waited" -ge "${T3_CONNECT_DEADLINE:-30}" ]; then
+        t3_cli connect status
+        printf 't3: T3 Connect did not link within %ss; check t3 logs.\n' "$waited" >&2
+        return 1
+      fi
+      sleep 1
+      waited=$((waited + 1))
+    done
+  fi
+
+  # After the restart, which releases any inhibitor bound to the old server.
+  if "$nosleep"; then
+    start_t3_nosleep || return "$?"
+  fi
+
+  t3_cli connect status
+}
+
+# Unlink T3 Connect, keeping its authorization for the next connect, and restart
+# a running server so that it closes the tunnel. Reports the first failure.
+disconnect_t3_connect() {
+  local result=0
+  t3_cli connect unlink || result=$?
+  if [ "$result" -eq 0 ]; then
+    restart_t3_service running || result=$?
+  fi
+  stop_t3_nosleep || return "$?"
+  return "$result"
+}
+
 # --- Argument parsing --------------------------------------------------------
 
-# Three invocations take a second word: `connect nosleep`, the label `pair`
-# accepts, and the id `revoke` requires. Everything else is a single action.
+# `tailscale connect` and `tailscale disconnect` are one action each, spelt in
+# two words; the internal names they map onto are not actions of their own.
+case "${1:-}" in
+  tailscale-*)
+    printf 'Unknown action: %s\n' "$1" >&2
+    usage >&2
+    exit 2
+    ;;
+  tailscale)
+    if [ "$#" -lt 2 ] || { [ "$2" != connect ] && [ "$2" != disconnect ]; }; then
+      usage >&2
+      exit 2
+    fi
+    shift
+    set -- "tailscale-$1" "${@:2}"
+    ;;
+esac
+
+# Three invocations take a further word: nosleep for either connect, the label
+# `pair` accepts, and the id `revoke` requires. Everything else is a single
+# action.
 nosleep=false
 argument=
 if [ "$#" -eq 2 ]; then
   case "$1" in
-    connect)
+    connect | tailscale-connect)
       if [ "$2" = nosleep ] || [ "$2" = --nosleep ]; then
         nosleep=true
       else
@@ -275,8 +368,10 @@ case "$action" in
       exit 2
     fi
     ;;
-  connect) set -- sudo tailscale serve --bg --https=3773 http://127.0.0.1:3773 ;;
-  disconnect) set -- sudo tailscale serve --https=3773 off ;;
+  # T3 Connect is the server's own CLI too, so it has no command to forward.
+  connect | disconnect) ;;
+  tailscale-connect) set -- sudo tailscale serve --bg --https=3773 http://127.0.0.1:3773 ;;
+  tailscale-disconnect) set -- sudo tailscale serve --https=3773 off ;;
   help | -h | --help)
     usage
     exit 0
@@ -293,13 +388,18 @@ esac
 if [ -n "${T3_HOST:-}" ]; then
   # Every remote command word comes from the fixed action table above.
   case "$action" in
-    # connect and disconnect need the helper functions on the far end, so their
-    # definitions are sent along with the command. -t allocates a terminal for
-    # the sudo password prompt.
-    connect) exec ssh -t -- "$T3_HOST" "$(declare -f t3_cli pair_t3 start_t3_nosleep)
+    # The connect and disconnect actions need the helper functions on the far
+    # end, so their definitions are sent along with the command. -t allocates a
+    # terminal for the sudo password prompt, and for the T3 Connect device
+    # flow, which is always used remotely: a browser here cannot finish it.
+    connect) exec ssh -t -- "$T3_HOST" "$(declare -f t3_cli t3_connect_linked restart_t3_service start_t3_nosleep connect_t3)
+connect_t3 $nosleep true" ;;
+    disconnect) exec ssh -- "$T3_HOST" "$(declare -f t3_cli restart_t3_service stop_t3_nosleep disconnect_t3_connect)
+disconnect_t3_connect" ;;
+    tailscale-connect) exec ssh -t -- "$T3_HOST" "$(declare -f t3_cli pair_t3 start_t3_nosleep)
 $* && { if $nosleep; then start_t3_nosleep; fi; } && pair_t3" ;;
-    disconnect) exec ssh -t -- "$T3_HOST" "$(declare -f stop_t3_nosleep disconnect_t3)
-disconnect_t3" ;;
+    tailscale-disconnect) exec ssh -t -- "$T3_HOST" "$(declare -f stop_t3_nosleep disconnect_t3_tailscale)
+disconnect_t3_tailscale" ;;
     # This checkout's updater, read by the server's python3 from the SSH
     # connection, so that the server needs no checkout of its own.
     update) exec ssh -- "$T3_HOST" python3 - < "${DOTFILES_DIR:?}/scripts/t3-update.py" ;;
@@ -340,6 +440,43 @@ case "$action" in
     exit "$?"
     ;;
 esac
+
+# --- Local: T3 Connect -------------------------------------------------------
+
+if [ "$action" = connect ] || [ "$action" = disconnect ]; then
+  if [ "${DOTFILES_PROFILE:-}" = macos ]; then
+    if "$nosleep"; then
+      printf 't3: nosleep requires a Linux server; set T3_HOST=user@tailnet-host.\n' >&2
+      exit 2
+    fi
+    # launchd runs the service, and there is no inhibitor to release.
+    restart_t3_service() {
+      if [ "${1:-}" = running ] &&
+        ! python3 "${DOTFILES_DIR:?}/scripts/t3-service.py" status > /dev/null 2>&1; then
+        return 0
+      fi
+      python3 "${DOTFILES_DIR:?}/scripts/t3-service.py" restart
+    }
+    stop_t3_nosleep() { :; }
+  elif ! command -v systemctl > /dev/null 2>&1; then
+    printf 't3: systemctl is unavailable; set T3_HOST=user@tailnet-host to control a Linux server.\n' >&2
+    exit 127
+  fi
+
+  if [ "$action" = disconnect ]; then
+    disconnect_t3_connect
+    exit "$?"
+  fi
+
+  # A browser can finish authorization only at a desktop session on this machine.
+  headless=false
+  if [ -n "${SSH_CONNECTION:-}" ] ||
+    { [ "${DOTFILES_PROFILE:-}" != macos ] && [ -z "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; }; then
+    headless=true
+  fi
+  connect_t3 "$nosleep" "$headless"
+  exit "$?"
+fi
 
 # --- Local macOS -------------------------------------------------------------
 
@@ -382,7 +519,7 @@ if [ "${DOTFILES_PROFILE:-}" = macos ]; then
   fi
 
   case "$action" in
-    connect | disconnect)
+    tailscale-connect | tailscale-disconnect)
       # Replace the leading `sudo tailscale` of the command built above with the
       # Tailscale CLI, which needs no sudo on macOS; "${@:3}" keeps its arguments.
       if command -v tailscale > /dev/null 2>&1; then
@@ -394,7 +531,7 @@ if [ "${DOTFILES_PROFILE:-}" = macos ]; then
         exit 127
       fi
 
-      if [ "$action" = connect ]; then
+      if [ "$action" = tailscale-connect ]; then
         run_tailscale "$@" || exit "$?"
         pair_t3
         exit "$?"
@@ -413,7 +550,7 @@ fi
 # --- Local Linux -------------------------------------------------------------
 
 case "$action" in
-  connect | disconnect)
+  tailscale-connect | tailscale-disconnect)
     if ! command -v tailscale > /dev/null 2>&1; then
       printf 't3: install Tailscale on this Linux server, or set T3_HOST=user@tailnet-host.\n' >&2
       exit 127
@@ -427,8 +564,8 @@ if ! command -v "$1" > /dev/null 2>&1; then
   exit 127
 fi
 
-# connect and disconnect are multi-step, so they cannot simply exec.
-if [ "$action" = connect ]; then
+# Sharing over Tailscale is multi-step, so it cannot simply exec.
+if [ "$action" = tailscale-connect ]; then
   "$@" || exit "$?"
 
   if "$nosleep"; then
@@ -439,8 +576,8 @@ if [ "$action" = connect ]; then
   exit "$?"
 fi
 
-if [ "$action" = disconnect ]; then
-  disconnect_t3
+if [ "$action" = tailscale-disconnect ]; then
+  disconnect_t3_tailscale
   exit "$?"
 fi
 
