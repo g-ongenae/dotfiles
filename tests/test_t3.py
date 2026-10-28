@@ -44,7 +44,8 @@ class T3Tests(unittest.TestCase):
                 'if Path(sys.argv[0]).name == "t3" and sys.argv[-3:] == ["connect", "status", "--json"]:\n'
                 '    calls = [json.loads(line) for line in Path(os.environ["CALL_LOG"]).read_text().splitlines()]\n'
                 '    linked = os.environ.get("T3_LINKED") == "1" or any(call[0] == "t3" and "link" in call for call in calls)\n'
-                '    print(json.dumps({"desired": linked, "linked": linked, "revoked": False}, indent=2))\n'
+                '    relay = os.environ.get("T3_RELAY", "available" if linked else "missing")\n'
+                '    print(json.dumps({"desired": linked, "linked": linked, "revoked": False, "relayClient": {"status": relay, "version": "2026.10.4"}}, indent=2))\n'
                 'elif Path(sys.argv[0]).name == "t3":\n'
                 '    print("Pairing URL: https://server:3773/#token=code\\nToken: code\\nQR: ▄█" if sys.argv[1] == "pair" else "  serve  Run the server")\n'
                 'sys.exit(int(os.environ.get("COMMAND_EXIT", "0")))\n')
@@ -266,6 +267,16 @@ class T3Tests(unittest.TestCase):
         self.assertTrue(any(call[0] == 'systemd-run' for call in self.calls()))
         self.assertEqual(self.calls()[-1], ['t3', 'connect', 'status'])
 
+    def test_connect_links_again_when_the_relay_client_is_missing(self):
+        # Linked, but without the client its tunnel runs on: only link offers
+        # to install it, and the server needs a restart to start the tunnel.
+        result = self.run_t3('connect', T3_LINKED='1', T3_RELAY='missing', T3_CONNECT_DEADLINE='0')
+        self.assertIn(['t3', 'connect', 'link', '--headless'], self.calls())
+        self.assertIn(['systemctl', '--user', 'restart', 't3code.service'], self.calls())
+        # The fake never installs it, so the wait reports the failure.
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('did not link', result.stderr)
+
     def test_connect_nosleep_inhibits_after_the_restart(self):
         result = self.run_t3('connect', '--nosleep')
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -419,6 +430,52 @@ class T3Tests(unittest.TestCase):
         result = self.run_t3('update', T3_HOST='g@fujitsu')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.calls(), [['ssh', '--', 'g@fujitsu', 'python3', '-']])
+
+    def update_appimage(self, release):
+        """Run the updater's AppImage step against a fake release, in this home."""
+        script = (
+            'import hashlib, importlib.util, sys\n'
+            'spec = importlib.util.spec_from_file_location("t3_update", sys.argv[1])\n'
+            'update = importlib.util.module_from_spec(spec); spec.loader.exec_module(update)\n'
+            'content = sys.argv[2].encode()\n'
+            'asset = {"name": "T3-Code-1-x86_64.AppImage", "browser_download_url": "url",\n'
+            '         "digest": "sha256:" + hashlib.sha256(content).hexdigest()}\n'
+            'update.latest_release = lambda repository: {"tag_name": "v1", "assets": [asset]}\n'
+            'update.fetch = lambda url: content\n'
+            'print("changed" if update.update_appimage() else "unchanged")\n')
+        return subprocess.run(
+            [sys.executable, '-c', script, str(ROOT / 'scripts/t3-update.py'), release],
+            env=dict(self.env, PATH=str(self.bin)), text=True, capture_output=True)
+
+    def test_update_refreshes_every_extracted_copy_left_stale(self):
+        # The AppImage writes its own release into the copy it extracts.
+        release = (f'#!{sys.executable}\n'
+                   'from pathlib import Path\n'
+                   'Path("squashfs-root").mkdir()\n'
+                   'Path("squashfs-root/version").write_text(Path(__file__).read_text())\n')
+        appimage = self.home / '.local/bin/t3-code'
+        appimage.parent.mkdir(parents=True)
+        appimage.write_text(release)
+        appimage.chmod(0o755)
+        # Already current, but the hand-installed wrapper's copy is older and
+        # has no record of its source, as on the Fujitsu.
+        legacy = self.home / '.local/opt/t3code/squashfs-root'
+        legacy.mkdir(parents=True)
+        (legacy / 'version').write_text('v0.0.40')
+        result = self.update_appimage(release)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('already the installed AppImage', result.stdout)
+        self.assertIn(f'Extract T3 v1 to {legacy}', result.stdout)
+        self.assertTrue(result.stdout.endswith('changed\n'))
+        self.assertEqual((legacy / 'version').read_text(), release)
+        self.assertFalse((legacy.parent / 'squashfs-root.previous').exists())
+        # The managed copy, never created here, is not created by an update.
+        self.assertFalse((self.home / '.local/share/dotfiles/t3/appimage').exists())
+        # Once recorded, a second update has nothing to do.
+        result = self.update_appimage(release)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn('Extract', result.stdout)
+        self.assertTrue(result.stdout.endswith('unchanged\n'))
 
     def test_local_setup_is_opt_in_preserves_services_and_does_not_start_them(self):
         result = self.run_t3('setup', DOTFILES_PROFILE='fedora')

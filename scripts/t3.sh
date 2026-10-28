@@ -222,13 +222,16 @@ restart_t3_service() {
   systemctl --user restart t3code.service
 }
 
-# Whether T3 Connect is wanted, provisioned and not revoked.
+# Whether T3 Connect is wanted, provisioned and not revoked, with the relay
+# client its tunnel runs on installed. Only `t3 connect link` offers to install
+# that client, so a link without it has to be made again.
 t3_connect_linked() {
   local status
   status=$(t3_cli --log-level none connect status --json 2> /dev/null) || return 1
   [[ "$status" =~ \"desired\":[[:space:]]*true ]] &&
     [[ "$status" =~ \"linked\":[[:space:]]*true ]] &&
-    [[ ! "$status" =~ \"revoked\":[[:space:]]*true ]]
+    [[ ! "$status" =~ \"revoked\":[[:space:]]*true ]] &&
+    [[ "$status" =~ \"relayClient\":[[:space:]]*\{[[:space:]]*\"status\":[[:space:]]*\"available\" ]]
 }
 
 # Link the server to T3 Connect, then show what other devices can reach. The
@@ -249,7 +252,9 @@ connect_t3() {
     until t3_connect_linked; do
       if [ "$waited" -ge "${T3_CONNECT_DEADLINE:-30}" ]; then
         t3_cli connect status
-        printf 't3: T3 Connect did not link within %ss; check t3 logs.\n' "$waited" >&2
+        printf '%s\n' \
+          "t3: T3 Connect did not link within ${waited}s. Its tunnel needs the relay client:" \
+          'accept its installation when t3 connect asks, then check t3 logs.' >&2
         return 1
       fi
       sleep 1
