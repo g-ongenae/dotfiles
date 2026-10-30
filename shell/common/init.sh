@@ -82,16 +82,16 @@ export PATH
 # file loads for every zsh, so GUI-launched agents get them too. Values already
 # in the environment (inherited, or emptied by clean_tokens) are kept.
 dotfiles_load_tokens() {
-  if [ -z "${SONARQUBE_TOKEN+set}" ] && command -v security >/dev/null 2>&1; then
-    SONARQUBE_TOKEN="$(security find-generic-password -a "$USER" -s sonarqube-token -w 2>/dev/null)"
+  if [ -z "${SONARQUBE_TOKEN+set}" ] && command -v security > /dev/null 2>&1; then
+    SONARQUBE_TOKEN="$(security find-generic-password -a "$USER" -s sonarqube-token -w 2> /dev/null)"
     export SONARQUBE_TOKEN
   fi
-  if [ -z "${NPM_TOKEN+set}" ] && command -v security >/dev/null 2>&1; then
-    NPM_TOKEN="$(security find-generic-password -a "$USER" -s npmjs-token -w 2>/dev/null)"
+  if [ -z "${NPM_TOKEN+set}" ] && command -v security > /dev/null 2>&1; then
+    NPM_TOKEN="$(security find-generic-password -a "$USER" -s npmjs-token -w 2> /dev/null)"
     export NPM_TOKEN
   fi
-  if [ -z "${GITHUB_PACKAGES_TOKEN+set}" ] && command -v gh >/dev/null 2>&1; then
-    GITHUB_PACKAGES_TOKEN="$(gh auth token 2>/dev/null)"
+  if [ -z "${GITHUB_PACKAGES_TOKEN+set}" ] && command -v gh > /dev/null 2>&1; then
+    GITHUB_PACKAGES_TOKEN="$(gh auth token 2> /dev/null)"
     export GITHUB_PACKAGES_TOKEN
   fi
 }
