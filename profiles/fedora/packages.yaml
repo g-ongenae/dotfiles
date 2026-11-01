@@ -16,6 +16,7 @@ native:
   - pcre2-tools
   - fzf
   - procps-ng
+  - btop
   - which
   - gnupg2
   - curl

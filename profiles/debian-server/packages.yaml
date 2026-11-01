@@ -18,6 +18,7 @@ native:
   - pcre2-utils
   - fzf
   - procps
+  - btop
   - debianutils
   - gnupg
   - curl
