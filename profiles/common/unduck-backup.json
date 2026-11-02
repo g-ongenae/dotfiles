@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "defaultBang": "ddg",
+  "bangs": [
+    {
+      "t": "gsheet",
+      "s": "Google Spreadsheets",
+      "d": "docs.google.com",
+      "c": "Online Services",
+      "sc": "Google",
+      "u": "https://docs.google.com/spreadsheets/u/0/?q={{{s}}}",
+      "ts": [
+        "gsheets",
+        "gspreadsheets",
+        "gsh",
+        "sheet",
+        "sheets"
+      ]
+    },
+    {
+      "t": "gslides",
+      "s": "Google Slides",
+      "d": "slides.google.com",
+      "c": "Online Services",
+      "sc": "Google",
+      "u": "https://slides.google.com/presentation/u/0/?q={{{s}}}",
+      "ts": [
+        "slides"
+      ]
+    },
+    {
+      "t": "gd",
+      "s": "Google Docs",
+      "d": "docs.google.com",
+      "c": "Online Services",
+      "sc": "Google",
+      "u": "https://docs.google.com/document/u/0/?q={{{s}}}",
+      "ts": [
+        "gdocs",
+        "docs"
+      ]
+    },
+    {
+      "t": "gcal",
+      "s": "Google Calendar",
+      "d": "calendar.google.com",
+      "c": "Online Services",
+      "sc": "Google",
+      "u": "https://calendar.google.com/calendar/b/0/r/search?q={{{s}}}",
+      "ts": [
+        "calendar",
+        "cal"
+      ]
+    },
+    {
+      "t": "dd",
+      "s": "Datadog",
+      "d": "app.datadoghq.eu",
+      "c": "Tech",
+      "sc": "Programming",
+      "u": "https://app.datadoghq.eu/logs?query={{{s}}}",
+      "ts": [
+        "datadog"
+      ]
+    },
+    {
+      "t": "drive",
+      "s": "Google Drive",
+      "d": "drive.google.com",
+      "c": "Online Services",
+      "sc": "Google",
+      "u": "https://drive.google.com/drive/search?q={{{s}}}",
+      "ts": [
+        "gdrive"
+      ]
+    }
+  ],
+  "enabled": [
+    "gsheet",
+    "gslides",
+    "gd",
+    "gcal",
+    "dd",
+    "drive",
+    "chatgpt",
+    "claude",
+    "dax",
+    "deezer",
+    "g",
+    "gh",
+    "gmail",
+    "hn",
+    "raycast",
+    "substack",
+    "wenfr",
+    "wfren",
+    "wrdefr",
+    "wrenpl",
+    "wrenpt",
+    "wrep",
+    "wrptes",
+    "nitter"
+  ]
+}

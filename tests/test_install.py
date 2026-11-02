@@ -1,11 +1,14 @@
 """Offline regression tests. No packages installed and no real dotfiles touched."""
 import argparse
+import base64
 import contextlib
 import hashlib
+import html
 import importlib.util
 import io
 import json
 import os
+import plistlib
 from pathlib import Path
 import re
 import shlex
@@ -538,9 +541,12 @@ class InstallerTests(unittest.TestCase):
 
     def test_browser_extensions_are_profile_specific(self):
         self.args.profile = 'fedora'
-        self.install.browsers()
+        with patch.object(self.install, 'unduck'):
+            self.install.browsers()
         page = (self.install.config / 'browser-extensions.html').read_text()
         self.assertIn('/switchyard/', page)
+        self.assertIn('Add “Unduck”', page)
+        self.assertIn(html.escape(installer.unduck_backup()[1]), page)
         self.assertNotIn('chromewebstore', page)
         self.assertIn('/violentmonkey/', page)
         self.assertIn('https://github.com/g-ongenae/parrot', page)
@@ -549,10 +555,11 @@ class InstallerTests(unittest.TestCase):
         for name in installer.manifest(installer.ROOT / 'profiles/common/browser-extensions.yaml')['userscripts']:
             self.assertTrue((installer.ROOT / 'userscripts' / name).is_file(), name)
         self.args.profile = 'macos'
-        with patch.object(self.install, 'run'):
+        with patch.object(self.install, 'run'), patch.object(self.install, 'unduck'):
             self.install.browsers()
         page = (self.install.config / 'browser-extensions.html').read_text()
         self.assertNotIn('/switchyard/', page)
+        self.assertNotIn('Add “Unduck”', page)
         self.assertIn('jhkfjpfhioaoopiapaipleecedggpimi', page)
         self.assertIn('jdkfjefccncegmcelnnbfmmibppjchgi', page)
 
@@ -561,7 +568,8 @@ class InstallerTests(unittest.TestCase):
         app.mkdir()
         checkout = self.install.data / 'firefox-autoconfig/firefox-memory-guard'
         self.args.profile = 'macos'
-        with patch.object(installer, 'FIREFOX_APP', app), patch.object(self.install, 'run') as run:
+        with patch.object(installer, 'FIREFOX_APP', app), patch.object(self.install, 'run') as run, \
+                patch.object(self.install, 'unduck'):
             self.install.browsers()
             checkout.mkdir(parents=True)
             self.install.browsers()
@@ -572,24 +580,95 @@ class InstallerTests(unittest.TestCase):
             ('sh', checkout / 'autoconfig/install.sh', app),
         ])
         self.args.profile = 'fedora'
-        with patch.object(self.install, 'run') as run:
+        with patch.object(self.install, 'run') as run, patch.object(self.install, 'unduck'):
             self.install.browsers()
         run.assert_not_called()
 
     def test_firefox_autoconfig_skips_missing_firefox_and_reports_clone_failure(self):
         self.args.profile = 'macos'
         with patch.object(installer, 'FIREFOX_APP', self.home / 'missing.app'), \
-                patch.object(self.install, 'run') as run:
+                patch.object(self.install, 'run') as run, patch.object(self.install, 'unduck'):
             self.install.browsers()
         run.assert_not_called()
         app = self.home / 'Firefox.app'
         app.mkdir()
         failure = subprocess.CalledProcessError(1, 'git')
         with patch.object(installer, 'FIREFOX_APP', app), \
-                patch.object(self.install, 'run', side_effect=failure):
+                patch.object(self.install, 'run', side_effect=failure), patch.object(self.install, 'unduck'):
             self.install.browsers()
         self.assertEqual(len(self.install.failures), 1)
         self.assertIn('firefox-memory-guard', self.install.failures[0])
+
+    def test_unduck_policy_keeps_other_policies_and_engines(self):
+        existing = {'policies': {'DisableTelemetry': True, 'SearchEngines': {
+            'Add': [{'Name': 'Other', 'URLTemplate': 'https://example.test/?q={searchTerms}'},
+                    {'Name': 'Unduck', 'URLTemplate': 'https://old.example.test/?q={searchTerms}'}],
+            'Remove': ['Google'], 'Default': 'Other'}}}
+        merged = json.loads(installer.with_unduck(json.dumps(existing)))
+        self.assertTrue(merged['policies']['DisableTelemetry'])
+        engines = merged['policies']['SearchEngines']
+        self.assertEqual(engines['Add'], [existing['policies']['SearchEngines']['Add'][0], installer.UNDUCK_ENGINE])
+        self.assertEqual((engines['Remove'], engines['Default']), (['Google'], 'Unduck'))
+        self.assertEqual(json.loads(installer.with_unduck('')),
+                         {'policies': {'SearchEngines': {'Add': [installer.UNDUCK_ENGINE], 'Default': 'Unduck'}}})
+
+    def test_unduck_link_carries_the_backup(self):
+        data, link = installer.unduck_backup()
+        prefix = installer.UNDUCK_URL + '?page=settings#import='
+        self.assertTrue(link.startswith(prefix))
+        encoded = link[len(prefix):]
+        self.assertRegex(encoded, r'^[\w-]+$')
+        backup = json.loads(base64.urlsafe_b64decode(encoded + '=' * (-len(encoded) % 4)))
+        self.assertEqual(backup, json.loads((installer.ROOT / 'profiles/common/unduck-backup.json').read_text()))
+        self.assertEqual(backup['version'], 1)
+        self.assertEqual(json.loads(data), backup)
+
+    def test_macos_unduck_sets_installed_browsers_and_imports_once(self):
+        applications = self.home / 'Applications'
+        for name in ('Firefox', 'Google Chrome'):
+            (applications / f'{name}.app').mkdir(parents=True)
+        self.args.profile = 'macos'
+        with patch.object(installer, 'APPLICATIONS', applications), patch.object(self.install, 'run') as run:
+            self.install.unduck()
+            first = [call.args for call in run.call_args_list]
+            run.reset_mock()
+            self.install.unduck()
+        link = installer.unduck_backup()[1]
+        domains = {call[2] for call in first if call[0] == 'defaults'}
+        self.assertEqual(domains, {'org.mozilla.firefox', 'com.google.Chrome'})
+        engines = next(call[4] for call in first if call[3] == 'SearchEngines')
+        self.assertEqual(plistlib.loads(f'<plist version="1.0">{engines}</plist>'.encode()),
+                         {'Add': [installer.UNDUCK_ENGINE], 'Default': 'Unduck'})
+        self.assertIn(('defaults', 'write', 'com.google.Chrome', 'DefaultSearchProviderSearchURL', '-string',
+                       installer.UNDUCK_ENGINE['URLTemplate']), first)
+        self.assertEqual([call for call in first if call[0] == 'open'], [
+            ('open', '-a', applications / 'Firefox.app', link),
+            ('open', '-a', applications / 'Google Chrome.app', link),
+        ])
+        self.assertFalse(any(call.args[0] == 'open' for call in run.call_args_list))
+        self.assertTrue(any(call.args[0] == 'defaults' for call in run.call_args_list))
+
+    def test_fedora_unduck_extends_distribution_policies_and_opens_each_browser(self):
+        distribution = self.home / 'distribution-policies.json'
+        distribution.write_text('{"policies": {"DisableAppUpdate": true}}')
+        target = self.home / 'etc/firefox/policies/policies.json'
+        self.args.profile = 'fedora'
+        with patch.object(installer, 'FEDORA_FIREFOX_POLICIES', target), \
+                patch.object(installer, 'FEDORA_FIREFOX_DISTRIBUTION', distribution), \
+                patch.object(self.install, 'run') as run, patch.object(self.install, 'launch') as launch:
+            self.install.unduck()
+        staged = self.install.data / 'firefox-search-policies.json'
+        policies = json.loads(staged.read_text())['policies']
+        self.assertTrue(policies['DisableAppUpdate'])
+        self.assertEqual(policies['SearchEngines']['Default'], 'Unduck')
+        self.assertEqual([call.args for call in run.call_args_list],
+                         [('sudo', 'install', '-D', '-m', '644', staged, target)])
+        link = installer.unduck_backup()[1]
+        self.assertEqual([call.args for call in launch.call_args_list], [
+            ('firefox', link),
+            ('flatpak', 'run', 'io.gitlab.librewolf-community', link),
+            ('flatpak', 'run', 'app.zen_browser.zen', link),
+        ])
 
 
 if __name__ == '__main__':

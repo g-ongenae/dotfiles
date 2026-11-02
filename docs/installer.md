@@ -232,8 +232,8 @@ Violentmonkey offers to install it and later checks it for updates:
   sidebar; channels with new videos come first and carry a blue dot.
 
 `--firefox-policy` additionally resolves the real AMO IDs and generates
-`~/.config/dotfiles/firefox-policies.json`. This optional policy is **not**
-deployed automatically: native Firefox, LibreWolf, Zen and Flatpak builds have
+`~/.config/dotfiles/firefox-policies.json`. This optional extension policy is
+**not** deployed automatically: native Firefox, LibreWolf, Zen and Flatpak builds have
 different policy locations/support. Review and deploy it according to your
 browser's enterprise-policy documentation. It uses `normal_installed`, leaving
 users able to remove extensions. No browser profile is overwritten.
@@ -259,6 +259,35 @@ Firefox to activate it.
   `./install.sh --apply --only browsers` to put them back.
 - The repositories come from the `macos-firefox-autoconfig` section of
   `profiles/common/browser-extensions.yaml`.
+
+### Unduck search engine
+
+The browsers step makes [Unduck](https://github.com/g-ongenae/unduck) the
+default search engine and imports the bangs saved in
+`profiles/common/unduck-backup.json`, an export from Unduck's settings page.
+
+- On macOS, Firefox, LibreWolf and Zen receive a `SearchEngines` enterprise
+  policy, and Chrome and Ungoogled Chromium the `DefaultSearchProvider*`
+  policies, all written with `defaults write` to each browser's preferences
+  domain. App bundles are left untouched: an edited bundle breaks its code
+  signature, and macOS then reports a quarantined app as damaged. Firefox-family
+  browsers combine these policies with a bundled `policies.json` (LibreWolf
+  ships one). Chromium browsers apply them as recommended policies, so you can
+  still pick another default.
+- On Fedora, the step merges the policy into
+  `/etc/firefox/policies/policies.json` (starting from Fedora's bundled
+  policies, which that file replaces) and installs it with `sudo`. The LibreWolf
+  and Zen Flatpaks are not configured: the setup page explains how to add Unduck
+  by hand.
+- Unduck keeps bangs in each browser's site storage, so no file can carry them.
+  The step opens an Unduck link carrying the backup (`#import=`, base64url JSON)
+  in each installed browser, and Unduck asks you to confirm the restore. This
+  happens only when the backup changed since the last run, tracked in
+  `~/.local/share/dotfiles/unduck-backup.sha256`; the link is also on the setup
+  page.
+- To change the bangs, edit them in Unduck, choose **Export**, replace
+  `profiles/common/unduck-backup.json` with the download, then rerun
+  `./install.sh --apply --only browsers`.
 
 ## Your existing configuration
 
