@@ -22,3 +22,4 @@ macos-firefox-autoconfig:
 userscripts:
   - github-find-active-forks.user.js
   - linkedin-declutter.user.js
+  - youtube-fold-related.user.js

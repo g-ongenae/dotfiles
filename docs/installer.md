@@ -215,6 +215,9 @@ Violentmonkey offers to install it and later checks it for updates:
   upsells, the right rail and "Recommended for you" cards; widens the feed;
   moves the post composer under **Saved items**; shows post images beside the
   text with an expand button; and pauses off-screen videos.
+- `youtube-fold-related.user.js` folds the right column of a YouTube video
+  (filter chips and related videos) so the video takes its space; a small
+  round button on the right edge unfolds it, and the last state is remembered.
 
 `--firefox-policy` additionally resolves the real AMO IDs and generates
 `~/.config/dotfiles/firefox-policies.json`. This optional policy is **not**
