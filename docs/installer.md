@@ -196,9 +196,21 @@ omitting it. Copilot is only selected for VS Code on macOS.
 
 Browser installation needs confirmation in each browser. Open
 `~/.config/dotfiles/browser-extensions.html` after the browsers step. It lists
-uBlock Origin, SponsorBlock, Privacy Badger, PR Review Collector and GitHub
-Mermaid JSDoc Viewer for Firefox/LibreWolf/Zen, plus Switchyard on Fedora; the
-macOS page also has two Chrome Web Store extensions.
+uBlock Origin, SponsorBlock, Privacy Badger, PR Review Collector, GitHub
+Mermaid JSDoc Viewer and Violentmonkey for Firefox/LibreWolf/Zen, plus
+Switchyard on Fedora; the macOS page also has two Chrome Web Store extensions.
+
+[Parrot](https://github.com/g-ongenae/parrot) is not published on
+addons.mozilla.org, so the page links to its repository instead (the
+`firefox-source` section). Follow its README to load it temporarily, or sign it
+as an unlisted add-on to keep it.
+
+The page also lists the userscripts in `userscripts/` (the `userscripts`
+section). Each link opens the script's raw GitHub URL on `main`, where
+Violentmonkey offers to install it and later checks it for updates:
+
+- `github-find-active-forks.user.js` adds an **Active forks** button to GitHub
+  repository headers, opening [active-forks](https://techgaun.github.io/active-forks/).
 
 `--firefox-policy` additionally resolves the real AMO IDs and generates
 `~/.config/dotfiles/firefox-policies.json`. This optional policy is **not**

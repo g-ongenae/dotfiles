@@ -5,6 +5,10 @@ firefox:
   - privacy-badger17
   - pr-review-collector
   - github-mermaid-jsdoc-viewer
+  - violentmonkey
+# Unpublished Firefox extensions: GitHub repositories to load or sign by hand.
+firefox-source:
+  - g-ongenae/parrot
 fedora-firefox:
   - switchyard
 chromium:
@@ -14,3 +18,6 @@ chromium:
 # against /Applications/Firefox.app (not LibreWolf or Zen).
 macos-firefox-autoconfig:
   - g-ongenae/firefox-memory-guard
+# Files in userscripts/, installed from GitHub through Violentmonkey.
+userscripts:
+  - github-find-active-forks.user.js
