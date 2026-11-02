@@ -217,7 +217,9 @@ Violentmonkey offers to install it and later checks it for updates:
 - `linkedin-declutter.user.js` hides LinkedIn's Jobs, For Business and Premium
   upsells, the right rail and "Recommended for you" cards; widens the feed;
   moves the post composer under **Saved items**; shows post images beside the
-  text with an expand button; and pauses off-screen videos.
+  text with an expand button; pauses off-screen videos; and, since LinkedIn
+  keeps every loaded post in memory, stops the feed after 50 posts with a
+  **Load a fresh feed** button (`FRESH_FEED_AFTER` at the top of the script).
 - `youtube-fold-related.user.js` folds the right column of a YouTube video
   (filter chips and related videos) so the video takes its space; a small
   round button on the right edge unfolds it, and the last state is remembered.

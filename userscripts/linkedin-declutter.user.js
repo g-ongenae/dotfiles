@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LinkedIn — Declutter & wide feed
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.0.0
+// @version      1.1.0
 // @description  Hides Jobs, For Business, Premium upsells, Groups/Newsletters/Events and the right rail; widens the feed; moves the composer to the left column; shows post images beside the text; removes "Show translation" on French/English posts.
 // @match        https://www.linkedin.com/*
 // @run-at       document-idle
@@ -10,6 +10,14 @@
 
 (() => {
   'use strict';
+
+  // ---------- Settings ----------
+  // Hide the "Messaging" pop-up docked at the bottom right. The unread count stays on the
+  // Messaging icon of the top bar. Set to false to keep the pop-up.
+  const HIDE_MESSAGING_POPUP = true;
+  // LinkedIn keeps every post it has loaded in memory (gigabytes after a long scroll) and only a
+  // reload frees it. After this many posts the feed stops and offers a fresh one. 0 disables.
+  const FRESH_FEED_AFTER = 50;
 
   const HIDE = 'data-lkc-hide';
   const MEDIA = 'data-lkc-media';
@@ -42,6 +50,14 @@
     /* Look comes from the classes copied off LinkedIn's "Send" button */
     .lkc-expand svg { display: block !important; width: 20px !important; height: 20px !important; }
     .lkc-expand[hidden] { display: none !important; }
+    .lkc-fresh {
+      display: block; width: 100%; margin: 8px 0 24px; padding: 16px;
+      border: 1px solid rgba(0, 0, 0, 0.15); border-radius: 8px;
+      background: var(--color-background-container, #fff); color: inherit;
+      font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
+    }
+    .lkc-fresh:hover { background: rgba(0, 0, 0, 0.04); }
+    .lkc-fresh small { display: block; margin-top: 4px; font-size: 13px; font-weight: 400; opacity: 0.7; }
     /* Skip rendering posts far off-screen; the auto keyword remembers their last real height */
     [data-testid="mainFeed"] [role="listitem"]:not([role="listitem"] [role="listitem"]) {
       content-visibility: auto;
@@ -89,6 +105,11 @@
   document.head.appendChild(style);
 
   // ---------- Helpers ----------
+  const offscreen = new IntersectionObserver((entries) => {
+    for (const e of entries) if (!e.isIntersecting && !e.target.paused) e.target.pause();
+  });
+  const watched = new WeakSet();
+
   const hide = (el, reason = '') => { if (el && !el.hasAttribute(HIDE)) el.setAttribute(HIDE, reason); };
 
   /** Climb from `el` to the ancestor that is a sibling-level block of `other` (i.e. whose parent contains `other`). */
@@ -115,21 +136,35 @@
     business: /^For Business$/i,
     premium: /^(Retry|Try|Reactivate)\b.{0,20}\bfor\b/i,
     recommended: /^Recommended for you$/i,
+    messaging: /^Messaging$/i,
     translation: /^(Show|See) translation$|^(Voir|Afficher) la traduction$/i,
   };
 
-  /** Single pass over short text nodes, bucketed by regex. */
-  function scanText() {
-    const found = Object.fromEntries(Object.keys(RX).map((k) => [k, []]));
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-      const t = n.nodeValue.trim();
-      if (!t || t.length > 40 || !n.parentElement) continue;
-      for (const k in RX) {
-        if (RX[k].test(t)) { found[k].push(n.parentElement); break; }
-      }
+  // Elements whose short text matches RX, kept across passes. Only subtrees added since the last
+  // pass are scanned, instead of every text node of the page several times a second.
+  const found = Object.fromEntries(Object.keys(RX).map((k) => [k, new Set()]));
+  let pendingRoots = [document.body];
+
+  function classify(n) {
+    const t = n.nodeValue.trim();
+    if (!t || t.length > 40 || !n.parentElement) return;
+    for (const k in RX) {
+      if (RX[k].test(t)) { found[k].add(n.parentElement); return; }
     }
-    return found;
+  }
+
+  function scanText() {
+    const roots = pendingRoots;
+    pendingRoots = [];
+    for (const k in found) for (const el of found[k]) if (!el.isConnected) found[k].delete(el);
+    for (const root of roots) {
+      if (!root.isConnected) continue;
+      if (root.nodeType === Node.TEXT_NODE) { classify(root); continue; }
+      if (root.nodeType !== Node.ELEMENT_NODE) continue;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) classify(n);
+    }
+    return Object.fromEntries(Object.entries(found).map(([k, set]) => [k, [...set]]));
   }
 
   // ---------- Language detection (stop-word scoring) ----------
@@ -311,6 +346,78 @@
     btn.hidden = !text.hasAttribute('data-lkc-expanded') && text.scrollHeight <= text.clientHeight + 1;
   }
 
+  // ---------- Fresh feed ----------
+  // The feed loads 5 posts per POST to .../rsc-action/actions/pagination?sduiid=...feed.mainFeed,
+  // with {"clientArguments":{"payload":{"startIndex":N,...}}} in the body. Past the limit that request
+  // is left pending forever (a failed one would be retried), so LinkedIn simply stops loading.
+  const FEED_PAGER = 'sduiid=com.linkedin.sdui.pagers.feed.mainFeed';
+  let feedCapped = false;
+
+  function feedStartIndex(init) {
+    try {
+      const body = init && init.body;
+      return typeof body === 'string' ? JSON.parse(body).clientArguments.payload.startIndex : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function guardFeedPagination() {
+    if (!FRESH_FEED_AFTER) return;
+    const page = pageObj(window);
+    const pageFetch = page.fetch;
+    if (typeof pageFetch !== 'function') return;
+    const fetch = function (input, init) {
+      const url = typeof input === 'string' ? input : (input && input.url) || '';
+      if (url.includes(FEED_PAGER)) {
+        const start = feedStartIndex(init);
+        // Unknown index (body not a string): only block once the limit was already hit
+        if (start === null ? feedCapped : start >= FRESH_FEED_AFTER) {
+          if (!feedCapped) console.info(`[linkedin-declutter] feed capped: blocked pagination at startIndex ${start}`);
+          feedCapped = true;
+          schedule(); // show the button
+          return new page.Promise(pageFn(() => {}, window));
+        }
+      }
+      return pageFetch.apply(this, arguments);
+    };
+    page.fetch = pageFn(fetch, window);
+  }
+
+  /** Once the feed is capped, offer a reload at its end. */
+  function freshFeedButton() {
+    if (!feedCapped) return;
+    const feed = document.querySelector('[data-testid="mainFeed"]');
+    if (!feed) return;
+    let btn = feed.querySelector(':scope > .lkc-fresh');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'lkc-fresh';
+      btn.textContent = 'Load a fresh feed';
+      const note = document.createElement('small');
+      note.textContent = `${FRESH_FEED_AFTER} posts loaded: reloading frees the memory LinkedIn holds on to`;
+      btn.appendChild(note);
+      btn.addEventListener('click', () => {
+        history.scrollRestoration = 'manual';
+        window.scrollTo(0, 0);
+        location.reload();
+      });
+    }
+    if (feed.lastElementChild !== btn) feed.appendChild(btn);
+    // The loading spinner waits for the blocked request forever: hide whatever follows the last post
+    const kids = [...feed.children];
+    const lastPost = kids.findLastIndex((c) => c.matches('[role="listitem"]') || c.querySelector('[role="listitem"]'));
+    // (lazy-mount wrappers are posts LinkedIn unmounted while off-screen: they come back, keep them)
+    for (const c of kids.slice(lastPost + 1)) {
+      if (c !== btn && !c.hasAttribute(MOVED) && !c.hasAttribute('data-lazy-mount-id')) hide(c, 'cap');
+    }
+    const column = feed.closest('[data-testid="lazy-column"]') || feed.parentElement;
+    for (const el of column.querySelectorAll('[role="progressbar"], [aria-busy="true"]')) {
+      if (!el.closest('[role="listitem"]')) hide(el, 'cap');
+    }
+  }
+
   // ---------- Moving React-owned nodes ----------
   // React later removes/inserts children through the original parent; make it tolerate the move.
   const pageObj = (n) => n.wrappedJSObject || n;
@@ -438,6 +545,7 @@
       undoFeedLayout();
     }
 
+    if (onFeed) freshFeedButton();
     if (centerCol) {
       markMedia(centerCol);
       postTexts(centerCol);
@@ -466,6 +574,22 @@
       }
     }
 
+    // Messaging pop-up: the "Messaging" label that is not in the top bar, up to its fixed container
+    if (HIDE_MESSAGING_POPUP) {
+      for (const el of f.messaging) {
+        if (el.closest(`[${HIDE}]`) || inTopBar(el)) continue;
+        if (el.getBoundingClientRect().top < window.innerHeight / 2) continue; // docked at the bottom only
+        let box = el;
+        while (box && box !== document.body && getComputedStyle(box).position !== 'fixed') box = box.parentElement;
+        if (box && box !== document.body) hide(box);
+      }
+    }
+
+    // Pause videos once they leave the screen (they keep buffering otherwise)
+    for (const v of document.querySelectorAll('video')) {
+      if (!watched.has(v)) { watched.add(v); offscreen.observe(v); }
+    }
+
     // "Recommended for you" (people to follow) cards in the feed
     for (const el of f.recommended) hide(el.closest('[role="listitem"]'));
 
@@ -486,28 +610,25 @@
     }
   }
 
-  // ---------- Scheduling (throttled, LinkedIn is an SPA) ----------
-  let timer = null;
+  // ---------- Scheduling (throttled, when the browser is idle; LinkedIn is an SPA) ----------
+  let queued = false;
+  const idle = window.requestIdleCallback
+    ? (fn) => window.requestIdleCallback(fn, { timeout: 500 })
+    : (fn) => setTimeout(fn, 250);
   const schedule = () => {
-    if (timer) return;
-    timer = setTimeout(() => { timer = null; run(); }, 250);
+    if (queued) return;
+    queued = true;
+    idle(() => { queued = false; run(); });
   };
-  new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
+  new MutationObserver((records) => {
+    for (const r of records) pendingRoots.push(...r.addedNodes);
+    schedule();
+  }).observe(document.body, { childList: true, subtree: true });
   window.addEventListener('resize', schedule);
   document.addEventListener('load', schedule, true); // lazy images get their size late
   // Posts skipped by content-visibility have no size until scrolled into view
   window.addEventListener('scroll', schedule, { passive: true });
 
-  // ---------- Memory: pause videos once they leave the screen ----------
-  const offscreen = new IntersectionObserver((entries) => {
-    for (const e of entries) if (!e.isIntersecting && !e.target.paused) e.target.pause();
-  });
-  const watched = new WeakSet();
-  setInterval(() => {
-    for (const v of document.querySelectorAll('video')) {
-      if (!watched.has(v)) { watched.add(v); offscreen.observe(v); }
-    }
-  }, 2000);
-
+  guardFeedPagination();
   run();
 })();
