@@ -29,6 +29,8 @@ ROOT = Path(__file__).resolve().parent.parent
 PROFILES = ('macos', 'fedora', 'debian-server')
 STEPS = ('packages', 'shell', 'extensions', 'browsers')
 FIREFOX_APP = Path('/Applications/Firefox.app')
+# Raw GitHub URLs ending in .user.js open Violentmonkey's install dialog.
+USERSCRIPTS_URL = 'https://raw.githubusercontent.com/g-ongenae/dotfiles/main/userscripts/'
 # An untouched copy of the previous installer's template can migrate safely.
 LEGACY_HASHES = {
     '.zshenv': 'd87ed002bb307efb306258142714c1d66e332dd1b651ca317d25eafb42dddb5f',
@@ -537,6 +539,10 @@ class Installer:
         links = [(slug, 'https://addons.mozilla.org/firefox/addon/' + slug + '/') for slug in slugs]
         text = '<!doctype html><meta charset="utf-8"><title>Browser extensions</title><h1>Firefox, LibreWolf and Zen</h1><p>Open these links in each browser and confirm installation.</p><ul>'
         text += ''.join(f'<li><a href="{html.escape(url)}">{html.escape(name)}</a></li>' for name, url in links) + '</ul>'
+        text += '<h2>Unpublished</h2><p>Not on addons.mozilla.org: follow the README to load the extension, or sign it as an unlisted add-on.</p><ul>'
+        text += ''.join(f'<li><a href="https://github.com/{html.escape(repo)}">{html.escape(repo)}</a></li>' for repo in config.get('firefox-source', [])) + '</ul>'
+        text += '<h2>Userscripts</h2><p>Install Violentmonkey first, then open each link to install the script.</p><ul>'
+        text += ''.join(f'<li><a href="{html.escape(USERSCRIPTS_URL + name)}">{html.escape(name)}</a></li>' for name in config.get('userscripts', [])) + '</ul>'
         if self.args.profile == 'macos':
             text += '<h1>Chrome and Chromium</h1><ul>'
             text += ''.join(f'<li><a href="https://chromewebstore.google.com/detail/{identifier}">{label}</a></li>' for identifier, label in zip(config['chromium'], ('github-mermaid-jsdoc-viewer', 'pr-review-collector'))) + '</ul>'

@@ -542,6 +542,12 @@ class InstallerTests(unittest.TestCase):
         page = (self.install.config / 'browser-extensions.html').read_text()
         self.assertIn('/switchyard/', page)
         self.assertNotIn('chromewebstore', page)
+        self.assertIn('/violentmonkey/', page)
+        self.assertIn('https://github.com/g-ongenae/parrot', page)
+        self.assertNotIn('/addon/g-ongenae/parrot', page)
+        self.assertIn(installer.USERSCRIPTS_URL + 'github-find-active-forks.user.js', page)
+        for name in installer.manifest(installer.ROOT / 'profiles/common/browser-extensions.yaml')['userscripts']:
+            self.assertTrue((installer.ROOT / 'userscripts' / name).is_file(), name)
         self.args.profile = 'macos'
         with patch.object(self.install, 'run'):
             self.install.browsers()

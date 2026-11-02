@@ -39,6 +39,7 @@ shell/
   macos/                     # Homebrew paths and Mac-specific commands
   linux/                     # Linux paths and network commands
   server/                    # terminal editor and headless Chromium environment
+userscripts/                 # Violentmonkey scripts, linked from the browser setup page
 scripts/
   install.py                 # standard-library installer behind install.sh
   t3-service.py              # creates and controls the T3 Code user service
