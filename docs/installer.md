@@ -211,6 +211,9 @@ Violentmonkey offers to install it and later checks it for updates:
 
 - `github-find-active-forks.user.js` adds an **Active forks** button to GitHub
   repository headers, opening [active-forks](https://techgaun.github.io/active-forks/).
+- `github-fold-profile.user.js` folds the README (folded by default) and the
+  pinned repositories on GitHub user profiles down to their headers; a chevron
+  button in each header unfolds it, and each state is remembered.
 - `linkedin-declutter.user.js` hides LinkedIn's Jobs, For Business and Premium
   upsells, the right rail and "Recommended for you" cards; widens the feed;
   moves the post composer under **Saved items**; shows post images beside the
