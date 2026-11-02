@@ -2,10 +2,16 @@
 """Profile installer. Standard library only; dry runs never write or use the network."""
 import argparse
 import ast
+# Brew may upgrade and clean up this very interpreter mid-run, so preload the
+# modules that hostname lookups and tarfile.open would otherwise import lazily.
+import bz2  # noqa: F401
+import encodings.idna  # noqa: F401
 import fnmatch
+import gzip  # noqa: F401
 import hashlib
 import html
 import json
+import lzma  # noqa: F401
 import os
 from pathlib import Path
 import platform
