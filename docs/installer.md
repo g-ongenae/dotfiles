@@ -218,6 +218,9 @@ Violentmonkey offers to install it and later checks it for updates:
 - `youtube-fold-related.user.js` folds the right column of a YouTube video
   (filter chips and related videos) so the video takes its space; a small
   round button on the right edge unfolds it, and the last state is remembered.
+- `youtube-home-subscriptions.user.js` fills the empty YouTube home page
+  (watch history off) with a grid of your subscribed channels, read from the
+  sidebar; channels with new videos come first and carry a blue dot.
 
 `--firefox-policy` additionally resolves the real AMO IDs and generates
 `~/.config/dotfiles/firefox-policies.json`. This optional policy is **not**
