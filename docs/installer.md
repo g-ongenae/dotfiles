@@ -220,6 +220,10 @@ Violentmonkey offers to install it and later checks it for updates:
   text with an expand button; pauses off-screen videos; and, since LinkedIn
   keeps every loaded post in memory, stops the feed after 50 posts with a
   **Load a fresh feed** button (`FRESH_FEED_AFTER` at the top of the script).
+- `slack-declutter.user.js` hides Slack's **Find a conversation** filter, the
+  **Huddles**, **Later** and **Directories** entries of the sidebar, and the
+  **Help** button of the top bar, closing the gaps they leave; it also folds
+  image and file previews in messages down to their file name.
 - `youtube-fold-related.user.js` folds the right column of a YouTube video
   (filter chips and related videos) so the video takes its space; a small
   round button on the right edge unfolds it, and the last state is remembered.

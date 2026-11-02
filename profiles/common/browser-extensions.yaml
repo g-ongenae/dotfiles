@@ -23,5 +23,6 @@ userscripts:
   - github-find-active-forks.user.js
   - github-fold-profile.user.js
   - linkedin-declutter.user.js
+  - slack-declutter.user.js
   - youtube-fold-related.user.js
   - youtube-home-subscriptions.user.js
