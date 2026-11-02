@@ -21,3 +21,4 @@ macos-firefox-autoconfig:
 # Files in userscripts/, installed from GitHub through Violentmonkey.
 userscripts:
   - github-find-active-forks.user.js
+  - linkedin-declutter.user.js

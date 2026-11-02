@@ -211,6 +211,10 @@ Violentmonkey offers to install it and later checks it for updates:
 
 - `github-find-active-forks.user.js` adds an **Active forks** button to GitHub
   repository headers, opening [active-forks](https://techgaun.github.io/active-forks/).
+- `linkedin-declutter.user.js` hides LinkedIn's Jobs, For Business and Premium
+  upsells, the right rail and "Recommended for you" cards; widens the feed;
+  moves the post composer under **Saved items**; shows post images beside the
+  text with an expand button; and pauses off-screen videos.
 
 `--firefox-policy` additionally resolves the real AMO IDs and generates
 `~/.config/dotfiles/firefox-policies.json`. This optional policy is **not**
