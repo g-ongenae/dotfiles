@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         GitHub — Fold profile sections
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.0.0
-// @description  Folds the README and the pinned repositories on GitHub user profiles down to their headers; a chevron button in each header unfolds it (next to the edit pencil on your own README). Each choice is remembered.
+// @version      1.1.0
+// @description  Folds the README and the pinned repositories on GitHub user and organization profiles down to their headers; a chevron button in each header unfolds it (next to the edit pencil on your own README). Each choice is remembered.
 // @match        https://github.com/*
 // @run-at       document-start
 // @grant        none
@@ -15,10 +15,13 @@
   // Fold on first visit. Afterwards, the last toggle state of each section is remembered.
   const FOLDED_BY_DEFAULT = { readme: true, pinned: false };
 
+  // User profile frame, or the main column of an organization page
+  const PROFILE = ':is(#user-profile-frame, main:has(.orghead))';
   // README box: "user / README.md" header row (with the edit pencil on your own profile), then the markdown
-  const README = '#user-profile-frame .Box:has(> .Box-body > article.markdown-body)';
-  // Pinned repositories: "Pinned" heading, then the list of cards
-  const PINNED = '#user-profile-frame .js-pinned-items-reorder-container';
+  const README = `${PROFILE} .Box:has(> .Box-body > article.markdown-body)`;
+  // Pinned repositories: "Pinned" heading, then the list of cards. On organizations, an outer
+  // container with the same class also wraps the README, hence the heading requirement.
+  const PINNED = `${PROFILE} .js-pinned-items-reorder-container:has(> h2)`;
   const SECTIONS = [
     {
       name: 'readme',

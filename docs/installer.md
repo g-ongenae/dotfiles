@@ -223,8 +223,9 @@ Violentmonkey offers to install it and later checks it for updates:
   threads), and Alt-click folds or unfolds every comment of the page. Each
   choice is remembered.
 - `github-fold-profile.user.js` folds the README (folded by default) and the
-  pinned repositories on GitHub user profiles down to their headers; a chevron
-  button in each header unfolds it, and each state is remembered.
+  pinned repositories on GitHub user and organization profiles down to their
+  headers; a chevron button in each header unfolds it, and each state is
+  remembered.
 - `github-hide-agents-tab.user.js` hides the **Agents** tab of GitHub
   repository navigation bars, and its entry in the overflow menu.
 - `github-hide-sidebar-sections.user.js` hides the **Projects**, **Milestone**,
