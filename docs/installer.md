@@ -247,12 +247,16 @@ Violentmonkey offers to install it and later checks it for updates:
   linked or mentioning issues and pull requests, and the merge. A thread a
   human answered stays, with the comment it answers. The button shows how many items are hidden, and the
   choice is remembered.
-- `google-meet-float-controls.user.js` gives the video the whole height of a
-  Google Meet call: the call controls and the reactions row either float over
-  the bottom of the video, fading out when the mouse rests, or fold into a tab
-  on the left edge that opens on hover. A button left of the controls switches
-  between docked (Meet's own layout), floating and side, and the choice is
-  remembered (`DEFAULT_MODE` and `SIDE` at the top of the script).
+- `google-meet-float-controls.user.js` gives the videos the whole window in a
+  Google Meet call: the tiles stretch over the room Meet keeps for its bottom
+  bar and its 16:9 boxes (cameras are cropped to fit, screen shares
+  letterboxed), and the call controls with the reactions row either float over
+  the bottom of the video, fading out when the mouse rests, or fold out of
+  sight against the left edge, opening when the mouse touches it. A button left
+  of the controls switches between docked (Meet's own layout), floating and
+  side, and the choice is remembered. It also hides the Gemini button at the
+  bottom left (`DEFAULT_MODE`, `SIDE`, `FILL` and `HIDE_GEMINI` at the top of
+  the script).
 - `linkedin-compose.user.js` makes LinkedIn's **Start a post** dialog fill the
   window; adds **B** and **I** buttons (and Cmd/Ctrl+B, Cmd/Ctrl+I, which also
   work in comments) that toggle bold or italic on the selection with Unicode
