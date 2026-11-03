@@ -86,6 +86,12 @@ This also repairs an existing installation when rerun. If you installed
 LibreWolf in a custom application directory, apply
 `xattr -dr com.apple.quarantine` to that app's path yourself.
 
+It also removes the `com.apple.FinderInfo` metadata the Zen cask leaves on
+files inside `/Applications/Zen.app`. It fails strict signature checks, so macOS
+reports the quarantined app as damaged; the app's signature is unaffected. If
+you already chose **Cancel** on that warning, macOS keeps blocking Zen: choose
+**Open Anyway** for Zen under System Settings > Privacy & Security.
+
 ## Where shared tools come from
 
 Shared tools use native package managers where appropriate, plus upstream Linux

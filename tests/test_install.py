@@ -138,6 +138,8 @@ class InstallerTests(unittest.TestCase):
         ssh_config.parent.mkdir()
         content = 'Host github.com\n  AddKeysToAgent yes\n  UseKeychain yes\n  IdentityFile ~/.ssh/id_ed25519\n'
         ssh_config.write_text(content)
+        applications = self.home / 'Applications'
+        (applications / 'Zen.app').mkdir(parents=True)
         for update in (False, True):
             for installed in ('git\nopenssh\n', 'git\n'):
                 with self.subTest(update=update, installed=installed):
@@ -149,6 +151,7 @@ class InstallerTests(unittest.TestCase):
                         return installed if argv[1:] == ('list', '--formula') else ''
 
                     with patch.object(installer.shutil, 'which', return_value='/opt/homebrew/bin/brew'), \
+                            patch.object(installer, 'APPLICATIONS', applications), \
                             patch.object(install, 'run', side_effect=run) as calls, \
                             patch.object(install, 'node'):
                         install.packages()
@@ -160,6 +163,7 @@ class InstallerTests(unittest.TestCase):
                         self.assertGreater(commands.index(unlink), max(upgrades))
                     else:
                         self.assertNotIn(unlink, commands)
+                    self.assertIn(('/usr/bin/xattr', '-dr', 'com.apple.FinderInfo', applications / 'Zen.app'), commands)
                     self.assertEqual(ssh_config.read_text(), content)
 
     def test_private_identity_is_prompted_and_written(self):
