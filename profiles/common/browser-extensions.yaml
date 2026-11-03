@@ -25,6 +25,7 @@ userscripts:
   - github-fold-profile.user.js
   - github-hide-agents-tab.user.js
   - github-hide-sidebar-sections.user.js
+  - github-notifications-hide-repos.user.js
   - github-pr-hide-bots.user.js
   - linkedin-compose.user.js
   - linkedin-declutter.user.js

@@ -231,6 +231,11 @@ Violentmonkey offers to install it and later checks it for updates:
 - `github-hide-sidebar-sections.user.js` hides the **Projects**, **Milestone**,
   **Development** and **Notifications** sections of the sidebar of GitHub pull
   requests and issues.
+- `github-notifications-hide-repos.user.js` adds a **Hide** button to the
+  header of each repository group of the GitHub notifications page; the
+  repository's notifications stay hidden after a reload. A crossed-out eye next
+  to the repository in the sidebar shows it again, and filtering on the
+  repository still lists its notifications.
 - `github-pr-hide-bots.user.js` adds a **Hide bots** button to the header of
   pull request conversations. It hides the comments and reviews of bots and AI
   reviewers (Copilot, CodeRabbit, Claude…, but not SonarCloud, Socket and
