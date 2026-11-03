@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LinkedIn — Declutter & wide feed
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.4.0
+// @version      1.4.3
 // @description  Hides Jobs, For Business, Premium upsells, Groups/Newsletters/Events, the footer and the right rail; widens the feed and single posts and lays out the posts of company and profile pages like the feed; moves the composer to the left column; shows post images beside the text; adds panel buttons folding the left column of the feed and the side column of company and profile pages (folded by default); removes "Show translation" on French/English posts.
 // @match        https://www.linkedin.com/*
 // @run-at       document-idle
@@ -31,6 +31,8 @@
   const TEXT = 'data-lkc-text'; // main text of a feed post
   const MOVED = 'data-lkc-moved'; // composer / feed sort moved to the left column
   const TEXT_BOX = '[data-testid="expandable-text-box"]'; // LinkedIn's post / comment text
+  const CARD = 'data-lkc-card'; // post card of a profile's Activity section; value: width it was fitted for
+  const CARD_GAP_PX = 12; // between the text and the image of such a card
   // Post images/videos are shrunk to 1/8 of the post width, but never below 100px.
   const MEDIA_MAX_WIDTH = 'max(12.5%, 100px)';
   // Smaller images are avatars, logos or reactions and are left alone.
@@ -357,12 +359,89 @@
     return svg;
   }
 
+  /** The post body of a text box: the one under a "Feed post" heading, else (cards of the Activity
+   *  section of a profile) the box around it holding a single action bar. */
+  function postOf(text) {
+    const post = text.closest(':has(> h2)');
+    if (post && isPostBody(post)) return post;
+    const card = text.closest(':has([aria-label="Send"])');
+    if (!card || card.querySelectorAll('[aria-label="Send"]').length !== 1 || card.querySelector('h1')) return null;
+    if (!card.hasAttribute(CARD)) card.setAttribute(CARD, '');
+    return card;
+  }
+
+  /** Activity card without media: the text runs down to the action bar. */
+  function fillCardText(card, text) {
+    const cardW = Math.round(card.getBoundingClientRect().width);
+    if (!cardW || card.getAttribute(CARD) === String(cardW)) return; // done for this width
+    const send = card.querySelector('[aria-label="Send"]');
+    let bar = send;
+    while (bar && bar.parentElement !== card && !bar.parentElement.contains(text)) bar = bar.parentElement;
+    if (!bar) return;
+    // The bar stays at the bottom of the card whatever the text height, so the result is stable
+    const room = bar.getBoundingClientRect().top - text.getBoundingClientRect().top - CARD_GAP_PX;
+    const cs = getComputedStyle(text);
+    const lineH = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.43;
+    if (room <= 0 || !lineH) return;
+    text.style.setProperty('--lkc-max', `${Math.max(3, Math.floor(room / lineH)) * lineH}px`);
+    card.setAttribute(CARD, String(cardW));
+    expandButton(card);
+  }
+
+  /** Activity card: the image fills the card width, and the text takes whatever height it leaves,
+   *  instead of 3 lines over an empty gap and an image boxed at a fixed size. */
+  function fillCard(card) {
+    const text = card.querySelector(`[${TEXT}]`);
+    const media = [...card.querySelectorAll('img, video')].find((m) => m.getBoundingClientRect().width >= 200);
+    if (!text || text.hasAttribute('data-lkc-expanded')) return;
+    if (!media) {
+      // An image still loading has no size yet: wait for it rather than give its room to the text
+      if ([...card.querySelectorAll('img')].some((i) => !i.complete || !i.getAttribute('src'))) return;
+      fillCardText(card, text);
+      return;
+    }
+    const w = media.naturalWidth || media.videoWidth;
+    const h = media.naturalHeight || media.videoHeight;
+    if (!w || !h) return; // not loaded yet
+    // The media frame: its outermost wrapper holding neither the text nor the action bar
+    const chain = [];
+    for (let p = media.parentElement; p && p !== card; p = p.parentElement) {
+      if (p.contains(text) || p.querySelector('[aria-label="Send"]')) break;
+      chain.push(p);
+    }
+    const frame = chain[chain.length - 1];
+    if (!frame || !frame.parentElement) return;
+    const cardW = Math.round(card.getBoundingClientRect().width);
+    if (!cardW || card.getAttribute(CARD) === String(cardW)) return; // done for this width
+    // Height shared by the text and the media: unchanged by the split, so the result is stable
+    const tr = text.getBoundingClientRect();
+    const span = frame.getBoundingClientRect().bottom - tr.top;
+    if (span <= 0) return;
+    const cs = getComputedStyle(text);
+    const lineH = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.43;
+    const textMin = Math.min(text.scrollHeight, 3 * lineH); // LinkedIn's 3 lines at least
+    const mediaH = Math.round(Math.min(frame.parentElement.getBoundingClientRect().width * (h / w), span - textMin - CARD_GAP_PX));
+    if (mediaH < 100) return;
+    for (const el of chain) {
+      for (const [k, v] of Object.entries({
+        width: '100%', height: `${mediaH}px`, 'max-width': 'none', 'max-height': 'none', 'padding-top': '0', 'padding-bottom': '0',
+      })) el.style.setProperty(k, v, 'important');
+    }
+    for (const [k, v] of Object.entries({
+      width: '100%', height: `${mediaH}px`, 'max-width': 'none', 'max-height': 'none', 'object-fit': 'contain',
+    })) media.style.setProperty(k, v, 'important');
+    const room = span - mediaH - CARD_GAP_PX;
+    text.style.setProperty('--lkc-max', `${Math.max(3, Math.floor(room / lineH)) * lineH}px`);
+    card.setAttribute(CARD, String(cardW));
+    expandButton(card); // the text may now fit whole
+  }
+
   /** Mark the main text of every post (not comment texts) and give it an expand button. */
   function postTexts(col) {
     const posts = new Set();
     for (const text of col.querySelectorAll(TEXT_BOX)) {
-      const post = text.closest(':has(> h2)');
-      if (!post || !isPostBody(post)) continue;
+      const post = postOf(text);
+      if (!post) continue;
       if (!text.hasAttribute(TEXT)) {
         // Comments live in the same post body, after the post text: only the first text box counts,
         // plus the one of a quoted post laid out beside its image
@@ -469,6 +548,10 @@
     return col.querySelector(`h1, ${TEXT_BOX}`) ? null : col;
   }
 
+  // LinkedIn sizes some images (Activity carousel) in pixels on window resize only: tell it when a
+  // column appears or disappears. The resize listener below also reruns fitText.
+  const relayout = () => requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+
   function applyFold(name) {
     const fold = FOLDS[name];
     document.documentElement.toggleAttribute(fold.attr, fold.folded);
@@ -496,14 +579,17 @@
         FOLDS[name].folded = !FOLDS[name].folded;
         localStorage.setItem(FOLDS[name].key, FOLDS[name].folded ? '1' : '0');
         applyFold(name);
-        schedule(); // fitText: the post text column got wider or narrower
+        relayout();
       });
       document.body.appendChild(btn);
       applyFold(name);
     }
     if (btn && btn.hidden !== !col) btn.hidden = !col;
     if (!col) return;
-    if (col.getAttribute(FOLD) !== name) col.setAttribute(FOLD, name);
+    if (col.getAttribute(FOLD) !== name) {
+      col.setAttribute(FOLD, name);
+      if (FOLDS[name].folded) relayout(); // folded from the start: the other columns just got wider
+    }
     // The feed grid is already ours (see widen); elsewhere, let the rest of the row take the room
     const row = col.parentElement;
     if (name === 'side' && row && row.getAttribute(FOLD_ROW) !== name) row.setAttribute(FOLD_ROW, name);
@@ -785,6 +871,7 @@
       }
       for (const post of posts) markMedia(post);
       postTexts(root);
+      for (const card of root.querySelectorAll(`[${CARD}]`)) fillCard(card);
       for (const post of root.querySelectorAll(`[${POST}]`)) fitText(post);
     } else if (centerCol) {
       markMedia(centerCol);
