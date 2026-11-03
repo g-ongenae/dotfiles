@@ -24,5 +24,6 @@ userscripts:
   - github-fold-profile.user.js
   - linkedin-declutter.user.js
   - slack-declutter.user.js
+  - twitch-home-following.user.js
   - youtube-fold-related.user.js
   - youtube-home-subscriptions.user.js
