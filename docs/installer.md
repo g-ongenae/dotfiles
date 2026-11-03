@@ -233,8 +233,12 @@ Violentmonkey offers to install it and later checks it for updates:
 - `twitch-home-following.user.js` replaces the Twitch home page (featured
   carousel, recommended streams and categories) with the channels you follow:
   live ones as stream cards, busiest first, the others as avatars, most
-  recently live first. It also hides the top bar's More options, Prime offers,
-  Bits and Turbo buttons.
+  recently live first. The carousel and recommendations are not even fetched,
+  so the carousel's live stream never plays, and the side bar keeps only the
+  followed channels. It also hides the top bar's More options, Prime offers,
+  Bits and Turbo buttons, and on channel pages the Bits, upgrade and gift sub
+  buttons, the goals, the goal and leaderboard banner atop the chat and the
+  Bits, points and bonus buttons under it.
 - `youtube-fold-related.user.js` folds the right column of a YouTube video
   (filter chips and related videos) so the video takes its space; a small
   round button on the right edge unfolds it, and the last state is remembered.

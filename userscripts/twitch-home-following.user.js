@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Twitch — Followed channels on the home page
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.0.0
-// @description  Replaces the Twitch home page (featured carousel, recommended streams, categories) with the channels you follow: live ones as stream cards, the others as a grid of avatars. Also hides the "More options", Prime offers, Bits and Turbo buttons of the top bar.
+// @version      1.1.0
+// @description  Replaces the Twitch home page (featured carousel, recommended streams, categories) with the channels you follow: live ones as stream cards, the others as a grid of avatars. The carousel and recommendations are not even fetched, so the carousel's live stream never plays, and the side bar keeps only the followed channels. Also hides the "More options", Prime offers, Bits and Turbo buttons of the top bar, and on channel pages the Bits, upgrade and gift sub buttons, the goals, the chat's goal and leaderboard banner and the Bits, points and bonus buttons.
 // @match        https://www.twitch.tv/*
 // @run-at       document-start
 // @grant        none
@@ -14,11 +14,18 @@
   // ---------- Settings ----------
   // Hide the "More options" (⋮), Prime offers, Bits and "Try Turbo" buttons of the top bar
   const DECLUTTER_TOP_NAV = true;
+  // On channel pages, hide the Bits, "Upgrade subscription" and "Gift a sub" buttons, the goals,
+  // the goal and leaderboard banner atop the chat and the Bits and points balance and bonus button under it
+  const DECLUTTER_CHANNEL = true;
   // Refresh the followed channels this often while the home page is open
   const REFRESH_MS = 60_000;
+  // GraphQL operations of the home page that are answered empty instead of sent: the featured carousel and the recommended shelves
+  const BLOCKED_OPERATIONS = ['FeaturedContentCarouselStreams', 'Shelves'];
 
   const GRID_ID = 'twhf-following';
-  const MAIN = '#front-page-main-content';
+  // Twitch's scroll area, on every page: on the home page, the grid replaces its content
+  const MAIN = '.root-scrollable__wrapper';
+  const isHome = () => location.pathname === '/';
   const AVATAR = 88; // px
   // Twitch's public web client ID: the site sends it with every GraphQL request
   const CLIENT_ID = 'kimne78kx3ncx6brgo4mv6wki5h1ko';
@@ -32,14 +39,28 @@
     [data-a-target="top-nav-container"] [data-a-target="top-nav-get-bits-button"],
     /* The Turbo button is the only labelled button of the top bar once logged in (logged out, those are Log in / Sign up) */
     html:has([data-a-target="top-nav-avatar"]) [data-a-target="top-nav-container"] button:has([data-a-target="tw-core-button-label-text"]) { display: none !important; }` : ''}
-    /* Once the followed channels are in, hide everything else of the home page */
-    html:has(#${GRID_ID}) [data-a-target="front-page-carousel"],
-    html:has(#${GRID_ID}) ${MAIN} > :not(#${GRID_ID}) { display: none !important; }
-    #${GRID_ID} { padding: 24px 0 32px; color: var(--color-text-base); font-family: var(--font-base, Inter, Roobert, Arial, sans-serif); }
+    ${DECLUTTER_CHANNEL ? `
+    [data-twhf-hidden],
+    [data-a-target="top-nav-get-bits-button"],
+    [data-a-target="manage-sub-button"],
+    [data-a-target="gift-button"],
+    .about-section__actions,
+    /* The rotating banner atop the chat (sub goal, gift and Bits leaderboards); the messages come after it */
+    .chat-room__content > div:first-child:has(.tw-transition-group):not(:has([role="log"], .chat-input)),
+    [data-test-selector="community-points-summary"] { display: none !important; }
+    /* Left of the chat box: the Bits and points balance and the bonus to claim; hidden, not removed, so the settings and Chat buttons stay right */
+    .chat-input__buttons-container > div:first-child:not(:has([data-a-target="chat-settings"], [data-a-target="chat-send-button"])) { visibility: hidden !important; }` : ''}
+    /* The side bar keeps only the followed channels: no recommended live channels, categories or "viewers also watch" */
+    .side-nav-section:not(:has(.followed-side-nav-header)) { display: none !important; }
+    /* Everything of the home page but the followed channels, whatever of it still renders */
+    [data-a-target="front-page-carousel"],
+    html[data-twhf-home] ${MAIN} > :not(#${GRID_ID}) { display: none !important; }
+    #${GRID_ID} { box-sizing: border-box; max-width: 1600px; margin: 0 auto; padding: 24px 30px 32px; color: var(--color-text-base); font-family: var(--font-base, Inter, Roobert, Arial, sans-serif); }
     #${GRID_ID} .twhf-head { display: flex; align-items: baseline; gap: 16px; margin: 0 0 16px; }
     #${GRID_ID} h2 { margin: 0; font-size: 1.8rem; font-weight: 700; }
     #${GRID_ID} .twhf-head a { font-size: 1.3rem; font-weight: 600; color: var(--color-text-link); text-decoration: none; }
     #${GRID_ID} .twhf-head a:hover { text-decoration: underline; }
+    #${GRID_ID} .twhf-status { margin: 0; font-size: 1.4rem; color: var(--color-text-alt); }
     #${GRID_ID} h3 { margin: 24px 0 12px; font-size: 1.4rem; font-weight: 600; color: var(--color-text-alt); }
     #${GRID_ID} ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
     #${GRID_ID} a { color: inherit; text-decoration: none; }
@@ -70,35 +91,93 @@
   `;
   (document.head || document.documentElement).appendChild(style);
 
-  // ---------- Followed channels, from Twitch's GraphQL API with the session of the page ----------
-  const QUERY = `query($after: Cursor) { currentUser { follows(first: 100, after: $after) {
-    edges { cursor node { login displayName profileImageURL(width: 150)
-      stream { title viewersCount game { displayName } previewImageURL(width: 440, height: 248) }
-      lastBroadcast { startedAt } } }
-    pageInfo { hasNextPage } } } }`;
+  // ---------- Hooks into Twitch's own GraphQL requests ----------
+  // Run in the page through a script element, so it wraps the fetch Twitch itself calls, before Twitch's code starts
+  // (twitch.tv sets no CSP). Twitch sends its GraphQL operations to gql.twitch.tv in batches:
+  // - on the home page, the carousel and recommended shelves operations are answered empty instead of sent,
+  //   so the carousel's live player and the recommended thumbnails never load;
+  // - the side bar's answer keeps only the followed channels section, whose logins are passed to the userscript
+  //   (gql.twitch.tv no longer lists your follows to an outside query: "service error").
+  const FOLLOWED_EVENT = 'twhf-followed';
 
-  const token = () => document.cookie.match(/(?:^|;\s*)auth-token=([^;]+)/)?.[1];
+  function hookGraphQL(operations, followedEvent) {
+    const blocked = new Set(operations);
+    const pageFetch = window.fetch;
+    const stub = (op) => ({ data: null, errors: [{ message: 'Blocked by a userscript' }], extensions: { operationName: op?.operationName } });
+    const json = (value) => new Response(JSON.stringify(value), { headers: { 'Content-Type': 'application/json' } });
+
+    function sideNav(result) {
+      const sections = result?.data?.sideNav?.sections;
+      if (!sections?.edges) return result;
+      sections.edges = sections.edges.filter((e) => e?.node?.id?.startsWith('provider-side-nav-followed-channels'));
+      const logins = sections.edges.flatMap((e) => e.node.content?.edges ?? []).map((e) => e?.node?.login).filter(Boolean);
+      document.dispatchEvent(new CustomEvent(followedEvent, { detail: JSON.stringify(logins) }));
+      return result;
+    }
+
+    window.fetch = function (input, init) {
+      try {
+        const url = typeof input === 'string' ? input : input?.url ?? String(input);
+        if (!url.startsWith('https://gql.twitch.tv/gql') || typeof init?.body !== 'string') return pageFetch.call(window, input, init);
+        const body = JSON.parse(init.body);
+        const ops = Array.isArray(body) ? body : [body];
+        const home = location.pathname === '/';
+        const drop = ops.map((op) => home && blocked.has(op?.operationName));
+        if (!drop.includes(true) && !ops.some((op) => op?.operationName === 'SideNav')) return pageFetch.call(window, input, init);
+        // Put the answers back in the batch's order, as Twitch matches them by position
+        const answer = (results) => {
+          let k = 0;
+          const all = ops.map((op, i) => (drop[i] ? stub(op) : op?.operationName === 'SideNav' ? sideNav(results[k++]) : results[k++]));
+          return json(Array.isArray(body) ? all : all[0]);
+        };
+        const kept = ops.filter((_, i) => !drop[i]);
+        if (!kept.length) return Promise.resolve(answer([]));
+        return pageFetch.call(window, input, { ...init, body: JSON.stringify(Array.isArray(body) ? kept : kept[0]) })
+          .then((res) => res.json())
+          .then((results) => answer(Array.isArray(results) ? results : [results]));
+      } catch {
+        return pageFetch.call(window, input, init);
+      }
+    };
+  }
+
+  let followed = null; // logins of the side bar's followed channels, once Twitch has loaded it
+  document.addEventListener(FOLLOWED_EVENT, (event) => {
+    followed = JSON.parse(event.detail);
+    stale = true;
+    refresh(); // fetch their streams now
+  });
+
+  const script = document.createElement('script');
+  script.textContent = `(${hookGraphQL})(${JSON.stringify(BLOCKED_OPERATIONS)}, ${JSON.stringify(FOLLOWED_EVENT)});`;
+  (document.head || document.documentElement).appendChild(script);
+  script.remove();
+
+  // ---------- Followed channels: their streams, from Twitch's public GraphQL API ----------
+  const QUERY = `query($logins: [String!]) { users(logins: $logins) {
+    login displayName profileImageURL(width: 150)
+    stream { title viewersCount game { displayName } previewImageURL(width: 440, height: 248) }
+    lastBroadcast { startedAt } } }`;
 
   async function follows() {
-    const auth = token();
-    if (!auth) return null; // logged out: keep Twitch's home page
-    // In a Firefox content script, content.fetch sends the request as the page, which CORS expects
-    const request = globalThis.content?.fetch?.bind(globalThis.content) ?? fetch;
-    const channels = [];
-    let after = null;
-    for (let page = 0; page < 20; page++) {
-      const res = await request('https://gql.twitch.tv/gql', {
+    if (!/(?:^|;\s*)auth-token=/.test(document.cookie)) return 'Log in to see the channels you follow.';
+    if (!followed) return 'Loading…'; // the side bar has not loaded yet
+    const list = [];
+    for (let i = 0; i < followed.length; i += 100) {
+      const res = await fetch('https://gql.twitch.tv/gql', {
         method: 'POST',
-        headers: { 'Client-ID': CLIENT_ID, Authorization: `OAuth ${auth}` },
-        body: JSON.stringify({ query: QUERY, variables: { after } }),
+        headers: { 'Client-ID': CLIENT_ID },
+        body: JSON.stringify({ query: QUERY, variables: { logins: followed.slice(i, i + 100) } }),
       });
-      const f = (await res.json())?.data?.currentUser?.follows;
-      if (!f) return channels.length ? channels : null;
-      channels.push(...f.edges.map((e) => e.node).filter(Boolean));
-      if (!f.pageInfo?.hasNextPage || !f.edges.length) break;
-      after = f.edges.at(-1).cursor;
+      const json = await res.json();
+      const users = json?.data?.users;
+      if (!users) {
+        console.warn('[twitch-home-following] Followed channels unavailable', res.status, json?.errors ?? json);
+        return "Couldn't load the channels you follow.";
+      }
+      list.push(...users.filter(Boolean));
     }
-    return channels;
+    return list;
   }
 
   // ---------- Grid ----------
@@ -146,14 +225,20 @@
         el('span', { className: 'twhf-since', textContent: since(last) })));
   }
 
+  function head() {
+    return el('div', { className: 'twhf-head' },
+      el('h2', { textContent: 'Followed channels' }),
+      el('a', { href: '/directory/following', textContent: 'Following page' }));
+  }
+
   function build(channels) {
+    // Not a list: the reason there is none (logged out, loading, API error)
+    if (typeof channels === 'string') return el('section', { id: GRID_ID }, head(), el('p', { className: 'twhf-status', textContent: channels }));
     const live = channels.filter((c) => c.stream).sort((x, y) => y.stream.viewersCount - x.stream.viewersCount);
     const offline = channels.filter((c) => !c.stream)
       .sort((x, y) => (y.lastBroadcast?.startedAt ?? '').localeCompare(x.lastBroadcast?.startedAt ?? ''));
     return el('section', { id: GRID_ID },
-      el('div', { className: 'twhf-head' },
-        el('h2', { textContent: 'Followed channels' }),
-        el('a', { href: '/directory/following', textContent: 'Following page' })),
+      head(),
       ...(live.length
         ? [el('h3', { textContent: `Live (${live.length})` }), el('ul', { className: 'twhf-live' }, ...live.map(liveCard))]
         : [el('h3', { textContent: 'Nobody you follow is live' })]),
@@ -162,19 +247,41 @@
         : []));
   }
 
+  // ---------- Channel page buttons ----------
+  // Hiding a button alone leaves the spacing of its wrappers: hide the outermost wrapper that holds only it
+  const CHANNEL_BUTTONS = '[data-a-target="top-nav-get-bits-button"], [data-a-target="manage-sub-button"], [data-a-target="gift-button"]';
+
+  function hideChannelButtons() {
+    // React may reuse a wrapper for another button: unhide those that no longer hold one
+    for (const node of document.querySelectorAll('[data-twhf-hidden]')) {
+      if (!node.matches(CHANNEL_BUTTONS) && !node.querySelector(CHANNEL_BUTTONS)) delete node.dataset.twhfHidden;
+    }
+    for (const button of document.querySelectorAll(CHANNEL_BUTTONS)) {
+      if (button.closest('[data-a-target="top-nav-container"]')) continue; // the top bar has its own rules
+      let node = button;
+      while (node.parentElement?.childElementCount === 1 && node.parentElement !== document.body) node = node.parentElement;
+      node.dataset.twhfHidden = '';
+    }
+  }
+
   // ---------- Main pass (Twitch is an SPA) ----------
-  let channels = null;
+  let channels = 'Loading…';
   let fetchedAt = 0;
   let loading = false;
+  let stale = false; // the side bar changed during a refresh
   let rendered = null;
 
   async function refresh() {
     if (loading) return;
     loading = true;
     try {
-      channels = await follows();
-    } catch {
-      channels = null; // network or API change: Twitch's own home page stays
+      do {
+        stale = false;
+        channels = await follows();
+      } while (stale);
+    } catch (error) {
+      console.warn('[twitch-home-following] Followed channels unavailable', error);
+      channels = "Couldn't load the channels you follow.";
     } finally {
       fetchedAt = Date.now();
       loading = false;
@@ -183,15 +290,17 @@
   }
 
   function run() {
-    const main = document.querySelector(MAIN);
+    if (DECLUTTER_CHANNEL) hideChannelButtons();
+    const home = isHome();
+    document.documentElement.toggleAttribute('data-twhf-home', home);
+    const main = home ? document.querySelector(MAIN) : null;
     const existing = document.getElementById(GRID_ID);
     if (!main) { existing?.remove(); return; }
     if (Date.now() - fetchedAt > REFRESH_MS) refresh();
-    // The hidden carousel would keep playing its featured stream
+    // Should the carousel still load, its hidden player would keep playing the featured stream
     for (const video of document.querySelectorAll('[data-a-target="front-page-carousel"] video')) {
-      if (existing && !video.paused) video.pause();
+      if (!video.paused) video.pause();
     }
-    if (!channels) return;
     if (existing && existing.parentNode === main && rendered === channels) return;
     existing?.remove();
     rendered = channels;
