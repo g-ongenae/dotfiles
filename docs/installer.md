@@ -259,12 +259,13 @@ Violentmonkey offers to install it and later checks it for updates:
   bottom left (`DEFAULT_MODE`, `SIDE`, `FILL` and `HIDE_GEMINI` at the top of
   the script).
 - `linkedin-compose.user.js` makes LinkedIn's **Start a post** dialog fill the
-  window; adds **B** and **I** buttons (and Cmd/Ctrl+B, Cmd/Ctrl+I, which also
-  work in comments) that toggle bold or italic on the selection with Unicode
-  letters, as posts are plain text;
+  window; adds **B**, **I** and **S** buttons (and Cmd/Ctrl+B, Cmd/Ctrl+I,
+  Cmd/Ctrl+Shift+X, which also work in comments) that toggle bold, italic or
+  strikethrough on the selection with Unicode letters and marks, as posts are
+  plain text;
   shows attached images as a row of thumbnails at the bottom; and counts the
   words and characters of the post against the 3,000 characters limit. Unicode
-  bold and italic letters are poorly read by screen readers and are not found
+  bold, italic and struck-through letters are poorly read by screen readers and are not found
   by LinkedIn's search.
 - `linkedin-declutter.user.js` hides LinkedIn's Jobs, For Business and Premium
   upsells, the footer links, the ad library card of company pages, the right

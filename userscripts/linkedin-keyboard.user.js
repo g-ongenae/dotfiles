@@ -2,7 +2,7 @@
 // @name         LinkedIn — Keyboard shortcuts
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.3.2
+// @version      1.3.3
 // @description  Drives LinkedIn from the keyboard: j / k (or ↓ / ↑) move between posts, l likes (held: picks the reaction), c comments, r reposts, s copies the link, o opens the post, e expands it, ← / → browse its images or document pages, Space plays / pauses its video and m mutes it, p starts a post, t / b go to the top / bottom, h / u open the feed / your profile, Cmd/Ctrl+U adds an image to the post or comment being written, Esc leaves a comment box and ? lists the shortcuts.
 // @match        https://www.linkedin.com/*
 // @run-at       document-idle
@@ -86,6 +86,7 @@
     ['u', 'Your profile'],
     [`${MOD}B`, 'Bold, in a post or comment (LinkedIn — Better post composer)'],
     [`${MOD}I`, 'Italic, in a post or comment (LinkedIn — Better post composer)'],
+    [`${MOD}${MOD === '⌘' ? '⇧' : 'Shift+'}X`, 'Strikethrough, in a post or comment (LinkedIn — Better post composer)'],
     [`${MOD}U`, 'Add an image, in a post or comment'],
     ['Esc', 'Close the post or comment being written'],
     ['?', 'Show / hide this list'],

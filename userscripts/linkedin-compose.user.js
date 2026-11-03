@@ -2,8 +2,8 @@
 // @name         LinkedIn — Better post composer
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.3.0
-// @description  Makes the "Start a post" dialog fill the window; adds Bold and Italic buttons (Cmd/Ctrl+B, Cmd/Ctrl+I, which also work in comments) that restyle the selection with Unicode letters; shows attached images as a row of thumbnails at the bottom; counts words and characters against the 3,000 characters limit. Unicode bold and italic letters are poorly read by screen readers and are not found by LinkedIn's search.
+// @version      1.4.0
+// @description  Makes the "Start a post" dialog fill the window; adds Bold, Italic and Strikethrough buttons (Cmd/Ctrl+B, Cmd/Ctrl+I, Cmd/Ctrl+Shift+X, which also work in comments) that restyle the selection with Unicode letters and marks; shows attached images as a row of thumbnails at the bottom; counts words and characters against the 3,000 characters limit. Unicode bold, italic and struck-through letters are poorly read by screen readers and are not found by LinkedIn's search.
 // @match        https://www.linkedin.com/*
 // @run-at       document-idle
 // @noframes
@@ -25,7 +25,7 @@
 
   const EDITOR = '[componentkey="ShareBox_textEditor"]';
   const DIALOG = 'data-lkp-dialog'; // the compose dialog
-  const FORMAT = 'data-lkp-format'; // Bold / Italic buttons
+  const FORMAT = 'data-lkp-format'; // Bold / Italic / Strikethrough buttons
   const COUNTER = 'data-lkp-counter';
   // The chain from the editor up to the dialog stretches so that the editor takes the free height
   // and the images sit at the bottom: "col" grows in a flex column, "row" / "grid" stretches.
@@ -70,6 +70,7 @@
     [${FORMAT}] button:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
     [${FORMAT}] button[data-style="bold"] { font-weight: 700; }
     [${FORMAT}] button[data-style="italic"] { font-style: italic; }
+    [${FORMAT}] button[data-style="strike"] { text-decoration: line-through; }
     [${COUNTER}] {
       align-self: center; white-space: nowrap;
       font-size: 14px; color: inherit; opacity: 0.7;
@@ -132,6 +133,29 @@
     return out.normalize('NFC');
   };
 
+  // ---------- Unicode strikethrough ----------
+  // A combining long stroke overlay after each visible character (letter, digit, emoji, ...).
+  const STROKE = '\u0336';
+  const graphemes = (text) => [...new Intl.Segmenter().segment(text)].map((s) => s.segment);
+  const isBlank = (g) => !/\S/.test(g.replaceAll(STROKE, ''));
+
+  // True when every visible character of the text is already struck through.
+  const hasStrike = (text) => {
+    const visible = graphemes(text).filter((g) => !isBlank(g));
+    return visible.length > 0 && visible.every((g) => g.includes(STROKE));
+  };
+
+  const strike = (text, on) =>
+    graphemes(text.replaceAll(STROKE, ''))
+      .map((g) => (on && !isBlank(g) ? g + STROKE : g))
+      .join('');
+
+  const STYLES = {
+    bold: { has: (text) => hasStyle(text, 'bold'), set: (text, on) => restyle(text, 'bold', on) },
+    italic: { has: (text) => hasStyle(text, 'italic'), set: (text, on) => restyle(text, 'italic', on) },
+    strike: { has: hasStrike, set: strike },
+  };
+
   // Replaces the text of each part through the browser's editing (insertText), which the editor
   // reads back like typing, so a single undo reverts it; edits the text node directly should the
   // browser refuse. Last part first, so that the offsets of the earlier ones still hold.
@@ -165,8 +189,9 @@
     }
     if (!parts.length) return;
 
-    const on = !hasStyle(parts.map((p) => p.node.data.slice(p.start, p.end)).join(''), kind);
-    for (const p of parts) p.text = restyle(p.node.data.slice(p.start, p.end), kind, on);
+    const { has, set } = STYLES[kind];
+    const on = !has(parts.map((p) => p.node.data.slice(p.start, p.end)).join(''));
+    for (const p of parts) p.text = set(p.node.data.slice(p.start, p.end), on);
     replaceParts(sel, parts);
     const first = parts[0];
     const last = parts[parts.length - 1];
@@ -176,12 +201,12 @@
     }
   };
 
-  // Cmd/Ctrl+B and Cmd/Ctrl+I in the editor, and in comment boxes.
+  // Cmd/Ctrl+B, Cmd/Ctrl+I and Cmd/Ctrl+Shift+X in the editor, and in comment boxes.
   document.addEventListener(
     'keydown',
     (e) => {
-      if (e.isComposing || !(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
-      const kind = { b: 'bold', i: 'italic' }[e.key.toLowerCase()];
+      if (e.isComposing || !(e.metaKey || e.ctrlKey) || e.altKey) return;
+      const kind = (e.shiftKey ? { x: 'strike' } : { b: 'bold', i: 'italic' })[e.key.toLowerCase()];
       const editor = kind && e.target instanceof Element && e.target.closest(`${EDITOR}, [contenteditable="true"]`);
       if (!editor) return;
       e.preventDefault();
@@ -210,7 +235,8 @@
     const counter = editor.closest('dialog')?.querySelector(`[${COUNTER}]`);
     if (!counter) return;
     const text = postText(editor);
-    // UTF-16 code units, as JavaScript and LinkedIn count: emoji and bold/italic letters count 2.
+    // UTF-16 code units, as JavaScript and LinkedIn count: emoji and bold/italic letters count 2,
+    // and struck-through characters 1 more.
     const chars = text.length;
     const words = (text.match(/\S+/g) || []).length;
     counter.textContent = `${words.toLocaleString()} ${words === 1 ? 'word' : 'words'} · ${chars.toLocaleString()} / ${MAX_CHARS.toLocaleString()}`;
@@ -270,15 +296,16 @@
   const formatButtons = () => {
     const group = document.createElement('div');
     group.setAttribute(FORMAT, '');
-    for (const [kind, label, key] of [
-      ['bold', 'B', 'B'],
-      ['italic', 'I', 'I'],
+    for (const [kind, label, key, name] of [
+      ['bold', 'B', 'B', 'Bold'],
+      ['italic', 'I', 'I', 'Italic'],
+      ['strike', 'S', isMac ? '⇧X' : 'Shift+X', 'Strikethrough'],
     ]) {
       const button = document.createElement('button');
       button.type = 'button';
       button.dataset.style = kind;
       button.textContent = label;
-      button.title = `${kind[0].toUpperCase()}${kind.slice(1)} (${isMac ? '⌘' : 'Ctrl+'}${key})`;
+      button.title = `${name} (${isMac ? '⌘' : 'Ctrl+'}${key})`;
       // Keep the focus and the selection in the editor.
       button.addEventListener('mousedown', (e) => e.preventDefault());
       button.addEventListener('click', () => {
@@ -307,7 +334,7 @@
         counter.setAttribute(COUNTER, '');
         const buttons = formatButtons();
         // The footer row holding the emoji / media buttons, just above the separator of the Post
-        // button: the Bold / Italic buttons go after the icons, the counter to the right. Found by
+        // button: the format buttons go after the icons, the counter to the right. Found by
         // its structure, not by a button label, which changes with the language of the UI.
         const row = dialog.querySelector('hr[role="presentation"]')?.previousElementSibling;
         const icons = row?.firstElementChild?.querySelector('button svg') && row.firstElementChild;
