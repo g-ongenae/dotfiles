@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         GitHub — Fold comments
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.0.0
+// @author       g-ongenae
+// @version      1.0.1
 // @description  Adds a chevron button to the header of each review, comment and description on GitHub pull requests and issues: it folds the comment down to its header. Alt-click folds or unfolds every comment of the page. Each choice is remembered.
 // @match        https://github.com/*
 // @run-at       document-start
+// @noframes
 // @grant        none
 // ==/UserScript==
 

@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         GitHub — Hide the Agents tab
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.2.1
+// @author       g-ongenae
+// @version      1.2.2
 // @description  Hides the "Agents" tab of the repository navigation bar, its entry in the overflow menu shown on narrow windows, and the Copilot button (and its dropdown) of the page header.
 // @match        https://github.com/*
 // @run-at       document-start
+// @noframes
 // @grant        none
 // ==/UserScript==
 

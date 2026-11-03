@@ -236,7 +236,8 @@ Violentmonkey offers to install it and later checks it for updates:
   header of each repository group of the GitHub notifications page; the
   repository's notifications stay hidden after a reload. A crossed-out eye next
   to the repository in the sidebar shows it again, and filtering on the
-  repository still lists its notifications.
+  repository still lists its notifications. Hiding is display-only: hidden
+  notifications still count in the inbox badge.
 - `github-pr-hide-bots.user.js` adds a **Hide bots** button to the header of
   pull request conversations. It hides the comments and reviews of bots and AI
   reviewers (Copilot, CodeRabbit, Claude…, but not SonarCloud, Socket and
@@ -262,7 +263,9 @@ Violentmonkey offers to install it and later checks it for updates:
   work in comments) that toggle bold or italic on the selection with Unicode
   letters, as posts are plain text;
   shows attached images as a row of thumbnails at the bottom; and counts the
-  words and characters of the post against the 3,000 characters limit.
+  words and characters of the post against the 3,000 characters limit. Unicode
+  bold and italic letters are poorly read by screen readers and are not found
+  by LinkedIn's search.
 - `linkedin-declutter.user.js` hides LinkedIn's Jobs, For Business and Premium
   upsells, the footer links, the ad library card of company pages, the right
   rail and "Recommended for you" cards; widens the feed and single posts, and
@@ -291,7 +294,8 @@ Violentmonkey offers to install it and later checks it for updates:
 - `slack-upload-shortcut.user.js` makes **Cmd+U** (**Ctrl+U** off macOS;
   `MODIFIER` at the top of the script) open the file picker of the message
   composer being typed in (or of the open conversation), like **Upload from
-  your computer** in its **+** menu.
+  your computer** in its **+** menu. It leaves the shortcut alone when the
+  focus is in another input, such as the search box.
 - `twitch-home-following.user.js` replaces the Twitch home page (featured
   carousel, recommended streams and categories) with the channels you follow:
   live ones as stream cards, busiest first, the others as avatars, most

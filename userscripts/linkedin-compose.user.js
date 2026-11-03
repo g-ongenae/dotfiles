@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         LinkedIn — Better post composer
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.2.0
-// @description  Makes the "Start a post" dialog fill the window; adds Bold and Italic buttons (Cmd/Ctrl+B, Cmd/Ctrl+I, which also work in comments) that restyle the selection with Unicode letters; shows attached images as a row of thumbnails at the bottom; counts words and characters against the 3,000 characters limit.
+// @author       g-ongenae
+// @version      1.3.0
+// @description  Makes the "Start a post" dialog fill the window; adds Bold and Italic buttons (Cmd/Ctrl+B, Cmd/Ctrl+I, which also work in comments) that restyle the selection with Unicode letters; shows attached images as a row of thumbnails at the bottom; counts words and characters against the 3,000 characters limit. Unicode bold and italic letters are poorly read by screen readers and are not found by LinkedIn's search.
 // @match        https://www.linkedin.com/*
 // @run-at       document-idle
+// @noframes
 // @grant        none
 // ==/UserScript==
 
@@ -65,18 +67,18 @@
       background: transparent; color: inherit; cursor: pointer;
       font: 20px/1 Georgia, serif;
     }
-    [${FORMAT}] button:hover { background: rgba(0, 0, 0, 0.08); }
+    [${FORMAT}] button:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
     [${FORMAT}] button[data-style="bold"] { font-weight: 700; }
     [${FORMAT}] button[data-style="italic"] { font-style: italic; }
     [${COUNTER}] {
       align-self: center; white-space: nowrap;
-      font-size: 14px; color: rgba(0, 0, 0, 0.6);
+      font-size: 14px; color: inherit; opacity: 0.7;
       font-variant-numeric: tabular-nums;
     }
-    [${COUNTER}][data-level="warn"] { color: #b24020; }
-    [${COUNTER}][data-level="over"] { color: #cc1016; font-weight: 600; }
+    [${COUNTER}][data-level="warn"] { color: #e06c3c; opacity: 1; }
+    [${COUNTER}][data-level="over"] { color: #e5484d; opacity: 1; font-weight: 600; }
   `;
-  document.head.append(style);
+  (document.head || document.documentElement).append(style);
 
   // ---------- Unicode bold / italic ----------
   // LinkedIn posts are plain text: "bold" and "italic" are the sans-serif letters of the
@@ -130,8 +132,23 @@
     return out.normalize('NFC');
   };
 
-  // Restyles the text nodes of the selection in place; ProseMirror reads the change back from
-  // the DOM, as it does for spellcheck corrections, so it is undoable.
+  // Replaces the text of each part through the browser's editing (insertText), which the editor
+  // reads back like typing, so a single undo reverts it; edits the text node directly should the
+  // browser refuse. Last part first, so that the offsets of the earlier ones still hold.
+  const replaceParts = (sel, parts) => {
+    for (const p of [...parts].reverse()) {
+      const range = document.createRange();
+      range.setStart(p.node, p.start);
+      range.setEnd(p.node, p.end);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      if (!document.execCommand('insertText', false, p.text)) {
+        p.node.data = p.node.data.slice(0, p.start) + p.text + p.node.data.slice(p.end);
+      }
+    }
+  };
+
+  // Restyles the selection, then selects the restyled text again.
   const applyStyle = (editor, kind) => {
     const sel = getSelection();
     if (!sel.rangeCount) return;
@@ -149,21 +166,21 @@
     if (!parts.length) return;
 
     const on = !hasStyle(parts.map((p) => p.node.data.slice(p.start, p.end)).join(''), kind);
-    for (const p of parts) {
-      const text = restyle(p.node.data.slice(p.start, p.end), kind, on);
-      p.node.data = p.node.data.slice(0, p.start) + text + p.node.data.slice(p.end);
-      p.end = p.start + text.length;
-    }
+    for (const p of parts) p.text = restyle(p.node.data.slice(p.start, p.end), kind, on);
+    replaceParts(sel, parts);
     const first = parts[0];
     const last = parts[parts.length - 1];
-    sel.setBaseAndExtent(first.node, first.start, last.node, last.end);
+    // The browser may have replaced a text node: the caret then stays after the last part.
+    if (first.node.isConnected && last.node.isConnected) {
+      sel.setBaseAndExtent(first.node, first.start, last.node, last.start + last.text.length);
+    }
   };
 
   // Cmd/Ctrl+B and Cmd/Ctrl+I in the editor, and in comment boxes.
   document.addEventListener(
     'keydown',
     (e) => {
-      if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
+      if (e.isComposing || !(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
       const kind = { b: 'bold', i: 'italic' }[e.key.toLowerCase()];
       const editor = kind && e.target instanceof Element && e.target.closest(`${EDITOR}, [contenteditable="true"]`);
       if (!editor) return;
@@ -248,6 +265,8 @@
   };
 
   // ---------- Setup ----------
+  const isMac = /mac/i.test(navigator.userAgentData?.platform || navigator.platform || '');
+
   const formatButtons = () => {
     const group = document.createElement('div');
     group.setAttribute(FORMAT, '');
@@ -259,7 +278,7 @@
       button.type = 'button';
       button.dataset.style = kind;
       button.textContent = label;
-      button.title = `${kind[0].toUpperCase()}${kind.slice(1)} (${navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl+'}${key})`;
+      button.title = `${kind[0].toUpperCase()}${kind.slice(1)} (${isMac ? '⌘' : 'Ctrl+'}${key})`;
       // Keep the focus and the selection in the editor.
       button.addEventListener('mousedown', (e) => e.preventDefault());
       button.addEventListener('click', () => {
@@ -288,9 +307,10 @@
         counter.setAttribute(COUNTER, '');
         const buttons = formatButtons();
         // The footer row holding the emoji / media buttons, just above the separator of the Post
-        // button: the Bold / Italic buttons go after the icons, the counter to the right.
+        // button: the Bold / Italic buttons go after the icons, the counter to the right. Found by
+        // its structure, not by a button label, which changes with the language of the UI.
         const row = dialog.querySelector('hr[role="presentation"]')?.previousElementSibling;
-        const icons = row?.querySelector('button[aria-label="Show Emoji Picker"]') && row.firstElementChild;
+        const icons = row?.firstElementChild?.querySelector('button svg') && row.firstElementChild;
         if (icons) {
           icons.append(buttons);
           row.append(counter);
@@ -333,6 +353,12 @@
       setup();
     });
   }
-  new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
+  // Typing changes the editor, and the counter follows it: neither alters the layout, so they
+  // don't rerun the setup, whose layout passes read the computed style of the whole chain.
+  const ownChange = (node) =>
+    !!(node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement)?.closest(`${EDITOR}, [${COUNTER}]`);
+  new MutationObserver((records) => {
+    if (!records.every((r) => ownChange(r.target))) schedule();
+  }).observe(document.body, { childList: true, subtree: true });
   setup();
 })();

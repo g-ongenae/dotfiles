@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         GitHub — Fold profile sections
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.1.0
+// @author       g-ongenae
+// @version      1.1.1
 // @description  Folds the README and the pinned repositories on GitHub user and organization profiles down to their headers; a chevron button in each header unfolds it (next to the edit pencil on your own README). Each choice is remembered.
 // @match        https://github.com/*
 // @run-at       document-start
+// @noframes
 // @grant        none
 // ==/UserScript==
 

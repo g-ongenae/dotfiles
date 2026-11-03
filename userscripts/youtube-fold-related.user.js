@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         YouTube — Fold related videos
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.1.0
+// @author       g-ongenae
+// @version      1.1.1
 // @description  Folds the right column of a YouTube video (filter chips and related videos) so the video takes its space; a small round button on the right edge unfolds it. The choice is remembered.
 // @match        https://www.youtube.com/*
 // @run-at       document-start
+// @noframes
 // @grant        none
 // ==/UserScript==
 

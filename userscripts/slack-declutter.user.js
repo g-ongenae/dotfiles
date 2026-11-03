@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         Slack — Declutter
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.1.0
+// @author       g-ongenae
+// @version      1.1.1
 // @description  Hides the "Find a conversation" filter, the Huddles, Later/Saved and Directories entries of the sidebar, and the Help button of the top bar; folds image and file previews in messages by default.
 // @match        https://app.slack.com/*
 // @run-at       document-start
+// @noframes
 // @grant        none
 // ==/UserScript==
 

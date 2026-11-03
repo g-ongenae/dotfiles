@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         GitHub — Hide repositories from notifications
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.0.0
-// @description  Adds a "Hide" button to the header of each repository group of the GitHub notifications page: the repository's notifications stay hidden, even after a reload. A crossed-out eye next to the repository in the sidebar shows it again. Filtering on the repository still lists its notifications.
+// @author       g-ongenae
+// @version      1.1.0
+// @description  Adds a "Hide" button to the header of each repository group of the GitHub notifications page: the repository's notifications stay hidden, even after a reload. A crossed-out eye next to the repository in the sidebar shows it again. Filtering on the repository still lists its notifications. Hiding is display-only: hidden notifications still count in the inbox badge.
 // @match        https://github.com/*
 // @run-at       document-start
+// @noframes
 // @grant        none
 // ==/UserScript==
 
@@ -15,14 +17,19 @@
   const BTN = 'ghn-hide';
   const SHOW = 'ghn-show';
 
-  // Lowercase "owner/repo" names: GitHub's are case-insensitive
+  // Lowercase "owner/repo" names: GitHub's are case-insensitive. They go into CSS selectors, so
+  // anything else (a hand-edited entry) is dropped rather than break the whole stylesheet.
+  const REPO = /^[\w.-]+\/[\w.-]+$/;
   let hidden = new Set();
   function load() {
-    try { hidden = new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch { hidden = new Set(); }
+    let list;
+    try { list = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { list = []; }
+    hidden = new Set(Array.isArray(list) ? list.filter((r) => typeof r === 'string' && REPO.test(r)) : []);
   }
   load();
 
   function setHidden(repo, value) {
+    if (!REPO.test(repo)) return;
     if (value) hidden.add(repo);
     else hidden.delete(repo);
     localStorage.setItem(KEY, JSON.stringify([...hidden].sort()));
@@ -121,15 +128,17 @@
 
   // ---------- Main pass (GitHub navigates with Turbo) ----------
   function run() {
-    const text = css();
+    // Elsewhere, drop the rules rather than rebuild them on every mutation
+    const onPage = location.pathname.startsWith('/notifications');
+    const text = onPage ? css() : '';
     if (style.textContent !== text) style.textContent = text;
     if (!style.isConnected) (document.head || document.documentElement).appendChild(style);
-    if (!location.pathname.startsWith('/notifications')) return;
+    if (!onPage) return;
 
     for (const header of document.querySelectorAll('.js-notifications-group > .Box-header')) {
       if (header.querySelector(`.${BTN}`)) continue;
       const repo = header.querySelector('h3 a')?.textContent.trim().toLowerCase();
-      if (!repo?.includes('/')) continue;
+      if (!repo || !REPO.test(repo)) continue;
       const done = header.querySelector('.js-grouped-notifications-mark-all-read-button');
       done ? done.before(hideButton(repo)) : header.appendChild(hideButton(repo));
     }

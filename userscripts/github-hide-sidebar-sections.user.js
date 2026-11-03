@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         GitHub — Hide sidebar sections
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.0.0
+// @author       g-ongenae
+// @version      1.0.1
 // @description  Hides the Projects, Milestone, Development and Notifications sections of the sidebar of pull requests and issues, leaving the reviewers, assignees, labels and participants.
 // @match        https://github.com/*
 // @run-at       document-start
+// @noframes
 // @grant        none
 // ==/UserScript==
 
