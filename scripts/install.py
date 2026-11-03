@@ -474,6 +474,11 @@ class Installer:
             # https://librewolf.net/docs/faq/#why-is-librewolf-marked-as-broken
             if not self.args.apply or Path('/Applications/LibreWolf.app').is_dir():
                 self.run('/usr/bin/xattr', '-dr', 'com.apple.quarantine', '/Applications/LibreWolf.app')
+            # Zen's cask leaves Finder metadata on files inside the bundle, which
+            # fails strict signature checks, so macOS reports the quarantined app
+            # as damaged. Unlike quarantine, it is not part of Gatekeeper's checks.
+            if not self.args.apply or (APPLICATIONS / 'Zen.app').is_dir():
+                self.run('/usr/bin/xattr', '-dr', 'com.apple.FinderInfo', APPLICATIONS / 'Zen.app')
             self.env['PATH'] = '/Applications/Visual Studio Code.app/Contents/Resources/app/bin:' + self.env['PATH']
         else:
             manager = 'apt-get' if self.args.profile == 'debian-server' else 'dnf'
