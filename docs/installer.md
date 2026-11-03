@@ -241,6 +241,11 @@ Violentmonkey offers to install it and later checks it for updates:
   linked or mentioning issues and pull requests, and the merge. A thread a
   human answered stays, with the comment it answers. The button shows how many items are hidden, and the
   choice is remembered.
+- `linkedin-compose.user.js` makes LinkedIn's **Start a post** dialog fill the
+  window; adds **B** and **I** buttons (and Cmd/Ctrl+B, Cmd/Ctrl+I) that toggle
+  bold or italic on the selection with Unicode letters, as posts are plain text;
+  shows attached images as a row of thumbnails at the bottom; and counts the
+  words and characters of the post against the 3,000 characters limit.
 - `linkedin-declutter.user.js` hides LinkedIn's Jobs, For Business and Premium
   upsells, the right rail and "Recommended for you" cards; widens the feed;
   moves the post composer under **Saved items**; shows post images beside the
