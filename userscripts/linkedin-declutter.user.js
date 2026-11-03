@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LinkedIn — Declutter & wide feed
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.1.0
+// @version      1.1.1
 // @description  Hides Jobs, For Business, Premium upsells, Groups/Newsletters/Events and the right rail; widens the feed; moves the composer to the left column; shows post images beside the text; removes "Show translation" on French/English posts.
 // @match        https://www.linkedin.com/*
 // @run-at       document-idle
@@ -25,6 +25,7 @@
   const SIDE = 'data-lkc-side'; // the media column of such a post
   const TEXT = 'data-lkc-text'; // main text of a feed post
   const MOVED = 'data-lkc-moved'; // composer / feed sort moved to the left column
+  const TEXT_BOX = '[data-testid="expandable-text-box"]'; // LinkedIn's post / comment text
   // Post images/videos are shrunk to 1/8 of the post width, but never below 100px.
   const MEDIA_MAX_WIDTH = 'max(12.5%, 100px)';
   // Smaller images are avatars, logos or reactions and are left alone.
@@ -226,8 +227,13 @@
   /** Put the first media of a post in a right-hand column, next to the text. */
   function sideBySide(box) {
     // The post body is the box holding the (visually hidden) "Feed post" <h2>; collages nest deeper
-    const post = box.parentElement && box.parentElement.closest(':has(> h2)');
-    if (!post || post.hasAttribute(POST) || !post.closest('[role="listitem"]')) return;
+    let post = box.parentElement && box.parentElement.closest(':has(> h2)');
+    if (!post || !post.closest('[role="listitem"]')) return;
+    // Quote repost: the media belongs to the quoted post (a card with its own text, no <h2>).
+    // Lay out that card instead of pushing the whole of it beside the reposter's text.
+    const quoted = box.parentElement.closest(`:has(${TEXT_BOX})`);
+    if (quoted && post.contains(quoted) && quoted !== post && !box.contains(quoted.querySelector(TEXT_BOX))) post = quoted;
+    if (post.hasAttribute(POST)) return;
     let item = box;
     while (item.parentElement !== post) item = item.parentElement;
     const others = [...post.children].filter((c) => c !== item);
@@ -296,20 +302,26 @@
 
   /** Mark the main text of every post (not comment texts) and give it an expand button. */
   function postTexts(col) {
-    for (const text of col.querySelectorAll('[data-testid="expandable-text-box"]')) {
+    const posts = new Set();
+    for (const text of col.querySelectorAll(TEXT_BOX)) {
+      const post = text.closest(':has(> h2)');
+      if (!post) continue;
       if (!text.hasAttribute(TEXT)) {
-        const post = text.closest(':has(> h2)');
-        // Comments live in the same post body, after the post text: only the first text box counts
-        if (!post || post.querySelector('[data-testid="expandable-text-box"]') !== text) continue;
+        // Comments live in the same post body, after the post text: only the first text box counts,
+        // plus the one of a quoted post laid out beside its image
+        const card = text.closest(`[${POST}]`);
+        const first = (el) => el && el.querySelector(TEXT_BOX) === text;
+        if (!first(post) && !(card && post.contains(card) && first(card))) continue;
         text.setAttribute(TEXT, '');
       }
-      const post = text.closest(':has(> h2)');
-      if (post) expandButton(post, text);
+      posts.add(post);
     }
+    for (const post of posts) expandButton(post);
   }
 
-  /** Expand/collapse toggle next to "Send", shown only when the text is actually cut. */
-  function expandButton(post, text) {
+  /** Expand/collapse toggle next to "Send", shown only when a text of the post is actually cut. */
+  function expandButton(post) {
+    const texts = () => [...post.querySelectorAll(`[${TEXT}]`)]; // LinkedIn may re-render them
     let btn = post.querySelector('.lkc-expand');
     if (!btn) {
       const send = [...post.querySelectorAll('[aria-label="Send"]')].find((el) => !el.closest(`[${SIDE}]`));
@@ -333,17 +345,17 @@
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const t = post.querySelector(`[${TEXT}]`); // LinkedIn may have re-rendered the text since
-        if (!t) return;
-        const open = !t.hasAttribute('data-lkc-expanded');
-        t.toggleAttribute('data-lkc-expanded', open);
+        const all = texts();
+        if (!all.length) return;
+        const open = !all[0].hasAttribute('data-lkc-expanded');
+        for (const t of all) t.toggleAttribute('data-lkc-expanded', open);
         label(open);
       });
       btn.appendChild(inner);
       label(false);
       send.after(btn);
     }
-    btn.hidden = !text.hasAttribute('data-lkc-expanded') && text.scrollHeight <= text.clientHeight + 1;
+    btn.hidden = !texts().some((t) => t.hasAttribute('data-lkc-expanded') || t.scrollHeight > t.clientHeight + 1);
   }
 
   // ---------- Fresh feed ----------
