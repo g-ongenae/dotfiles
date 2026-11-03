@@ -252,9 +252,13 @@ Violentmonkey offers to install it and later checks it for updates:
   shows attached images as a row of thumbnails at the bottom; and counts the
   words and characters of the post against the 3,000 characters limit.
 - `linkedin-declutter.user.js` hides LinkedIn's Jobs, For Business and Premium
-  upsells, the right rail and "Recommended for you" cards; widens the feed;
-  moves the post composer under **Saved items**; shows post images beside the
-  text with an expand button; pauses off-screen videos; and, since LinkedIn
+  upsells, the footer links, the ad library card of company pages, the right
+  rail and "Recommended for you" cards; widens the feed and single posts, and
+  lays out the posts of company and profile pages like the feed; moves the post composer under **Saved
+  items**; shows post images beside the text with an expand button; adds panel
+  buttons at the page edges that fold away the left column of the feed and the
+  side column of company and profile pages (**People also viewed**, …; folded
+  by default), remembering their state; pauses off-screen videos; and, since LinkedIn
   keeps every loaded post in memory, stops the feed after 50 posts with a
   **Load a fresh feed** button (`FRESH_FEED_AFTER` at the top of the script).
 - `slack-declutter.user.js` hides Slack's **Find a conversation** filter, the

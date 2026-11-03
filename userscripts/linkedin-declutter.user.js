@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         LinkedIn — Declutter & wide feed
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.1.1
-// @description  Hides Jobs, For Business, Premium upsells, Groups/Newsletters/Events and the right rail; widens the feed; moves the composer to the left column; shows post images beside the text; removes "Show translation" on French/English posts.
+// @version      1.4.0
+// @description  Hides Jobs, For Business, Premium upsells, Groups/Newsletters/Events, the footer and the right rail; widens the feed and single posts and lays out the posts of company and profile pages like the feed; moves the composer to the left column; shows post images beside the text; adds panel buttons folding the left column of the feed and the side column of company and profile pages (folded by default); removes "Show translation" on French/English posts.
 // @match        https://www.linkedin.com/*
 // @run-at       document-idle
 // @grant        none
@@ -18,6 +18,11 @@
   // LinkedIn keeps every post it has loaded in memory (gigabytes after a long scroll) and only a
   // reload frees it. After this many posts the feed stops and offers a fresh one. 0 disables.
   const FRESH_FEED_AFTER = 50;
+  // Fold columns on first visit: the left one of the feed and single posts (profile, composer), the
+  // right one of company and profile pages ("People also viewed", …). Afterwards, a panel button at
+  // the page edge toggles them and the last state is remembered.
+  const FOLD_LEFT_BY_DEFAULT = false;
+  const FOLD_SIDE_BY_DEFAULT = true;
 
   const HIDE = 'data-lkc-hide';
   const MEDIA = 'data-lkc-media';
@@ -32,6 +37,21 @@
   const MEDIA_THRESHOLD_PX = 250;
   // Padding/borders a media wrapper may add around the image itself.
   const MEDIA_SLACK_PX = 40;
+  // The top bar is about 52px tall; with the sticky header of a company or profile page under it
+  // the pair is much taller
+  const TOP_BAR_MAX_PX = 100;
+  const FOLD = 'data-lkc-fold'; // a foldable column: "left" or "side"
+  const FOLD_ROW = 'data-lkc-fold-row'; // the row holding the side column, re-laid out while it is folded
+  const FOLDS = {
+    left: { label: 'left column', byDefault: FOLD_LEFT_BY_DEFAULT },
+    side: { label: 'side column', byDefault: FOLD_SIDE_BY_DEFAULT },
+  };
+  for (const [name, fold] of Object.entries(FOLDS)) {
+    fold.key = `lkc-${name}-folded`;
+    fold.attr = `data-lkc-${name}-folded`; // on <html>
+    const stored = localStorage.getItem(fold.key);
+    fold.folded = stored === null ? fold.byDefault : stored === '1';
+  }
 
   // ---------- Styles ----------
   const style = document.createElement('style');
@@ -58,6 +78,28 @@
       font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
     }
     .lkc-fresh:hover { background: rgba(0, 0, 0, 0.04); }
+    /* Folded columns disappear and the others take their room; only the panel button stays */
+    html[${FOLDS.left.attr}] [${FOLD}="left"], html[${FOLDS.side.attr}] [${FOLD}="side"] { display: none !important; }
+    html[${FOLDS.left.attr}] [data-lkc-layout="grid"] { --lkc-cols: minmax(0, 1fr) !important; --lkc-center-col: 1 !important; }
+    /* A row left with a single column (side column folded, or emptied by hiding its only card) */
+    html[${FOLDS.side.attr}] [${FOLD_ROW}], [data-lkc-solo] {
+      grid-template-columns: minmax(0, 1fr) !important; grid-template-areas: none !important;
+    }
+    html[${FOLDS.side.attr}] [${FOLD_ROW}] > :not([${FOLD}]), [data-lkc-solo] > * {
+      grid-area: auto !important; grid-column: 1 / -1 !important; flex: 1 1 auto !important; max-width: none !important;
+    }
+    .lkc-fold {
+      /* At the page edges, in the top bar */
+      position: fixed; z-index: 10000; top: max(4px, calc((var(--lkc-bar, 52px) - 32px) / 2));
+      display: flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; padding: 0; border: none; border-radius: 8px;
+      background: transparent; color: rgba(0, 0, 0, 0.6); cursor: pointer;
+    }
+    .lkc-fold:hover { background: rgba(0, 0, 0, 0.08); color: rgba(0, 0, 0, 0.9); }
+    .lkc-fold[hidden] { display: none !important; }
+    .lkc-fold svg { width: 20px; height: 20px; }
+    #lkc-fold-left { left: 8px; }
+    #lkc-fold-side { right: 8px; }
     .lkc-fresh small { display: block; margin-top: 4px; font-size: 13px; font-weight: 400; opacity: 0.7; }
     /* Skip rendering posts far off-screen; the auto keyword remembers their last real height */
     [data-testid="mainFeed"] [role="listitem"]:not([role="listitem"] [role="listitem"]) {
@@ -136,6 +178,10 @@
     jobs: /^Jobs$/i,
     business: /^For Business$/i,
     premium: /^(Retry|Try|Reactivate)\b.{0,20}\bfor\b/i,
+    // Upsell cards of the left column of a post and of company pages ("The latest hiring trends")
+    upsell: /^Limited offer\b|^Redeem now$|^Restart Premium\b/i,
+    adLibrary: /^View ad library\b/i,
+    side: /^(People also (viewed|follow)|Pages people also viewed|(Other )?similar pages|Affiliated pages|More profiles for you|People you may know|You might like|Explore Premium profiles|Who your viewers also viewed|Pages for you)$/i,
     recommended: /^Recommended for you$/i,
     messaging: /^Messaging$/i,
     translation: /^(Show|See) translation$|^(Voir|Afficher) la traduction$/i,
@@ -205,6 +251,14 @@
   }
 
   // ---------- Media ----------
+  /** A post body: in a feed list, or headed by its own visually hidden "Feed post" heading (single
+   *  posts, posts of a company or profile page). Not a page section with a visible <h2>. */
+  function isPostBody(el) {
+    if (el.closest('[role="listitem"]')) return true;
+    const h2 = el.querySelector(':scope > h2');
+    return !!h2 && h2.getBoundingClientRect().height < 2;
+  }
+
   /** Mark the outermost box wrapping each post image/video; CSS caps its width (aspect-ratio children follow). */
   function markMedia(col) {
     for (const m of col.querySelectorAll('img, video')) {
@@ -228,7 +282,7 @@
   function sideBySide(box) {
     // The post body is the box holding the (visually hidden) "Feed post" <h2>; collages nest deeper
     let post = box.parentElement && box.parentElement.closest(':has(> h2)');
-    if (!post || !post.closest('[role="listitem"]')) return;
+    if (!post || !isPostBody(post)) return;
     // Quote repost: the media belongs to the quoted post (a card with its own text, no <h2>).
     // Lay out that card instead of pushing the whole of it beside the reposter's text.
     const quoted = box.parentElement.closest(`:has(${TEXT_BOX})`);
@@ -281,10 +335,13 @@
     }
   }
 
-  // Line icons on a 20px grid like LinkedIn's: ↨ (expand) and ↥ (collapse)
+  // Line icons on a 20px grid like LinkedIn's: ↨ (expand), ↥ (collapse) and panels with their left / right column
+  const PANEL = 'M4 3h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z';
   const ICONS = {
     expand: 'M10 2v13M6 6l4-4 4 4M6 11l4 4 4-4M5 18h10',
     collapse: 'M10 15V3M6 7l4-4 4 4M5 18h10',
+    left: `${PANEL}M7.5 3v14`,
+    side: `${PANEL}M12.5 3v14`,
   };
   const SVG_NS = 'http://www.w3.org/2000/svg';
   function icon(name) {
@@ -305,7 +362,7 @@
     const posts = new Set();
     for (const text of col.querySelectorAll(TEXT_BOX)) {
       const post = text.closest(':has(> h2)');
-      if (!post) continue;
+      if (!post || !isPostBody(post)) continue;
       if (!text.hasAttribute(TEXT)) {
         // Comments live in the same post body, after the post text: only the first text box counts,
         // plus the one of a quoted post laid out beside its image
@@ -356,6 +413,100 @@
       send.after(btn);
     }
     btn.hidden = !texts().some((t) => t.hasAttribute('data-lkc-expanded') || t.scrollHeight > t.clientHeight + 1);
+  }
+
+  // ---------- Cards, footer, side column ----------
+  /** The card (rounded box with a background) around `el`, unless it holds the page title or a post. */
+  function cardOf(el) {
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      const r = p.getBoundingClientRect();
+      if (r.width < 200 || r.height < 60) continue; // buttons and labels
+      const cs = getComputedStyle(p);
+      const bg = cs.backgroundColor;
+      if (!parseFloat(cs.borderTopLeftRadius) || bg === 'transparent' || bg === 'rgba(0, 0, 0, 0)') continue;
+      return p.querySelector(`h1, ${TEXT_BOX}, [role="listitem"]`) ? null : p;
+    }
+    return null;
+  }
+
+  /** Hide the column `card` was alone in, and let the rest of its row take the room. */
+  function hideEmptyColumn(card) {
+    const shown = (c) => !c.hasAttribute(HIDE) && c.getBoundingClientRect().height > 0;
+    let col = card;
+    for (let p = card.parentElement; p && p !== document.body; p = p.parentElement) {
+      if ([...p.children].some(shown)) {
+        if (col === card || col.querySelector(`h1, ${TEXT_BOX}`)) return;
+        hide(col, 'empty');
+        p.setAttribute('data-lkc-solo', '');
+        return;
+      }
+      col = p;
+    }
+  }
+
+  /** The block of links ending with the copyright line. */
+  function footerOf(el) {
+    const footer = el.closest('footer');
+    if (footer) return footer;
+    let box = el;
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      if (p.querySelector(`h1, h2, ${TEXT_BOX}, [role="listitem"]`) || p.textContent.length > 1500) break;
+      box = p;
+    }
+    return box === el ? null : box;
+  }
+
+  /** The right-hand column holding `el`: the widest box around it still narrower than a column. */
+  function sideColumnOf(el) {
+    const vw = window.innerWidth;
+    let col = null;
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      const r = p.getBoundingClientRect();
+      if (r.width > vw * 0.4) break;
+      if (r.width) col = p;
+    }
+    if (!col || col.getBoundingClientRect().left < vw / 2) return null;
+    return col.querySelector(`h1, ${TEXT_BOX}`) ? null : col;
+  }
+
+  function applyFold(name) {
+    const fold = FOLDS[name];
+    document.documentElement.toggleAttribute(fold.attr, fold.folded);
+    const btn = document.getElementById(`lkc-fold-${name}`);
+    if (!btn) return;
+    btn.title = `${fold.folded ? 'Show' : 'Hide'} the ${fold.label}`;
+    btn.setAttribute('aria-label', btn.title);
+    btn.setAttribute('aria-expanded', String(!fold.folded));
+  }
+
+  /** Make `col` the foldable column `name` (none on this page when null), with its panel button. */
+  function foldColumn(name, col) {
+    for (const el of document.querySelectorAll(`[${FOLD}="${name}"]`)) if (el !== col) el.removeAttribute(FOLD);
+    for (const el of document.querySelectorAll(`[${FOLD_ROW}="${name}"]`)) {
+      if (!col || el !== col.parentElement) el.removeAttribute(FOLD_ROW);
+    }
+    let btn = document.getElementById(`lkc-fold-${name}`);
+    if (!btn && col) {
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = `lkc-fold-${name}`;
+      btn.className = 'lkc-fold';
+      btn.appendChild(icon(name));
+      btn.addEventListener('click', () => {
+        FOLDS[name].folded = !FOLDS[name].folded;
+        localStorage.setItem(FOLDS[name].key, FOLDS[name].folded ? '1' : '0');
+        applyFold(name);
+        schedule(); // fitText: the post text column got wider or narrower
+      });
+      document.body.appendChild(btn);
+      applyFold(name);
+    }
+    if (btn && btn.hidden !== !col) btn.hidden = !col;
+    if (!col) return;
+    if (col.getAttribute(FOLD) !== name) col.setAttribute(FOLD, name);
+    // The feed grid is already ours (see widen); elsewhere, let the rest of the row take the room
+    const row = col.parentElement;
+    if (name === 'side' && row && row.getAttribute(FOLD_ROW) !== name) row.setAttribute(FOLD_ROW, name);
   }
 
   // ---------- Fresh feed ----------
@@ -459,14 +610,19 @@
   function widen(grid, centerCol, leftCol) {
     if (grid.hasAttribute('data-lkc-layout') || window.innerWidth < 992) return;
     const isGrid = getComputedStyle(grid).display.includes('grid');
-    const left = leftCol && leftCol.parentElement === grid ? leftCol : null;
+    // Without "Saved items" (single post), the left column is whatever sits left of the center one
+    const cLeft = centerCol.getBoundingClientRect().left;
+    const left = leftCol && leftCol.parentElement === grid ? leftCol : [...grid.children].find((c) => {
+      const r = c.getBoundingClientRect();
+      return c !== centerCol && !c.hasAttribute(HIDE) && r.width > 0 && r.right <= cLeft + 1;
+    }) || null;
     if (isGrid) {
       const lw = left ? Math.round(left.getBoundingClientRect().width) : 0;
       if (left && !lw) return; // not laid out yet, retry on next pass
       grid.style.setProperty('--lkc-cols', left ? `${lw}px minmax(0, 1fr)` : 'minmax(0, 1fr)');
       grid.style.setProperty('--lkc-center-col', left ? '2' : '1');
-      if (left) left.setAttribute('data-lkc-col', 'left');
     }
+    if (left) left.setAttribute('data-lkc-col', 'left');
     centerCol.setAttribute('data-lkc-col', 'center');
     grid.setAttribute('data-lkc-layout', isGrid ? 'grid' : 'flex');
   }
@@ -482,26 +638,47 @@
   }
 
   // ---------- Main pass ----------
+  // A single post (/posts/… or /feed/update/…): laid out like the feed
+  const onPostPage = () => /^\/(posts|feed\/update)\//.test(location.pathname);
+
+  /** The top bar: the widest bar-shaped box around "Me", so the sticky header of a company or
+   *  profile page sliding under it (with its own "Home" and "Jobs" tabs) is never mistaken for it. */
+  function topBar(me) {
+    const nav = document.getElementById('global-nav');
+    if (nav) return nav;
+    if (!me) return null;
+    let bar = me;
+    for (let p = me.parentElement; p && p !== document.body; p = p.parentElement) {
+      if (p.getBoundingClientRect().height > TOP_BAR_MAX_PX) break;
+      bar = p;
+    }
+    return bar;
+  }
+
   function run() {
     const f = scanText();
-    const onFeed = location.pathname.startsWith('/feed');
+    const path = location.pathname;
+    const onPost = onPostPage();
+    const onFeed = path.startsWith('/feed') && !onPost;
+    const wide = onFeed || onPost; // right rail hidden, center column widened
+    const onPage = /^\/(company|in|school|showcase)\//.test(path);
 
     const startPost = [document.getElementById('shareboxProfilePictureComponentRef'), ...f.startPost]
       .find((el) => el && !el.closest(`[${MOVED}]`));
     const center = startPost
       || (composerHome && composerHome.isConnected ? composerHome : null)
-      || document.querySelector('main [data-urn*="activity"], main [data-id*="activity"]');
+      || document.querySelector('main [data-urn*="activity"], main [data-id*="activity"]')
+      || (onPost ? document.querySelector(TEXT_BOX) : null);
     const rightAnchor = f.puzzles[0] || f.addFeed[0] || f.copyright[0];
     const saved = document.querySelector('a[href*="/my-items"]');
     const centerCol = center && blockOf(center, rightAnchor || saved);
 
     // Top navigation: Jobs, For Business, Premium
-    const inTopBar = (el) => {
-      if (centerCol && centerCol.contains(el)) return false;
-      if (el.closest('header, #global-nav')) return true;
+    const bar = topBar(f.me.find((el) => {
       const r = el.getBoundingClientRect();
       return r.height > 0 && r.bottom < 120;
-    };
+    }));
+    const inTopBar = (el) => !!bar && bar.contains(el);
     const me = f.me.find(inTopBar);
     const home = f.home.find(inTopBar);
     // Climb to the whole nav entry: up to the block next to "Me"/"Home", else the nearest link/button
@@ -521,7 +698,7 @@
         for (let s = item && item.nextElementSibling; s; s = s.nextElementSibling) {
           const r = s.getBoundingClientRect();
           // Closed dropdowns have no size and open ones overflow the bar: leave them alone
-          if (r.height > 0 && r.bottom < 120 && r.left >= meRight - 1) hide(s);
+          if (r.height > 0 && r.bottom < 120 && r.left >= meRight - 1 && bar.contains(s)) hide(s);
         }
       };
       hideRight(me.closest('li'));
@@ -545,20 +722,71 @@
       }
     }
 
-    // Right rail + wider feed (feed page only)
-    if (onFeed && rightAnchor && center) {
+    // Upsell cards: "Limited offer" beside a post, "The latest hiring trends" on company pages
+    for (const el of f.upsell) {
+      if (inTopBar(el) || el.closest(`[${HIDE}]`)) continue;
+      const card = cardOf(el);
+      if (card) hide(card, 'upsell');
+    }
+
+    // "See a collection of ads by …" on company pages, and the column it leaves empty
+    for (const el of f.adLibrary) {
+      if (el.closest(`[${HIDE}]`)) continue;
+      const card = cardOf(el);
+      if (card) {
+        hide(card, 'ads');
+        hideEmptyColumn(card);
+      }
+    }
+
+    // Footer links, in the right rail or at the bottom of company and profile pages
+    for (const el of f.copyright) {
+      const footer = !el.closest(`[${HIDE}]`) && footerOf(el);
+      if (footer) hide(footer, 'footer');
+    }
+
+    // Side column of company and profile pages. Once folded it has no size: keep the one found.
+    let sideCol = null;
+    if (onPage) {
+      sideCol = document.querySelector(`[${FOLD}="side"]`);
+      for (const h of f.side) if (!sideCol) sideCol = sideColumnOf(h);
+    }
+    foldColumn('side', sideCol);
+
+    // Right rail + wider center column (feed and single posts)
+    if (wide && rightAnchor && center) {
       const rightCol = blockOf(rightAnchor, center);
       const cCol = blockOf(center, rightAnchor);
       if (rightCol && cCol && rightCol.parentElement === cCol.parentElement) {
         hide(rightCol, 'rail');
         widen(rightCol.parentElement, cCol, leftCol);
       }
-    } else if (!onFeed) {
+    } else if (!wide) {
       undoFeedLayout();
     }
 
+    foldColumn('left', wide ? document.querySelector('[data-lkc-col="left"]') : null);
+    if (bar) {
+      // Fold buttons sit right under the top bar, or at the top once it scrolled away
+      const bottom = `${Math.max(0, Math.round(bar.getBoundingClientRect().bottom))}px`;
+      const root = document.documentElement.style;
+      if (root.getPropertyValue('--lkc-bar') !== bottom) root.setProperty('--lkc-bar', bottom);
+    }
+
     if (onFeed) freshFeedButton();
-    if (centerCol) {
+    if (onPage) {
+      // Posts of a company or profile page, laid out like the feed. Only inside posts: the cover
+      // image and the rest of the page are left alone.
+      const root = document.querySelector('main') || document.body;
+      const posts = new Set();
+      for (const text of root.querySelectorAll(TEXT_BOX)) {
+        const post = text.closest(':has(> h2)');
+        if (post && isPostBody(post)) posts.add(post);
+      }
+      for (const post of posts) markMedia(post);
+      postTexts(root);
+      for (const post of root.querySelectorAll(`[${POST}]`)) fitText(post);
+    } else if (centerCol) {
       markMedia(centerCol);
       postTexts(centerCol);
       for (const post of centerCol.querySelectorAll(`[${POST}]`)) fitText(post);
