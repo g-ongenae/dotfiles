@@ -230,6 +230,11 @@ Violentmonkey offers to install it and later checks it for updates:
   **Huddles**, **Later** and **Directories** entries of the sidebar, and the
   **Help** button of the top bar, closing the gaps they leave; it also folds
   image and file previews in messages down to their file name.
+- `twitch-home-following.user.js` replaces the Twitch home page (featured
+  carousel, recommended streams and categories) with the channels you follow:
+  live ones as stream cards, busiest first, the others as avatars, most
+  recently live first. It also hides the top bar's More options, Prime offers,
+  Bits and Turbo buttons.
 - `youtube-fold-related.user.js` folds the right column of a YouTube video
   (filter chips and related videos) so the video takes its space; a small
   round button on the right edge unfolds it, and the last state is remembered.
