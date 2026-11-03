@@ -2,7 +2,7 @@
 // @name         LinkedIn — Declutter & wide feed
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.4.7
+// @version      1.4.8
 // @description  Hides Jobs, For Business, Premium upsells, Groups/Newsletters/Events, the footer and the right rail; widens the feed and single posts and lays out the posts of company and profile pages like the feed; moves the composer to the left column; shows post images beside the text; adds panel buttons folding the left column of the feed and the side column of company and profile pages (folded by default); removes "Show translation" on French/English posts.
 // @match        https://www.linkedin.com/*
 // @run-at       document-idle
@@ -110,7 +110,8 @@
       content-visibility: auto;
       contain-intrinsic-size: auto 600px;
     }
-    [${MEDIA}]:not(:is(dialog, [role="dialog"], [aria-modal="true"]) *) { max-width: ${MEDIA_MAX_WIDTH} !important; }
+    /* :where adds no weight, so [${SIDE}] below still lifts the cap */
+    [${MEDIA}]:not(:where(dialog, [role="dialog"], [aria-modal="true"]) *) { max-width: ${MEDIA_MAX_WIDTH} !important; }
     [${MEDIA}] img, [${MEDIA}] video { max-width: 100% !important; }
     @media (min-width: 992px) {
       [${POST}] {
