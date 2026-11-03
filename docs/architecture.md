@@ -26,6 +26,7 @@ profiles/
     npm-packages.yaml
     vscode-extension.yaml
     browser-extensions.yaml
+    unduck-backup.json       # Unduck bangs, imported into each browser
   macos/
     Brewfile
   fedora/

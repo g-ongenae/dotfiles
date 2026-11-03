@@ -2,6 +2,7 @@
 """Profile installer. Standard library only; dry runs never write or use the network."""
 import argparse
 import ast
+import base64
 # Brew may upgrade and clean up this very interpreter mid-run, so preload the
 # modules that hostname lookups and tarfile.open would otherwise import lazily.
 import bz2  # noqa: F401
@@ -15,6 +16,7 @@ import lzma  # noqa: F401
 import os
 from pathlib import Path
 import platform
+import plistlib
 import re
 import shlex
 import shutil
@@ -28,9 +30,37 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 PROFILES = ('macos', 'fedora', 'debian-server')
 STEPS = ('packages', 'shell', 'extensions', 'browsers')
-FIREFOX_APP = Path('/Applications/Firefox.app')
+APPLICATIONS = Path('/Applications')
+FIREFOX_APP = APPLICATIONS / 'Firefox.app'
 # Raw GitHub URLs ending in .user.js open Violentmonkey's install dialog.
 USERSCRIPTS_URL = 'https://raw.githubusercontent.com/g-ongenae/dotfiles/main/userscripts/'
+UNDUCK_URL = 'https://g-ongenae.github.io/unduck/'
+# Added through each Firefox-family browser's SearchEngines policy (Firefox 139+).
+UNDUCK_ENGINE = {
+    'Name': 'Unduck',
+    'URLTemplate': UNDUCK_URL + '?q={searchTerms}',
+    'Method': 'GET',
+    'IconURL': UNDUCK_URL + 'search.png',
+    'Description': 'Fast, local-first search with DuckDuckGo bangs.',
+}
+# macOS browsers read policies from user defaults in their bundle's domain, which
+# leaves the signed app bundles untouched: Gatekeeper reports a quarantined app
+# with an edited bundle as damaged. Firefox-family browsers combine them with a
+# bundled policies.json (LibreWolf ships one); Chromium browsers apply them as
+# recommended policies, which users can still change.
+MACOS_FIREFOX_DOMAINS = {
+    'Firefox': 'org.mozilla.firefox',
+    'LibreWolf': 'net.librewolf.librewolf',
+    'Zen': 'app.zen-browser.zen',
+}
+MACOS_CHROMIUM_DOMAINS = {
+    'Google Chrome': 'com.google.Chrome',
+    'Chromium': 'io.ungoogled-software.ungoogled-chromium',
+}
+FEDORA_FIREFOX_POLICIES = Path('/etc/firefox/policies/policies.json')
+# Fedora's own defaults, which /etc/firefox/policies replaces rather than extends.
+FEDORA_FIREFOX_DISTRIBUTION = Path('/usr/lib64/firefox/distribution/policies.json')
+FEDORA_FLATPAK_BROWSERS = ('io.gitlab.librewolf-community', 'app.zen_browser.zen')
 # An untouched copy of the previous installer's template can migrate safely.
 LEGACY_HASHES = {
     '.zshenv': 'd87ed002bb307efb306258142714c1d66e332dd1b651ca317d25eafb42dddb5f',
@@ -104,6 +134,28 @@ def extract_binary(path, name):
     raise ValueError(f'Expected exactly one {name} binary in {path.name}')
 
 
+def with_unduck(text):
+    """Add Unduck to a Firefox policies.json and make it the default, keeping other policies."""
+    data = json.loads(text) if text.strip() else {}
+    engines = data.setdefault('policies', {}).setdefault('SearchEngines', {})
+    engines['Add'] = [e for e in engines.get('Add', []) if e.get('Name') != UNDUCK_ENGINE['Name']] + [UNDUCK_ENGINE]
+    engines['Default'] = UNDUCK_ENGINE['Name']
+    return json.dumps(data, indent=4, ensure_ascii=False) + '\n'
+
+
+def plist_value(value):
+    """A value as the XML fragment `defaults write` accepts."""
+    document = plistlib.dumps(value).decode()
+    return document[document.index('<plist version="1.0">') + 21:document.rindex('</plist>')].strip()
+
+
+def unduck_backup():
+    """The bangs backup, compacted, and the Unduck link that imports it in a browser."""
+    data = json.dumps(json.loads((ROOT / 'profiles/common/unduck-backup.json').read_text()),
+                      separators=(',', ':'), ensure_ascii=False).encode()
+    return data, UNDUCK_URL + '?page=settings#import=' + base64.urlsafe_b64encode(data).decode().rstrip('=')
+
+
 def migrate_startup(filename, text):
     if hashlib.sha256(text.encode()).hexdigest() == LEGACY_HASHES.get(filename):
         return ''
@@ -141,6 +193,14 @@ class Installer:
 
     def sudo(self, *argv):
         return self.run('sudo', *argv)
+
+    def launch(self, *argv):
+        """Start a GUI program in the background; Linux browsers otherwise block until closed."""
+        argv = [str(x) for x in argv]
+        print('+ ' + shlex.join(argv) + ' &', flush=True)
+        if self.args.apply:
+            subprocess.Popen(argv, env=self.env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, start_new_session=True)
 
     def write(self, path, content, executable=False):
         content = content.encode() if isinstance(content, str) else content
@@ -548,9 +608,16 @@ class Installer:
             text += ''.join(f'<li><a href="https://chromewebstore.google.com/detail/{identifier}">{label}</a></li>' for identifier, label in zip(config['chromium'], ('github-mermaid-jsdoc-viewer', 'pr-review-collector'))) + '</ul>'
         if self.args.profile == 'fedora':
             text += '<p>Open Switchyard after installation to configure routing and select it as your default browser.</p>'
+        text += '<h1>Unduck</h1><p>The browsers step makes <a href="https://github.com/g-ongenae/unduck">Unduck</a> the default search engine'
+        if self.args.profile == 'fedora':
+            text += ' of Firefox. In the LibreWolf and Zen Flatpaks, open Unduck, right-click the address bar, choose <b>Add “Unduck”</b>, then select it as the default search engine in the settings.'
+        else:
+            text += ' of every browser.'
+        text += f' It also opens this link in each browser when the bangs backup changes; open it again to restore your bangs there: <a href="{html.escape(unduck_backup()[1])}">Import Unduck bangs</a></p>'
         self.write(self.config / 'browser-extensions.html', text + '\n')
         if self.args.profile == 'macos':
             self.firefox_autoconfig(config.get('macos-firefox-autoconfig', []))
+        self.unduck()
         # Generate, do not deploy system/browser policies to unknown profile paths.
         if self.args.firefox_policy:
             policy = self.config / 'firefox-policies.json'
@@ -561,6 +628,55 @@ class Installer:
                     addon = json.loads(fetch(f'https://addons.mozilla.org/api/v5/addons/addon/{slug}/'))
                     settings[addon['guid']] = {'installation_mode': 'normal_installed', 'install_url': addon['current_version']['file']['url']}
                 self.write(policy, json.dumps({'policies': {'ExtensionSettings': settings}}, indent=2) + '\n')
+
+    def unduck(self):
+        """Make Unduck the default search engine, then import its bangs into each browser.
+
+        Unduck keeps bangs in each browser's site storage, so they are imported by
+        opening a link, and only when profiles/common/unduck-backup.json changed.
+        """
+        engine = {'Name': UNDUCK_ENGINE['Name'], 'SearchURL': UNDUCK_ENGINE['URLTemplate'], 'IconURL': UNDUCK_ENGINE['IconURL']}
+        browsers = []
+        if self.args.profile == 'macos':
+            search_engines = plist_value({'Add': [UNDUCK_ENGINE], 'Default': UNDUCK_ENGINE['Name']})
+            for name, domain in MACOS_FIREFOX_DOMAINS.items():
+                app = APPLICATIONS / f'{name}.app'
+                if self.args.apply and not app.is_dir():
+                    continue
+                browsers.append(app)
+                self.run('defaults', 'write', domain, 'EnterprisePoliciesEnabled', '-bool', 'true')
+                self.run('defaults', 'write', domain, 'SearchEngines', search_engines)
+            for name, domain in MACOS_CHROMIUM_DOMAINS.items():
+                app = APPLICATIONS / f'{name}.app'
+                if self.args.apply and not app.is_dir():
+                    continue
+                browsers.append(app)
+                self.run('defaults', 'write', domain, 'DefaultSearchProviderEnabled', '-bool', 'true')
+                for key, value in engine.items():
+                    self.run('defaults', 'write', domain, 'DefaultSearchProvider' + key, '-string', value)
+        else:
+            current = FEDORA_FIREFOX_POLICIES if FEDORA_FIREFOX_POLICIES.is_file() else FEDORA_FIREFOX_DISTRIBUTION
+            staged = self.data / 'firefox-search-policies.json'
+            self.write(staged, with_unduck(current.read_text() if current.is_file() else ''))
+            self.sudo('install', '-D', '-m', '644', staged, FEDORA_FIREFOX_POLICIES)
+        data, link = unduck_backup()
+        digest = hashlib.sha256(data).hexdigest()
+        stamp = self.data / 'unduck-backup.sha256'
+        if stamp.is_file() and stamp.read_text().strip() == digest:
+            print('Skip Unduck bang import: the backup has not changed since it was last opened')
+            return
+        try:
+            if self.args.profile == 'macos':
+                for app in browsers:
+                    self.run('open', '-a', app, link)
+            else:
+                self.launch('firefox', link)
+                for app in FEDORA_FLATPAK_BROWSERS:
+                    self.launch('flatpak', 'run', app, link)
+        except (OSError, subprocess.CalledProcessError) as error:
+            self.failures.append(f'Cannot open the Unduck bang import ({error}); open it from the browser setup page')
+            return
+        self.write(stamp, digest + '\n')
 
     def firefox_autoconfig(self, repos):
         """Run each repository's autoconfig/install.sh against Firefox.app.
