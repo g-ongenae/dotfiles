@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         GitHub — Hide the Agents tab
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.1.1
-// @description  Hides the "Agents" tab of the repository navigation bar, and its entry in the overflow menu shown on narrow windows.
+// @version      1.2.1
+// @description  Hides the "Agents" tab of the repository navigation bar, its entry in the overflow menu shown on narrow windows, and the Copilot button (and its dropdown) of the page header.
 // @match        https://github.com/*
 // @run-at       document-start
 // @grant        none
@@ -25,6 +25,15 @@
   // rule, and without nested :has() (invalid CSS), so a parse failure can't unhide the tab
   const MORE = `nav[aria-label="Repository"]:not(:has(> ul > li[aria-hidden="true"] > a:not(${TAB})))
     > div:has(> [data-component="overflow-menu-button"])`;
+  // The Copilot button of the page header, next to the search bar, and its dropdown arrow. The
+  // dropdown is labelled, but the button itself isn't (its tooltip names it), so it is matched by
+  // its Copilot icon, in its own rule so a browser without :has() still hides the dropdown
+  const COPILOT = [
+    '.AppHeader-CopilotChat',
+    '#copilot-chat-header-button',
+    'header :is(button, a)[aria-label*="Copilot"]',
+  ].join(', ');
+  const COPILOT_ICON = 'header :is(button, a):has(svg.octicon-copilot)';
 
   // ---------- Styles ----------
   // Injected at document-start so the tab never flashes
@@ -32,6 +41,8 @@
   style.textContent = `
     ${HIDDEN} { display: none !important; }
     ${MORE} { display: none !important; }
+    ${COPILOT} { display: none !important; }
+    ${COPILOT_ICON} { display: none !important; }
   `;
   (document.head || document.documentElement).appendChild(style);
 })();

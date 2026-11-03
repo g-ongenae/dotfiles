@@ -227,7 +227,8 @@ Violentmonkey offers to install it and later checks it for updates:
   headers; a chevron button in each header unfolds it, and each state is
   remembered.
 - `github-hide-agents-tab.user.js` hides the **Agents** tab of GitHub
-  repository navigation bars, and its entry in the overflow menu.
+  repository navigation bars, its entry in the overflow menu, and the
+  **Copilot** button (and its dropdown) of the page header.
 - `github-hide-sidebar-sections.user.js` hides the **Projects**, **Milestone**,
   **Development** and **Notifications** sections of the sidebar of GitHub pull
   requests and issues.
@@ -265,6 +266,10 @@ Violentmonkey offers to install it and later checks it for updates:
   **Huddles**, **Later** and **Directories** entries of the sidebar, and the
   **Help** button of the top bar, closing the gaps they leave; it also folds
   image and file previews in messages down to their file name.
+- `slack-upload-shortcut.user.js` makes **Cmd+U** (**Ctrl+U** off macOS;
+  `MODIFIER` at the top of the script) open the file picker of the message
+  composer being typed in (or of the open conversation), like **Upload from
+  your computer** in its **+** menu.
 - `twitch-home-following.user.js` replaces the Twitch home page (featured
   carousel, recommended streams and categories) with the channels you follow:
   live ones as stream cards, busiest first, the others as avatars, most
