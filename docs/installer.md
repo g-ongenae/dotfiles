@@ -217,6 +217,11 @@ Violentmonkey offers to install it and later checks it for updates:
 
 - `github-find-active-forks.user.js` adds an **Active forks** button to GitHub
   repository headers, opening [active-forks](https://techgaun.github.io/active-forks/).
+- `github-fold-comments.user.js` adds a chevron button to the header of each
+  review, comment, review comment and description of GitHub pull requests and
+  issues; it folds it down to its header (a review with its comment and its
+  threads), and Alt-click folds or unfolds every comment of the page. Each
+  choice is remembered.
 - `github-fold-profile.user.js` folds the README (folded by default) and the
   pinned repositories on GitHub user profiles down to their headers; a chevron
   button in each header unfolds it, and each state is remembered.

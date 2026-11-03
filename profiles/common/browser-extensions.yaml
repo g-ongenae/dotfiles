@@ -21,6 +21,7 @@ macos-firefox-autoconfig:
 # Files in userscripts/, installed from GitHub through Violentmonkey.
 userscripts:
   - github-find-active-forks.user.js
+  - github-fold-comments.user.js
   - github-fold-profile.user.js
   - github-hide-agents-tab.user.js
   - github-hide-sidebar-sections.user.js
