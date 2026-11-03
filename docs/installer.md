@@ -220,6 +220,9 @@ Violentmonkey offers to install it and later checks it for updates:
 - `github-fold-profile.user.js` folds the README (folded by default) and the
   pinned repositories on GitHub user profiles down to their headers; a chevron
   button in each header unfolds it, and each state is remembered.
+- `github-hide-sidebar-sections.user.js` hides the **Projects**, **Milestone**,
+  **Development** and **Notifications** sections of the sidebar of GitHub pull
+  requests and issues.
 - `github-pr-hide-bots.user.js` adds a **Hide bots** button to the header of
   pull request conversations. It hides the comments and reviews of bots and AI
   reviewers (Copilot, CodeRabbit, Claude…, but not SonarCloud, Socket and
