@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         LinkedIn — Better post composer
 // @namespace    https://github.com/g-ongenae/dotfiles
-// @version      1.1.0
-// @description  Makes the "Start a post" dialog fill the window; adds Bold and Italic buttons (Cmd/Ctrl+B, Cmd/Ctrl+I) that restyle the selection with Unicode letters; shows attached images as a row of thumbnails at the bottom; counts words and characters against the 3,000 characters limit.
+// @version      1.2.0
+// @description  Makes the "Start a post" dialog fill the window; adds Bold and Italic buttons (Cmd/Ctrl+B, Cmd/Ctrl+I, which also work in comments) that restyle the selection with Unicode letters; shows attached images as a row of thumbnails at the bottom; counts words and characters against the 3,000 characters limit.
 // @match        https://www.linkedin.com/*
 // @run-at       document-idle
 // @grant        none
@@ -159,13 +159,13 @@
     sel.setBaseAndExtent(first.node, first.start, last.node, last.end);
   };
 
-  // Cmd/Ctrl+B and Cmd/Ctrl+I in the editor.
+  // Cmd/Ctrl+B and Cmd/Ctrl+I in the editor, and in comment boxes.
   document.addEventListener(
     'keydown',
     (e) => {
       if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
       const kind = { b: 'bold', i: 'italic' }[e.key.toLowerCase()];
-      const editor = kind && e.target instanceof Element && e.target.closest(EDITOR);
+      const editor = kind && e.target instanceof Element && e.target.closest(`${EDITOR}, [contenteditable="true"]`);
       if (!editor) return;
       e.preventDefault();
       e.stopImmediatePropagation();

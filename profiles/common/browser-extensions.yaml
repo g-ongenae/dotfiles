@@ -27,8 +27,10 @@ userscripts:
   - github-hide-sidebar-sections.user.js
   - github-notifications-hide-repos.user.js
   - github-pr-hide-bots.user.js
+  - google-meet-float-controls.user.js
   - linkedin-compose.user.js
   - linkedin-declutter.user.js
+  - linkedin-keyboard.user.js
   - slack-declutter.user.js
   - slack-upload-shortcut.user.js
   - twitch-home-following.user.js

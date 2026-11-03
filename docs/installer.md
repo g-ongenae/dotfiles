@@ -247,9 +247,16 @@ Violentmonkey offers to install it and later checks it for updates:
   linked or mentioning issues and pull requests, and the merge. A thread a
   human answered stays, with the comment it answers. The button shows how many items are hidden, and the
   choice is remembered.
+- `google-meet-float-controls.user.js` gives the video the whole height of a
+  Google Meet call: the call controls and the reactions row either float over
+  the bottom of the video, fading out when the mouse rests, or fold into a tab
+  on the left edge that opens on hover. A button left of the controls switches
+  between docked (Meet's own layout), floating and side, and the choice is
+  remembered (`DEFAULT_MODE` and `SIDE` at the top of the script).
 - `linkedin-compose.user.js` makes LinkedIn's **Start a post** dialog fill the
-  window; adds **B** and **I** buttons (and Cmd/Ctrl+B, Cmd/Ctrl+I) that toggle
-  bold or italic on the selection with Unicode letters, as posts are plain text;
+  window; adds **B** and **I** buttons (and Cmd/Ctrl+B, Cmd/Ctrl+I, which also
+  work in comments) that toggle bold or italic on the selection with Unicode
+  letters, as posts are plain text;
   shows attached images as a row of thumbnails at the bottom; and counts the
   words and characters of the post against the 3,000 characters limit.
 - `linkedin-declutter.user.js` hides LinkedIn's Jobs, For Business and Premium
@@ -262,6 +269,17 @@ Violentmonkey offers to install it and later checks it for updates:
   by default), remembering their state; pauses off-screen videos; and, since LinkedIn
   keeps every loaded post in memory, stops the feed after 50 posts with a
   **Load a fresh feed** button (`FRESH_FEED_AFTER` at the top of the script).
+- `linkedin-keyboard.user.js` drives LinkedIn from the keyboard: **j** / **k**
+  (or **↓** / **↑**) move to the next / previous post (outlined), **l** likes it
+  and holding **l** shows a reaction picker (**t y u i o p** for Like,
+  Celebrate, Support, Love, Insightful and Funny; **l** or **Esc** cancels),
+  **c** opens its comment box, **r** reposts it with your thoughts (in the
+  composer), **s** copies its link, **o** opens it, **e** expands or collapses
+  its text, **←** / **→** browse its images or document pages, **Space**
+  plays or pauses its video and **m** mutes or unmutes it; **p** starts a post, **t** / **b** go to the top / bottom
+  of the page, **h** opens the feed and **u** your profile; in a post or comment
+  being written, **Cmd+U** (**Ctrl+U** off macOS) adds an image and **Esc**
+  leaves a comment box. **?** lists the shortcuts.
 - `slack-declutter.user.js` hides Slack's **Find a conversation** filter, the
   **Huddles**, **Later** and **Directories** entries of the sidebar, and the
   **Help** button of the top bar, closing the gaps they leave; it also folds
