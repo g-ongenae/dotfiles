@@ -2,7 +2,7 @@
 // @name         LinkedIn — Declutter & wide feed
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.4.5
+// @version      1.4.7
 // @description  Hides Jobs, For Business, Premium upsells, Groups/Newsletters/Events, the footer and the right rail; widens the feed and single posts and lays out the posts of company and profile pages like the feed; moves the composer to the left column; shows post images beside the text; adds panel buttons folding the left column of the feed and the side column of company and profile pages (folded by default); removes "Show translation" on French/English posts.
 // @match        https://www.linkedin.com/*
 // @run-at       document-idle
@@ -110,7 +110,7 @@
       content-visibility: auto;
       contain-intrinsic-size: auto 600px;
     }
-    [${MEDIA}] { max-width: ${MEDIA_MAX_WIDTH} !important; }
+    [${MEDIA}]:not(:is(dialog, [role="dialog"], [aria-modal="true"]) *) { max-width: ${MEDIA_MAX_WIDTH} !important; }
     [${MEDIA}] img, [${MEDIA}] video { max-width: 100% !important; }
     @media (min-width: 992px) {
       [${POST}] {
@@ -263,12 +263,23 @@
     return !!h2 && h2.getBoundingClientRect().height < 2;
   }
 
+  /** In the image viewer or another overlay: a dialog, or a fixed box over the page. */
+  function inOverlay(el) {
+    if (el.closest('dialog, [role="dialog"], [aria-modal="true"]')) return true;
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      if (getComputedStyle(p).position === 'fixed') return true;
+    }
+    return false;
+  }
+
   /** Mark the outermost box wrapping each post image/video; CSS caps its width (aspect-ratio children follow). */
   function markMedia(col) {
     for (const m of col.querySelectorAll('img, video')) {
       if (m.closest(`[${MEDIA}]`)) continue;
       const r = m.getBoundingClientRect();
       if (r.width < MEDIA_THRESHOLD_PX) continue; // also skips lazy images not loaded yet
+      // Opening an image shows it full size in a viewer: never shrink that one
+      if (inOverlay(m)) continue;
       let box = m;
       for (let p = m.parentElement; p && p !== col; p = p.parentElement) {
         const pr = p.getBoundingClientRect();
@@ -525,13 +536,17 @@
     }
   }
 
+  /** Would hiding `el` blank the page: does it hold the top bar or the main content? */
+  const holdsPage = (el, bar) => !!el.querySelector('main') || (!!bar && el.contains(bar));
+
   /** The block of links ending with the copyright line. */
-  function footerOf(el) {
+  function footerOf(el, bar) {
     const footer = el.closest('footer');
     if (footer) return footer;
     let box = el;
     for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
-      if (p.querySelector(`h1, h2, ${TEXT_BOX}, [role="listitem"]`) || p.textContent.length > 1500) break;
+      // While LinkedIn re-renders a page it is nearly empty: never climb to the app root then
+      if (p.querySelector(`h1, h2, ${TEXT_BOX}, [role="listitem"]`) || p.textContent.length > 1500 || holdsPage(p, bar)) break;
       box = p;
     }
     return box === el ? null : box;
@@ -759,7 +774,8 @@
     const center = startPost
       || (composerHome && composerHome.isConnected ? composerHome : null)
       || document.querySelector('main [data-urn*="activity"], main [data-id*="activity"]')
-      || (onPost ? document.querySelector(TEXT_BOX) : null);
+      // (not the text of the image viewer: the "right rail" next to it would be the whole page)
+      || (onPost ? [...document.querySelectorAll(TEXT_BOX)].find((t) => !inOverlay(t)) : null);
     const rightAnchor = f.puzzles[0] || f.addFeed[0] || f.copyright[0];
     const saved = document.querySelector('a[href*="/my-items"]');
     const centerCol = center && blockOf(center, rightAnchor || saved);
@@ -769,6 +785,14 @@
       const r = el.getBoundingClientRect();
       return r.height > 0 && r.bottom < 120;
     }));
+    // Safety net: a box hidden mid re-render that turns out to hold the whole page is shown again
+    // (once hidden, "Me" has no size and `bar` is not found: any "Me" will do for the rules that climb)
+    for (const el of [document.querySelector('main'), bar, ...f.me]) {
+      const blank = el && el.closest(`[${HIDE}]`);
+      if (!blank || (el !== bar && !blank.querySelector('main') && !['rail', 'footer'].includes(blank.getAttribute(HIDE)))) continue;
+      console.warn(`[linkedin-declutter] unhid a box holding the page (hidden as "${blank.getAttribute(HIDE)}")`, blank);
+      blank.removeAttribute(HIDE);
+    }
     const inTopBar = (el) => !!bar && bar.contains(el);
     const me = f.me.find(inTopBar);
     const home = f.home.find(inTopBar);
@@ -832,7 +856,7 @@
 
     // Footer links, in the right rail or at the bottom of company and profile pages
     for (const el of f.copyright) {
-      const footer = !el.closest(`[${HIDE}]`) && footerOf(el);
+      const footer = !el.closest(`[${HIDE}]`) && footerOf(el, bar);
       if (footer) hide(footer, 'footer');
     }
 
@@ -848,7 +872,7 @@
     if (wide && rightAnchor && center) {
       const rightCol = blockOf(rightAnchor, center);
       const cCol = blockOf(center, rightAnchor);
-      if (rightCol && cCol && rightCol.parentElement === cCol.parentElement) {
+      if (rightCol && cCol && rightCol.parentElement === cCol.parentElement && !holdsPage(rightCol, bar)) {
         hide(rightCol, 'rail');
         widen(rightCol.parentElement, cCol, leftCol);
       }
