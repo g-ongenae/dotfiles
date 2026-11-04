@@ -28,6 +28,7 @@ userscripts:
   - github-notifications-hide-repos.user.js
   - github-pr-hide-bots.user.js
   - google-meet-float-controls.user.js
+  - google-slides-declutter.user.js
   - linkedin-compose.user.js
   - linkedin-declutter.user.js
   - linkedin-keyboard.user.js

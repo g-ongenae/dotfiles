@@ -258,6 +258,14 @@ Violentmonkey offers to install it and later checks it for updates:
   side, and the choice is remembered. It also hides the Gemini button at the
   bottom left (`DEFAULT_MODE`, `SIDE`, `FILL` and `HIDE_GEMINI` at the top of
   the script).
+- `google-slides-declutter.user.js` gives the slide more room in the Google
+  Slides editor: it folds away the insert rail on the right of the slide
+  (Slide, Image, Media, Uploads, Convert to video, all still in the **Insert**
+  menu) and hands its room to the slide; a chevron at the end of the toolbar,
+  like the filmstrip one, folds it (`>`) and brings it back (`<`), and the
+  choice is remembered. It also closes the
+  **Enhance this slide** AI button under the slide whenever it shows up
+  (`FOLD_RAIL_BY_DEFAULT` and `CLOSE_AI_NUDGE` at the top of the script).
 - `linkedin-compose.user.js` makes LinkedIn's **Start a post** dialog fill the
   window; adds **B**, **I** and **S** buttons (and Cmd/Ctrl+B, Cmd/Ctrl+I,
   Cmd/Ctrl+Shift+X, which also work in comments) that toggle bold, italic or
