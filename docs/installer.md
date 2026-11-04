@@ -258,6 +258,18 @@ Violentmonkey offers to install it and later checks it for updates:
   side, and the choice is remembered. It also hides the Gemini button at the
   bottom left (`DEFAULT_MODE`, `SIDE`, `FILL` and `HIDE_GEMINI` at the top of
   the script).
+- `google-meet-keyboard.user.js` drives a Google Meet call from the keyboard:
+  **c** opens the chat with the cursor in its message box (**Esc** leaves it,
+  **Cmd+Esc** closes the chat), **m** mutes or unmutes the sound of the call
+  (not your microphone, which stays on **Cmd+D**; a red badge shows while it
+  is off), **h** hides your own video (Meet's **Minimize**, closing the notice
+  that follows) or shows it again, **v** switches to the next layout (Auto,
+  Tiled, Spotlight, Sidebar, then back), **f** toggles full screen, **s** the
+  captions, **t** the translation (closing Meet's panel afterwards), **p**
+  presents your screen, **l** reacts with 👍, **r** opens Meet's emoji picker
+  with the cursor in its search, and holding **r** shows Meet's nine
+  reactions to pick with **1**–**9**. **?** lists the shortcuts, Meet's own
+  included.
 - `google-slides-declutter.user.js` gives the slide more room in the Google
   Slides editor: it folds away the insert rail on the right of the slide
   (Slide, Image, Media, Uploads, Convert to video, all still in the **Insert**
