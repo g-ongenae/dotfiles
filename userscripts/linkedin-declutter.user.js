@@ -2,7 +2,7 @@
 // @name         LinkedIn — Declutter & wide feed
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.4.8
+// @version      1.4.9
 // @description  Hides Jobs, For Business, Premium upsells, Groups/Newsletters/Events, the footer and the right rail; widens the feed and single posts and lays out the posts of company and profile pages like the feed; moves the composer to the left column; shows post images beside the text; adds panel buttons folding the left column of the feed and the side column of company and profile pages (folded by default); removes "Show translation" on French/English posts.
 // @match        https://www.linkedin.com/*
 // @run-at       document-idle
@@ -319,6 +319,9 @@
     post.style.setProperty('grid-template-rows', rows.join(' '), 'important');
     others.forEach((c, i) => c.style.setProperty('grid-row', String(i < before ? i + 1 : i + 2), 'important'));
     item.style.setProperty('grid-row', `1 / span ${bar < 0 ? before + 1 : before + 2}`, 'important');
+    // A quoted post wraps its media in a display: contents box: without a box of its own, its grid
+    // placement is lost and the media lands in the first row only, pushing the text below it
+    if (getComputedStyle(item).display === 'contents') item.style.setProperty('display', 'block', 'important');
     item.setAttribute(SIDE, '');
     post.setAttribute(POST, '');
   }
