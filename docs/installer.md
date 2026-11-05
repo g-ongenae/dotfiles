@@ -242,7 +242,8 @@ Violentmonkey offers to install it and later checks it for updates:
   pull request conversations. It hides the comments and reviews of bots and AI
   reviewers (Copilot, CodeRabbit, Claude…, but not SonarCloud, Socket and
   algoanbot), the replies posted with a
-  `Co-Authored-By: Claude … <noreply@anthropic.com>` signature, the resolved
+  `Co-Authored-By: Claude … <noreply@anthropic.com>` signature or a
+  `🤖 Generated with Claude Code` footer, the resolved
   threads and the timeline events (labels, review requests, draft/ready…),
   leaving the description, the commits, the human comments and reviews, the
   linked or mentioning issues and pull requests, and the merge. A thread a

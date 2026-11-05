@@ -2,8 +2,8 @@
 // @name         GitHub — Hide bots on pull requests
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.0.1
-// @description  Adds a "Hide bots" button to pull request conversations: it hides the comments and reviews of bots and AI reviewers (except SonarCloud, Socket and algoanbot), the replies written by Claude (Co-Authored-By: Claude … noreply@anthropic.com), the resolved threads and the timeline events, leaving the description, the commits, the human comments and the linked issues and pull requests. The choice is remembered.
+// @version      1.0.2
+// @description  Adds a "Hide bots" button to pull request conversations: it hides the comments and reviews of bots and AI reviewers (except SonarCloud, Socket and algoanbot), the replies written by Claude (Co-Authored-By: Claude … noreply@anthropic.com or 🤖 Generated with Claude Code), the resolved threads and the timeline events, leaving the description, the commits, the human comments and the linked issues and pull requests. The choice is remembered.
 // @match        https://github.com/*
 // @run-at       document-start
 // @noframes
@@ -16,8 +16,9 @@
   // ---------- Settings ----------
   // Bots (GitHub Apps, by login) whose comments stay visible
   const KEEP_BOTS = ['sonarqubecloud', 'socket-security', 'algoanbot'];
-  // Signature of the comments Claude posts on behalf of a developer. Never applied to the description.
-  const AUTO_REPLY = /Co-Authored-By:[^\n]*noreply@anthropic\.com/i;
+  // Signatures of the comments Claude posts on behalf of a developer: the co-author trailer or the
+  // "🤖 Generated with Claude Code" footer (its link is gone from the rendered text). Never applied to the description.
+  const AUTO_REPLY = /Co-Authored-By:[^\n]*noreply@anthropic\.com|Generated with \[?Claude Code\b/i;
   // Timeline events (labels, review requests, draft/ready…) are hidden, except links to other issues
   // and pull requests and these kinds,
   // by the prefix of their data-gid: merged, closed, reopened
