@@ -2,8 +2,8 @@
 // @name         GitHub — Hide bots on pull requests
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.0.2
-// @description  Adds a "Hide bots" button to pull request conversations: it hides the comments and reviews of bots and AI reviewers (except SonarCloud, Socket and algoanbot), the replies written by Claude (Co-Authored-By: Claude … noreply@anthropic.com or 🤖 Generated with Claude Code), the resolved threads and the timeline events, leaving the description, the commits, the human comments and the linked issues and pull requests. The choice is remembered.
+// @version      1.0.3
+// @description  Adds a "Hide bots" button to pull request conversations: it hides the comments and reviews of bots and AI reviewers (except SonarCloud, Socket and algoanbot), the replies written by Claude (Co-Authored-By: Claude … noreply@anthropic.com or 🤖 Generated with Claude Code), the @coderabbitai review commands, the resolved threads and the timeline events, leaving the description, the commits, the human comments and the linked issues and pull requests. The choice is remembered.
 // @match        https://github.com/*
 // @run-at       document-start
 // @noframes
@@ -19,6 +19,8 @@
   // Signatures of the comments Claude posts on behalf of a developer: the co-author trailer or the
   // "🤖 Generated with Claude Code" footer (its link is gone from the rendered text). Never applied to the description.
   const AUTO_REPLY = /Co-Authored-By:[^\n]*noreply@anthropic\.com|Generated with \[?Claude Code\b/i;
+  // Comments asking CodeRabbit for a review: "@coderabbitai review" or "@coderabbitai full review"
+  const BOT_COMMAND = /@coderabbitai\s+(full\s+)?review\b/i;
   // Timeline events (labels, review requests, draft/ready…) are hidden, except links to other issues
   // and pull requests and these kinds,
   // by the prefix of their data-gid: merged, closed, reopened
@@ -49,11 +51,13 @@
     return /\/apps\//.test(a.getAttribute('href') || '') || /[?&]bot=/.test(a.dataset.hovercardUrl || '');
   }
 
+  const isNoiseText = (text) => AUTO_REPLY.test(text) || BOT_COMMAND.test(text);
+
   // One comment: an issue comment, or a comment of a review thread
   function isNoise(comment) {
     if (comment.querySelector('[data-testid="automated-review-comment"]')) return true; // Copilot inline comment
     if (isBot(comment.querySelector('a.author'))) return true;
-    return AUTO_REPLY.test(comment.querySelector('.comment-body')?.textContent || '');
+    return isNoiseText(comment.querySelector('.comment-body')?.textContent || '');
   }
 
   // A mention, cross-reference or link of another issue or pull request
@@ -98,7 +102,7 @@
     const bot = isBot(item.querySelector('a.author'));
     const body = item.querySelector('.timeline-comment-group[id^="pullrequestreview-"]');
     const text = body?.querySelector('.comment-body')?.textContent.trim() || '';
-    const humanBody = !bot && text !== '' && !AUTO_REPLY.test(text);
+    const humanBody = !bot && text !== '' && !isNoiseText(text);
     // Approvals and change requests of humans stay, even without a comment
     const verdict = !bot && !!item.querySelector('.TimelineItem-badge .octicon-check, .TimelineItem-badge .octicon-file-diff');
 
@@ -133,7 +137,7 @@
     btn.id = BTN;
     btn.type = 'button';
     btn.className = 'Button Button--secondary Button--medium';
-    btn.title = 'Hide the bot and AI comments, the replies written by Claude, the resolved threads and the timeline events';
+    btn.title = 'Hide the bot and AI comments, the replies written by Claude, the @coderabbitai review commands, the resolved threads and the timeline events';
     btn.addEventListener('click', () => {
       on = !on;
       localStorage.setItem(KEY, on ? '1' : '0');
