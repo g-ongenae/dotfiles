@@ -2,7 +2,7 @@
 // @name         Slack — Fold sidebar
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.0.0
+// @version      1.0.1
 // @description  Adds a button left of the back/forward arrows of Slack's top bar that folds the sidebar (workspace name, channels, DMs…) so the conversation takes its space. The choice is remembered.
 // @match        https://app.slack.com/*
 // @run-at       document-start
@@ -26,10 +26,15 @@
 
   // ---------- Styles ----------
   // Injected at document-start so the sidebar never flashes before being folded.
-  // Slack sizes the sidebar column of the tab panel grid in a <style> of its own (its resizable width).
+  // Slack sizes the tab panel grid columns in a <style> of its own (sidebar, conversation and, when a thread
+  // is open, the thread pane). Keep its columns and let the conversation span the sidebar's column too.
+  const PRIMARY = 'p-view_contents--primary';
   const style = document.createElement('style');
   style.textContent = `
-    html[${FOLDED}] .p-ia4_client .p-client_workspace__tabpanel { grid-template-columns: 0 minmax(0, 1fr) !important; }
+    html[${FOLDED}] .p-ia4_client .p-client_workspace__tabpanel { grid-template-areas: '${PRIMARY} ${PRIMARY}' !important; }
+    html[${FOLDED}] .p-ia4_client .p-client_workspace__tabpanel:has(.p-view_contents--secondary) {
+      grid-template-areas: '${PRIMARY} ${PRIMARY} p-view_contents--secondary' !important;
+    }
     html[${FOLDED}] .p-ia4_client .p-view_contents--sidebar,
     html[${FOLDED}] .p-ia4_client__resizer--sidebar { display: none !important; }
     #${BUTTON_ID} { display: flex; align-self: center; margin-right: 4px; }
