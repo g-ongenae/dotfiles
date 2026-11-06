@@ -34,6 +34,7 @@ userscripts:
   - linkedin-declutter.user.js
   - linkedin-keyboard.user.js
   - slack-declutter.user.js
+  - slack-fold-sidebar.user.js
   - slack-upload-shortcut.user.js
   - twitch-home-following.user.js
   - youtube-fold-related.user.js

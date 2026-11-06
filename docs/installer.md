@@ -314,6 +314,10 @@ Violentmonkey offers to install it and later checks it for updates:
   **Huddles**, **Later** and **Directories** entries of the sidebar, and the
   **Help** button of the top bar, closing the gaps they leave; it also folds
   image and file previews in messages down to their file name.
+- `slack-fold-sidebar.user.js` adds a button left of the back/forward arrows
+  of Slack's top bar that folds the sidebar (workspace name, channels, direct
+  messages…) so the conversation takes the whole width; the last state is
+  remembered.
 - `slack-upload-shortcut.user.js` makes **Cmd+U** (**Ctrl+U** off macOS;
   `MODIFIER` at the top of the script) open the file picker of the message
   composer being typed in (or of the open conversation), like **Upload from
