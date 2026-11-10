@@ -218,10 +218,10 @@ Violentmonkey offers to install it and later checks it for updates:
 - `github-find-active-forks.user.js` adds an **Active forks** button to GitHub
   repository headers, opening [active-forks](https://techgaun.github.io/active-forks/).
 - `github-fold-comments.user.js` adds a chevron button to the header of each
-  review, comment, review comment and description of GitHub pull requests and
-  issues; it folds it down to its header (a review with its comment and its
-  threads), and Alt-click folds or unfolds every comment of the page. Each
-  choice is remembered.
+  review, comment, review comment and description of GitHub pull requests (the
+  Overview preview and the classic conversation) and issues; it folds it down
+  to its header (a review with its comment and its threads), and Alt-click
+  folds or unfolds every comment of the page. Each choice is remembered.
 - `github-fold-profile.user.js` folds the README (folded by default) and the
   pinned repositories on GitHub user and organization profiles down to their
   headers; a chevron button in each header unfolds it, and each state is
@@ -231,22 +231,26 @@ Violentmonkey offers to install it and later checks it for updates:
   **Copilot** button (and its dropdown) of the page header.
 - `github-hide-sidebar-sections.user.js` hides the **Projects**, **Milestone**,
   **Development** and **Notifications** sections of the sidebar of GitHub pull
-  requests and issues.
+  requests (the Overview preview and the classic conversation) and issues.
 - `github-notifications-hide-repos.user.js` adds a **Hide** button to the
   header of each repository group of the GitHub notifications page; the
   repository's notifications stay hidden after a reload. A crossed-out eye next
   to the repository in the sidebar shows it again, and filtering on the
   repository still lists its notifications. Hiding is display-only: hidden
   notifications still count in the inbox badge.
-- `github-pr-hide-bots.user.js` adds a **Hide bots** button to the header of
-  pull request conversations. It hides the comments and reviews of bots and AI
+- `github-pr-hide-bots.user.js` adds a **Hide bots** button to pull request
+  conversations: left of **All / Unresolved / Mine** on the Overview preview,
+  in the page header on the classic conversation (`?overview=false`). Unlike
+  GitHub's own **Show AI and bot comments** filter, it keeps the SonarCloud and
+  algoanbot reports (OpenAPI changes…) and hides the replies Claude wrote. It
+  hides the comments and reviews of bots and AI
   reviewers (Copilot, CodeRabbit, Claude…, but not SonarCloud, Socket and
   algoanbot), the replies posted with a
   `Co-Authored-By: Claude … <noreply@anthropic.com>` signature or a
   `🤖 Generated with Claude Code` footer, the `@coderabbitai review` (or
   `full review`) commands, the resolved threads and the timeline events
-  (labels, review requests, draft/ready…),
-  leaving the description, the commits, the human comments and reviews, the
+  (labels, review requests, draft/ready…; the Overview moves them to the
+  sidebar's Activity), leaving the description, the commits, the human comments and reviews, the
   linked or mentioning issues and pull requests, and the merge. A thread a
   human answered stays, with the comment it answers. The button shows how many items are hidden, and the
   choice is remembered.

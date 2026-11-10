@@ -2,8 +2,8 @@
 // @name         GitHub — Fold comments
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.0.1
-// @description  Adds a chevron button to the header of each review, comment and description on GitHub pull requests and issues: it folds the comment down to its header. Alt-click folds or unfolds every comment of the page. Each choice is remembered.
+// @version      1.1.0
+// @description  Adds a chevron button to the header of each review, comment and description on GitHub pull requests (the Overview preview and the classic conversation) and issues: it folds the comment down to its header. Alt-click folds or unfolds every comment of the page. Each choice is remembered.
 // @match        https://github.com/*
 // @run-at       document-start
 // @noframes
@@ -21,8 +21,27 @@
   const FOLDED = 'data-ghc-folded'; // on each folded comment
   const BTN = 'ghc-toggle';
 
-  // Pull requests (server-rendered timeline) and issues (React) use different markup
+  // Pull requests (Overview preview and classic server-rendered timeline) and issues (React) use
+  // different markup
   const KINDS = [
+    {
+      // Pull request Overview: description, its header row (edit history, pencil) floating at the top right
+      box: 'section[aria-label="Description"]',
+      id: () => `body:${location.pathname}`,
+      hidden: '> div > :not([class*="editMetadata"])',
+      extra: '',
+      // Right of the pencil
+      mount: (box, btn) => box.querySelector('[class*="editMetadata"]')?.appendChild(btn),
+    },
+    {
+      // Pull request Overview: comments and reviews (a review with its comment and its threads)
+      box: 'article:is([id^="issuecomment-"], [id^="pullrequestreview-"])',
+      id: (box) => box.id,
+      hidden: '> :not(:first-child)',
+      extra: '',
+      // Right of the "…" menu of the article's own header, not of a nested thread's
+      mount: (box, btn) => box.querySelector(':scope > :first-child [data-testid="comment-header-right-side-items"]')?.appendChild(btn),
+    },
     {
       // Pull request review: "… reviewed" header row, then the review comment and the threads
       box: '.js-timeline-item[data-gid^="PRR_"]',
