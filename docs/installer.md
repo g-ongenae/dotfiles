@@ -255,6 +255,12 @@ Violentmonkey offers to install it and later checks it for updates:
   linked or mentioning issues and pull requests, and the merge. A thread a
   human answered stays, with the comment it answers. The button shows how many items are hidden, and the
   choice is remembered.
+- `github-readme-tab.user.js` moves the README of GitHub repositories (and
+  directories) into its own **README** tab, first in the repository navigation
+  bar: **Code** shows the files only, **README** shows the README with its
+  License / Code of conduct tabs instead of the files. The tab opens on
+  `#readme-ov-file` (also the sidebar's **Readme** link), so it can be linked
+  to and survives a reload; from the other tabs it goes to the repository home.
 - `google-meet-float-controls.user.js` gives the videos the whole window in a
   Google Meet call: the tiles stretch over the room Meet keeps for its bottom
   bar and its 16:9 boxes (cameras are cropped to fit, screen shares

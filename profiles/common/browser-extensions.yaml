@@ -27,6 +27,7 @@ userscripts:
   - github-hide-sidebar-sections.user.js
   - github-notifications-hide-repos.user.js
   - github-pr-hide-bots.user.js
+  - github-readme-tab.user.js
   - google-meet-float-controls.user.js
   - google-meet-keyboard.user.js
   - google-slides-declutter.user.js
