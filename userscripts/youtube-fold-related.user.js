@@ -4,6 +4,9 @@
 // @author       g-ongenae
 // @version      1.1.1
 // @description  Folds the right column of a YouTube video (filter chips and related videos) so the video takes its space; a small round button on the right edge unfolds it. The choice is remembered.
+// @license      MIT
+// @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/youtube-fold-related.user.js
+// @supportURL   https://github.com/g-ongenae/dotfiles/issues
 // @match        https://www.youtube.com/*
 // @run-at       document-start
 // @noframes

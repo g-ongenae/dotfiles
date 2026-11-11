@@ -4,6 +4,9 @@
 // @author       g-ongenae
 // @version      1.4.0
 // @description  Makes the "Start a post" dialog fill the window; adds Bold, Italic and Strikethrough buttons (Cmd/Ctrl+B, Cmd/Ctrl+I, Cmd/Ctrl+Shift+X, which also work in comments) that restyle the selection with Unicode letters and marks; shows attached images as a row of thumbnails at the bottom; counts words and characters against the 3,000 characters limit. Unicode bold, italic and struck-through letters are poorly read by screen readers and are not found by LinkedIn's search.
+// @license      MIT
+// @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/linkedin-compose.user.js
+// @supportURL   https://github.com/g-ongenae/dotfiles/issues
 // @match        https://www.linkedin.com/*
 // @run-at       document-idle
 // @noframes

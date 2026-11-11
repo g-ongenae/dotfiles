@@ -4,6 +4,9 @@
 // @author       g-ongenae
 // @version      1.3.0
 // @description  Hides the "Agents" tab of the repository navigation bar, its entry in the overflow menu shown on narrow windows, the Copilot button (and its dropdown) of the page header, and the Copilot panel button of the pull request header.
+// @license      MIT
+// @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/github-hide-agents-tab.user.js
+// @supportURL   https://github.com/g-ongenae/dotfiles/issues
 // @match        https://github.com/*
 // @run-at       document-start
 // @noframes

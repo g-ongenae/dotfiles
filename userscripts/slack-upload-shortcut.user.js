@@ -4,6 +4,9 @@
 // @author       g-ongenae
 // @version      1.2.0
 // @description  Cmd+U (Ctrl+U off macOS) opens the file picker of the message composer, like "Upload from your computer" in its "+" menu. It only fires from a composer or the conversation, not from the search box or other inputs.
+// @license      MIT
+// @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/slack-upload-shortcut.user.js
+// @supportURL   https://github.com/g-ongenae/dotfiles/issues
 // @match        https://app.slack.com/*
 // @run-at       document-start
 // @noframes

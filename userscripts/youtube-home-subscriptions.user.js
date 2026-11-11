@@ -4,6 +4,9 @@
 // @author       g-ongenae
 // @version      1.0.1
 // @description  When the YouTube home feed is empty (watch history off), shows your subscribed channels there as a grid of avatars instead of the "Your watch history is off" box. Channels with new videos come first and carry a dot.
+// @license      MIT
+// @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/youtube-home-subscriptions.user.js
+// @supportURL   https://github.com/g-ongenae/dotfiles/issues
 // @match        https://www.youtube.com/*
 // @run-at       document-start
 // @noframes
