@@ -2,7 +2,7 @@
 // @name         Slack — Declutter
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.1.1
+// @version      1.1.2
 // @description  Hides the "Find a conversation" filter, the Huddles, Later/Saved and Directories entries of the sidebar, and the Help button of the top bar; folds image and file previews in messages by default.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/slack-declutter.user.js
@@ -37,7 +37,9 @@
     SIDEBAR_ROWS,
     HIDE_FIND_CONVERSATION ? '.p-sidebar_text_filter_input_header:has([data-qa="sidebar-text-filter-input"])' : '',
     HIDE_HELP ? '[data-qa="top-nav-help-button"]' : '',
-  ].filter(Boolean).join(', ');
+  ]
+    .filter(Boolean)
+    .join(', ');
 
   const SHIFT = 'data-sdc-shift'; // sidebar row moved up over the hidden rows above it
 
@@ -101,8 +103,14 @@
   new MutationObserver(() => {
     if (queued) return;
     queued = true;
-    requestAnimationFrame(() => { queued = false; run(); });
+    requestAnimationFrame(() => {
+      queued = false;
+      run();
+    });
   }).observe(document.documentElement, {
-    childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'aria-expanded'],
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['style', 'aria-expanded'],
   });
 })();

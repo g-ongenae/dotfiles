@@ -2,7 +2,7 @@
 // @name         GitHub — Fold comments
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.1.0
+// @version      1.1.1
 // @description  Adds a chevron button to the header of each review, comment and description on GitHub pull requests (the Overview preview and the classic conversation) and issues: it folds the comment down to its header. Alt-click folds or unfolds every comment of the page. Each choice is remembered.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/github-fold-comments.user.js
@@ -43,7 +43,8 @@
       hidden: '> :not(:first-child)',
       extra: '',
       // Right of the "…" menu of the article's own header, not of a nested thread's
-      mount: (box, btn) => box.querySelector(':scope > :first-child [data-testid="comment-header-right-side-items"]')?.appendChild(btn),
+      mount: (box, btn) =>
+        box.querySelector(':scope > :first-child [data-testid="comment-header-right-side-items"]')?.appendChild(btn),
     },
     {
       // Pull request review: "… reviewed" header row, then the review comment and the threads
@@ -86,7 +87,11 @@
   ];
 
   let folded = new Set();
-  try { folded = new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch { /* corrupted: start over */ }
+  try {
+    folded = new Set(JSON.parse(localStorage.getItem(KEY) || '[]'));
+  } catch {
+    /* corrupted: start over */
+  }
 
   function save() {
     localStorage.setItem(KEY, JSON.stringify([...folded].slice(-MAX_REMEMBERED)));
@@ -95,10 +100,14 @@
   // ---------- Styles ----------
   // Injected at document-start so a folded comment never flashes before being hidden
   const style = document.createElement('style');
-  style.textContent = KINDS.map((k) => `
+  style.textContent =
+    KINDS.map(
+      (k) => `
     ${k.box}[${FOLDED}] ${k.hidden} { display: none !important; }
     ${k.extra ? `${k.box}[${FOLDED}] ${k.extra}` : ''}
-  `).join('') + `
+  `,
+    ).join('') +
+    `
     .${BTN} { margin: 0 4px; vertical-align: middle; }
     .${BTN} svg { transition: transform 0.15s; }
     .${BTN}[aria-expanded="false"] svg { transform: rotate(-90deg); }
@@ -137,7 +146,10 @@
     svg.setAttribute('aria-hidden', 'true');
     svg.classList.add('octicon');
     const path = document.createElementNS(SVG_NS, 'path');
-    path.setAttribute('d', 'M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.749.749 0 1 1 1.06-1.06L8 8.939l3.72-3.719a.749.749 0 0 1 1.06 0Z');
+    path.setAttribute(
+      'd',
+      'M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.749.749 0 1 1 1.06-1.06L8 8.939l3.72-3.719a.749.749 0 0 1 1.06 0Z',
+    );
     svg.appendChild(path);
     return svg;
   }
@@ -178,6 +190,9 @@
   new MutationObserver(() => {
     if (queued) return;
     queued = true;
-    requestAnimationFrame(() => { queued = false; run(); });
+    requestAnimationFrame(() => {
+      queued = false;
+      run();
+    });
   }).observe(document.documentElement, { childList: true, subtree: true });
 })();

@@ -2,7 +2,7 @@
 // @name         YouTube — Subscriptions on the home page
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.0.1
+// @version      1.0.2
 // @description  When the YouTube home feed is empty (watch history off), shows your subscribed channels there as a grid of avatars instead of the "Your watch history is off" box. Channels with new videos come first and carry a dot.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/youtube-home-subscriptions.user.js
@@ -98,11 +98,16 @@
     const subs = [];
     for (const node of section.querySelectorAll('ytd-guide-collapsible-entry-renderer')) {
       let items;
-      try { items = dataOf(node)?.expandableItems; } catch { continue; }
+      try {
+        items = dataOf(node)?.expandableItems;
+      } catch {
+        continue;
+      }
       for (const item of items ?? []) {
         const e = item.guideEntryRenderer;
-        const path = e?.navigationEndpoint?.browseEndpoint?.canonicalBaseUrl
-          ?? e?.navigationEndpoint?.commandMetadata?.webCommandMetadata?.url;
+        const path =
+          e?.navigationEndpoint?.browseEndpoint?.canonicalBaseUrl ??
+          e?.navigationEndpoint?.commandMetadata?.webCommandMetadata?.url;
         if (!path || !/^\/(@|channel\/)/.test(path)) continue;
         subs.push({
           href: new URL(path, location.origin).href,
@@ -132,7 +137,11 @@
     }
     // Once "Show more" was expanded, its channels are in both lists: keep the rendered ones
     const seen = new Set(subs.map((s) => s.href));
-    for (const s of hidden(section)) if (!seen.has(s.href)) { seen.add(s.href); subs.push(s); }
+    for (const s of hidden(section))
+      if (!seen.has(s.href)) {
+        seen.add(s.href);
+        subs.push(s);
+      }
     if (NEW_FIRST) subs.sort((x, y) => y.isNew - x.isNew); // stable: keeps the guide order within each group
     return subs;
   }
@@ -159,17 +168,31 @@
     const list = el('ul');
     for (const s of subs) {
       const img = el('img', { src: s.avatar, alt: '', loading: 'lazy', referrerPolicy: 'no-referrer' });
-      list.append(el('li', { className: s.isNew ? 'yths-new' : '' },
-        el('a', { href: s.href, title: s.isNew ? `${s.name} — new content` : s.name },
-          el('span', { className: 'yths-avatar' }, img),
-          el('span', { className: 'yths-name' }, s.name))));
+      list.append(
+        el(
+          'li',
+          { className: s.isNew ? 'yths-new' : '' },
+          el(
+            'a',
+            { href: s.href, title: s.isNew ? `${s.name} — new content` : s.name },
+            el('span', { className: 'yths-avatar' }, img),
+            el('span', { className: 'yths-name' }, s.name),
+          ),
+        ),
+      );
     }
-    return el('section', { id: GRID_ID },
-      el('div', { className: 'yths-head' },
+    return el(
+      'section',
+      { id: GRID_ID },
+      el(
+        'div',
+        { className: 'yths-head' },
         el('h2', { textContent: 'Subscriptions' }),
         el('a', { href: '/feed/subscriptions', textContent: 'Latest videos' }),
-        el('a', { href: '/feed/channels', textContent: 'Manage' })),
-      list);
+        el('a', { href: '/feed/channels', textContent: 'Manage' }),
+      ),
+      list,
+    );
   }
 
   // ---------- Main pass (YouTube is an SPA) ----------
@@ -184,7 +207,10 @@
       return;
     }
     const subs = subscriptions();
-    if (!subs.length) { requestGuide(); return; } // the observer runs us again once the guide is in
+    if (!subs.length) {
+      requestGuide();
+      return;
+    } // the observer runs us again once the guide is in
     const key = JSON.stringify(subs);
     if (existing && existing.parentNode === grid && key === lastKey) return;
     lastKey = key;
@@ -196,7 +222,15 @@
   new MutationObserver(() => {
     if (queued) return;
     queued = true;
-    requestAnimationFrame(() => { queued = false; run(); });
-  }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['line-end-style'] });
+    requestAnimationFrame(() => {
+      queued = false;
+      run();
+    });
+  }).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['line-end-style'],
+  });
   window.addEventListener('yt-navigate-finish', run);
 })();

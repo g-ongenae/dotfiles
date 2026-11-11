@@ -2,7 +2,7 @@
 // @name         GitHub — Fold profile sections
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.1.1
+// @version      1.1.2
 // @description  Folds the README and the pinned repositories on GitHub user and organization profiles down to their headers; a chevron button in each header unfolds it (next to the edit pencil on your own README). Each choice is remembered.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/github-fold-profile.user.js
@@ -74,13 +74,18 @@
   // ---------- Styles ----------
   // Injected at document-start so a folded section never flashes before being hidden
   const style = document.createElement('style');
-  style.textContent = SECTIONS.map((s) => `
-    ${s.hidden.split(', ').map((sel) => `html[${s.attr}] ${sel}`).join(', ')} { display: none !important; }
+  style.textContent = SECTIONS.map(
+    (s) => `
+    ${s.hidden
+      .split(', ')
+      .map((sel) => `html[${s.attr}] ${sel}`)
+      .join(', ')} { display: none !important; }
     ${s.extra ? `html[${s.attr}] ${s.extra}` : ''}
     #${s.id} { margin-left: 4px; vertical-align: middle; }
     #${s.id} svg { transition: transform 0.15s; }
     html[${s.attr}] #${s.id} svg { transform: rotate(-90deg); }
-  `).join('');
+  `,
+  ).join('');
   (document.head || document.documentElement).appendChild(style);
 
   // ---------- Toggle ----------
@@ -105,7 +110,10 @@
     svg.setAttribute('aria-hidden', 'true');
     svg.classList.add('octicon');
     const path = document.createElementNS(SVG_NS, 'path');
-    path.setAttribute('d', 'M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.749.749 0 1 1 1.06-1.06L8 8.939l3.72-3.719a.749.749 0 0 1 1.06 0Z');
+    path.setAttribute(
+      'd',
+      'M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.749.749 0 1 1 1.06-1.06L8 8.939l3.72-3.719a.749.749 0 0 1 1.06 0Z',
+    );
     svg.appendChild(path);
     return svg;
   }
@@ -138,6 +146,9 @@
   new MutationObserver(() => {
     if (queued) return;
     queued = true;
-    requestAnimationFrame(() => { queued = false; run(); });
+    requestAnimationFrame(() => {
+      queued = false;
+      run();
+    });
   }).observe(document.documentElement, { childList: true, subtree: true });
 })();

@@ -3,6 +3,9 @@ __pycache__/
 *.pyc
 .gitconfig.local
 
+# Development tools of the JavaScript files, installed by `npm ci`
+node_modules/
+
 # Sym links
 # Running copies of the committed files
 # that are at a different place

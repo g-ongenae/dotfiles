@@ -2,7 +2,7 @@
 // @name         LinkedIn — Keyboard shortcuts
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.3.3
+// @version      1.3.4
 // @description  Drives LinkedIn from the keyboard: j / k (or ↓ / ↑) move between posts, l likes (held: picks the reaction), c comments, r reposts, s copies the link, o opens the post, e expands it, ← / → browse its images or document pages, Space plays / pauses its video and m mutes it, p starts a post, t / b go to the top / bottom, h / u open the feed / your profile, Cmd/Ctrl+U adds an image to the post or comment being written, Esc leaves a comment box and ? lists the shortcuts.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/linkedin-keyboard.user.js
@@ -212,15 +212,16 @@
       if (el.tagName === 'IFRAME') {
         try {
           if (el.contentDocument?.body) out.push(...deepAll(el.contentDocument, selector));
-        } catch { /* cross-origin */ }
+        } catch {
+          /* cross-origin */
+        }
       }
     }
     return out;
   }
 
   const labelOf = (b) => b.getAttribute('aria-label') || b.getAttribute('title') || '';
-  const byLabel = (root, rx) => deepAll(root, 'button, [role="button"]')
-    .find((b) => visible(b) && rx.test(labelOf(b)));
+  const byLabel = (root, rx) => deepAll(root, 'button, [role="button"]').find((b) => visible(b) && rx.test(labelOf(b)));
 
   // Clicks without leaving a focus ring on what LinkedIn focuses (the button, the text it opened):
   // the post already has an outline
@@ -264,8 +265,12 @@
       let post = share.closest('[role="listitem"]');
       if (!post) {
         post = share;
-        while (post.parentElement && post.parentElement.tagName !== 'MAIN'
-          && post.parentElement.querySelectorAll(SHARE).length === 1) post = post.parentElement;
+        while (
+          post.parentElement &&
+          post.parentElement.tagName !== 'MAIN' &&
+          post.parentElement.querySelectorAll(SHARE).length === 1
+        )
+          post = post.parentElement;
       }
       if (visible(post)) found.add(post);
     }
@@ -282,7 +287,8 @@
   // The page scrolls in <main> (the body does not), or in the window on older layouts
   function scroller() {
     const main = document.querySelector('main');
-    if (main && /auto|scroll/.test(getComputedStyle(main).overflowY) && main.scrollHeight > main.clientHeight) return main;
+    if (main && /auto|scroll/.test(getComputedStyle(main).overflowY) && main.scrollHeight > main.clientHeight)
+      return main;
     return document.scrollingElement || document.documentElement;
   }
 
@@ -369,7 +375,8 @@
     if (post) menuItem(post.querySelector(REPOST), REPOST_ITEM, 'No “Repost with thoughts” on this post');
   }
 
-  const copyLink = (post) => menuItem(post.querySelector(POST_MENU), COPY_LINK_ITEM, 'No “Copy link to post” on this post');
+  const copyLink = (post) =>
+    menuItem(post.querySelector(POST_MENU), COPY_LINK_ITEM, 'No “Copy link to post” on this post');
 
   // LinkedIn says "Link copied to clipboard" itself
   function share() {
@@ -385,9 +392,12 @@
     const own = post.querySelector('a[href*="/feed/update/"], a[href*="/posts/"]');
     if (own) return location.assign(own.href);
     const before = new Set(document.querySelectorAll('a'));
-    if (!await copyLink(post)) return;
-    const link = await waitFor(() => [...document.querySelectorAll('a')]
-      .find((a) => !before.has(a) && VIEW_POST.test(a.textContent.trim()) && visible(a)));
+    if (!(await copyLink(post))) return;
+    const link = await waitFor(() =>
+      [...document.querySelectorAll('a')].find(
+        (a) => !before.has(a) && VIEW_POST.test(a.textContent.trim()) && visible(a),
+      ),
+    );
     if (!link) return toast('No “View post” link after copying it');
     if (/\/(feed\/update|posts)\//.test(link.href)) location.assign(link.href);
     else link.click();
@@ -407,8 +417,8 @@
   // Mutes or unmutes the video of the post, else the one playing on screen
   function mute() {
     const post = onScreen();
-    const video = (post && deepAll(post, 'video').find(visible))
-      || deepAll(document, 'video').find((v) => visible(v) && !v.paused);
+    const video =
+      (post && deepAll(post, 'video').find(visible)) || deepAll(document, 'video').find((v) => visible(v) && !v.paused);
     if (!video) return;
     video.muted = !video.muted;
     // LinkedIn starts videos muted at volume 0
@@ -467,9 +477,13 @@
   function reactionButton(name, post) {
     const rx = new RegExp(`^(React )?${name}\\b`, 'i');
     const ownLike = post.querySelector(LIKE);
-    return [...document.querySelectorAll('button, [role="button"], [role="menuitem"]')].find((b) => visible(b)
-      && !b.matches(LIKE) && !ownLike?.contains(b)
-      && (rx.test(b.getAttribute('aria-label') || '') || rx.test(b.querySelector('img')?.alt || '')));
+    return [...document.querySelectorAll('button, [role="button"], [role="menuitem"]')].find(
+      (b) =>
+        visible(b) &&
+        !b.matches(LIKE) &&
+        !ownLike?.contains(b) &&
+        (rx.test(b.getAttribute('aria-label') || '') || rx.test(b.querySelector('img')?.alt || '')),
+    );
   }
 
   async function react(name) {
@@ -505,8 +519,9 @@
   // that has one: the compose dialog or the comment box.
   function addImage(editor) {
     for (let box = editor.parentElement; box && box !== document.body; box = box.parentElement) {
-      const button = [...box.querySelectorAll('button[aria-label]')]
-        .find((b) => MEDIA_BUTTON.test(b.getAttribute('aria-label')));
+      const button = [...box.querySelectorAll('button[aria-label]')].find((b) =>
+        MEDIA_BUTTON.test(b.getAttribute('aria-label')),
+      );
       if (button) return button.click();
       const input = box.querySelector('input[type="file"]');
       if (input) return input.click();
@@ -584,85 +599,93 @@
   let holdTimer = 0; // set while l is down and the picker not open yet
 
   // Capture phase, so that LinkedIn's own handlers (and the browser's) never see the shortcuts
-  window.addEventListener('keydown', (e) => {
-    if (e.isComposing || escaping) return;
-    const el = e.target instanceof Element ? e.target : null;
-    const editor = el?.closest(EDITOR);
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.isComposing || escaping) return;
+      const el = e.target instanceof Element ? e.target : null;
+      const editor = el?.closest(EDITOR);
 
-    if (picker) {
+      if (picker) {
+        swallow(e);
+        if (e.repeat) return;
+        const reaction = REACTIONS.find(([key]) => key === e.key);
+        if (reaction) return react(reaction[1]);
+        closePicker();
+        escape(); // closes LinkedIn's menu too
+        return;
+      }
+
+      const modifier = useMeta ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey;
+      if (modifier && !e.altKey && !e.shiftKey && e.code === 'KeyU') {
+        if (!editor) return;
+        swallow(e);
+        if (!e.repeat) addImage(editor);
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        if (help) {
+          swallow(e);
+          toggleHelp();
+        } else if (editor && !editor.closest('dialog')) {
+          // The compose dialog closes on Esc by itself
+          swallow(e);
+          leaveComment(editor);
+        }
+        return;
+      }
+
+      if (e.metaKey || e.ctrlKey || e.altKey || el?.closest(EDITABLE)) return;
+      // Space plays the video of the post, or scrolls the page as usual when it has none
+      if (e.key === ' ' && !help && !e.repeat && !document.querySelector('dialog[open]')) {
+        if (playPause()) swallow(e);
+        return;
+      }
+      const action = e.key === 'l' || KEYS[e.key];
+      if (!action || (help && e.key !== '?')) return;
+      // With a dialog open (composer, image viewer, …) only the help and the viewer's Next / Previous
+      // buttons work; without those buttons, the arrows are left to LinkedIn
+      if (e.key !== '?' && document.querySelector('dialog[open]')) {
+        const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+        const button = step && viewerButton(step);
+        if (button) {
+          swallow(e);
+          button.click();
+        }
+        return;
+      }
       swallow(e);
-      if (e.repeat) return;
-      const reaction = REACTIONS.find(([key]) => key === e.key);
-      if (reaction) return react(reaction[1]);
-      closePicker();
-      escape(); // closes LinkedIn's menu too
-      return;
-    }
 
-    const modifier = useMeta ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey;
-    if (modifier && !e.altKey && !e.shiftKey && e.code === 'KeyU') {
-      if (!editor) return;
+      // l likes on release, or opens the picker once held
+      if (e.key === 'l') {
+        if (!e.repeat && !holdTimer) {
+          holdTimer = setTimeout(() => {
+            holdTimer = -1;
+            openPicker();
+          }, HOLD_MS);
+        }
+        return;
+      }
+      if (e.repeat && !/^Arrow|^[jk]$/.test(e.key)) return;
+      action();
+    },
+    true,
+  );
+
+  window.addEventListener(
+    'keyup',
+    (e) => {
+      if (e.key !== 'l' || !holdTimer) return;
       swallow(e);
-      if (!e.repeat) addImage(editor);
-      return;
-    }
-
-    if (e.key === 'Escape') {
-      if (help) {
-        swallow(e);
-        toggleHelp();
-      } else if (editor && !editor.closest('dialog')) {
-        // The compose dialog closes on Esc by itself
-        swallow(e);
-        leaveComment(editor);
+      if (holdTimer > 0) {
+        clearTimeout(holdTimer);
+        like();
       }
-      return;
-    }
-
-    if (e.metaKey || e.ctrlKey || e.altKey || el?.closest(EDITABLE)) return;
-    // Space plays the video of the post, or scrolls the page as usual when it has none
-    if (e.key === ' ' && !help && !e.repeat && !document.querySelector('dialog[open]')) {
-      if (playPause()) swallow(e);
-      return;
-    }
-    const action = e.key === 'l' || KEYS[e.key];
-    if (!action || (help && e.key !== '?')) return;
-    // With a dialog open (composer, image viewer, …) only the help and the viewer's Next / Previous
-    // buttons work; without those buttons, the arrows are left to LinkedIn
-    if (e.key !== '?' && document.querySelector('dialog[open]')) {
-      const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
-      const button = step && viewerButton(step);
-      if (button) {
-        swallow(e);
-        button.click();
-      }
-      return;
-    }
-    swallow(e);
-
-    // l likes on release, or opens the picker once held
-    if (e.key === 'l') {
-      if (!e.repeat && !holdTimer) {
-        holdTimer = setTimeout(() => {
-          holdTimer = -1;
-          openPicker();
-        }, HOLD_MS);
-      }
-      return;
-    }
-    if (e.repeat && !/^Arrow|^[jk]$/.test(e.key)) return;
-    action();
-  }, true);
-
-  window.addEventListener('keyup', (e) => {
-    if (e.key !== 'l' || !holdTimer) return;
-    swallow(e);
-    if (holdTimer > 0) {
-      clearTimeout(holdTimer);
-      like();
-    }
-    holdTimer = 0;
-  }, true);
+      holdTimer = 0;
+    },
+    true,
+  );
 
   // A release missed while another window had the focus
   window.addEventListener('blur', () => {

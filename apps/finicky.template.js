@@ -19,9 +19,9 @@
  * List of browser installed on my computer
  */
 const Browsers = {
-  FIREFOX: "Firefox",
-  LIBRE_WOLF: "LibreWolf",
-  SAFARI: "Safari",
+  FIREFOX: 'Firefox',
+  LIBRE_WOLF: 'LibreWolf',
+  SAFARI: 'Safari',
   // @not-installed
   // ARC: "Arc",
   // BRAVE: "Brave Browser",
@@ -44,13 +44,19 @@ export default {
   rewrite: [
     {
       // Redirect all urls to use https
-      match: (url) => url.protocol === "http",
-      url: (url) => { url.protocol = "https"; return url; },
+      match: (url) => url.protocol === 'http',
+      url: (url) => {
+        url.protocol = 'https';
+        return url;
+      },
     },
     {
       // Redirect all urls to use https
       match: /^https?:\/\/localhost.*$/,
-      url: (url) => { url.protocol = "http"; return url; },
+      url: (url) => {
+        url.protocol = 'http';
+        return url;
+      },
     },
   ],
   handlers: [
@@ -64,22 +70,22 @@ export default {
       // Default connected browser
       browser: Browsers.FIREFOX,
       match: [
-        "https://app.perimeter81.com/sign-in?redirectUrl=CheckPointSASE://perimeter81.com/macos/callback",
-        "https://app.datadoghq.eu*",
-        "https://app.slack.com/*",
-        "https://wisprflow.ai/*",
-        "*github.com*",
-        "www.linkedin.com*",
-        "docs.google.com*",
-        "drive.google.com*",
-        "console.cloud.google.com*",
-        "www.google.com/calendar/event*",
-        "calendar.google.com*",
-        "meet.google.com*",
-        "www.figma.com*",
-        "cloud.nx.app/*",
-        "claude.ai/*",
-        "*notion.so*",
+        'https://app.perimeter81.com/sign-in?redirectUrl=CheckPointSASE://perimeter81.com/macos/callback',
+        'https://app.datadoghq.eu*',
+        'https://app.slack.com/*',
+        'https://wisprflow.ai/*',
+        '*github.com*',
+        'www.linkedin.com*',
+        'docs.google.com*',
+        'drive.google.com*',
+        'console.cloud.google.com*',
+        'www.google.com/calendar/event*',
+        'calendar.google.com*',
+        'meet.google.com*',
+        'www.figma.com*',
+        'cloud.nx.app/*',
+        'claude.ai/*',
+        '*notion.so*',
       ],
     },
     {

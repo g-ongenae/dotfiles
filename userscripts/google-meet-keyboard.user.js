@@ -2,7 +2,7 @@
 // @name         Google Meet — Keyboard shortcuts
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.3.0
+// @version      1.3.1
 // @description  Drives a Google Meet call from the keyboard: c opens the chat with the cursor in its message box (Esc leaves it, Cmd/Ctrl+Esc closes the chat), m mutes / unmutes the sound of the call (not your microphone), h hides / shows your own video, v switches to the next layout, f toggles full screen, s the captions, t the translation, p presents your screen, l reacts with a thumbs up, r opens Meet's emoji picker (held: 1 – 9 picks one of Meet's reactions) and ? lists the shortcuts.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/google-meet-keyboard.user.js
@@ -28,20 +28,23 @@
   const MORE_OPTIONS = /^(more options|plus d['’]options|autres options)$/i;
   // The options button of a tile ("Plus d'options pour <name>"), naming who it is for
   const TILE_OPTIONS = /^(?:more options for|plus d['’]options pour|autres options pour) (.+)$/i;
-  const CHANGE_LAYOUT = /^(change layout|adjust view|modifier la vue|modifier la mise en page|changer la mise en page)$/i;
+  const CHANGE_LAYOUT =
+    /^(change layout|adjust view|modifier la vue|modifier la mise en page|changer la mise en page)$/i;
   const REACTIONS_TOGGLE = /^(send a reaction|reactions|envoyer une réaction|réactions)\b/i;
   // The captions and translation panel of the bottom bar, and its two switches
   const CAPTIONS_PANEL = /sous-titres|captions|tradu|translat|langu/i;
   // (not anchored: a switch's text may start with its icon's name)
   const CAPTIONS = /\b((activer|désactiver) (les )?sous-titres|turn (on|off) captions|(show|hide) captions)/i;
-  const TRANSLATION = /\b(traduire ce|arrêter de traduire|ne plus traduire|désactiver la traduction|translate what|stop translating|turn (on|off) translation)/i;
+  const TRANSLATION =
+    /\b(traduire ce|arrêter de traduire|ne plus traduire|désactiver la traduction|translate what|stop translating|turn (on|off) translation)/i;
   const MINIMIZE = /^(minimi[sz]e|réduire)$/i;
   const RESTORE = /^(maximi[sz]e|expand|restore|agrandir|développer|restaurer)\b/i;
   // The notice Meet shows once your video is minimized
   const MINIMIZED_NOTICE = /toujours envoyée|still (being )?(sent|shared|visible)/i;
   // Never clicked while looking for the reactions' "more emojis" button
   const LEAVE_CALL = /quitter|raccrocher|leave|hang ?up/i;
-  const PRESENT = /^(present now|share screen|stop presenting|you are presenting|présenter maintenant|présenter|partager (l['’]|votre )?écran|arrêter (la présentation|de présenter)|vous présentez)\b/i;
+  const PRESENT =
+    /^(present now|share screen|stop presenting|you are presenting|présenter maintenant|présenter|partager (l['’]|votre )?écran|arrêter (la présentation|de présenter)|vous présentez)\b/i;
   const CLOSE = /^(close|fermer)\b/i;
   const THUMBS_UP = '👍';
   // Meet's reactions row, in its order, for r held
@@ -94,18 +97,24 @@
   // back to Meet and Cmd/Ctrl+Esc closes the chat
   if (window.top !== window) {
     // Google Chat's frames elsewhere (Gmail, …) are left alone
-    let inMeet = location.ancestorOrigins ? [...location.ancestorOrigins].includes(MEET) : document.referrer.startsWith(MEET);
+    let inMeet = location.ancestorOrigins
+      ? [...location.ancestorOrigins].includes(MEET)
+      : document.referrer.startsWith(MEET);
     window.addEventListener('message', async (e) => {
       if (e.origin !== MEET || e.data?.[MSG] !== 'focus') return;
       inMeet = true;
       (await waitFor(() => editorIn(document)))?.focus();
     });
-    window.addEventListener('keydown', (e) => {
-      if (!inMeet || e.key !== 'Escape' || e.isComposing) return;
-      swallow(e);
-      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-      window.top.postMessage({ [MSG]: e.metaKey || e.ctrlKey ? 'close' : 'leave' }, MEET);
-    }, true);
+    window.addEventListener(
+      'keydown',
+      (e) => {
+        if (!inMeet || e.key !== 'Escape' || e.isComposing) return;
+        swallow(e);
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+        window.top.postMessage({ [MSG]: e.metaKey || e.ctrlKey ? 'close' : 'leave' }, MEET);
+      },
+      true,
+    );
     return;
   }
   if (location.origin !== MEET) return;
@@ -204,16 +213,19 @@
   }
 
   // ---------- Helpers ----------
-  const labelOf = (b) => b.getAttribute('aria-label') || b.getAttribute('data-tooltip') || b.getAttribute('title') || '';
-  const byLabel = (root, rx) => [...root.querySelectorAll('button, [role="button"]')]
-    .find((b) => visible(b) && rx.test(labelOf(b).trim()));
+  const labelOf = (b) =>
+    b.getAttribute('aria-label') || b.getAttribute('data-tooltip') || b.getAttribute('title') || '';
+  const byLabel = (root, rx) =>
+    [...root.querySelectorAll('button, [role="button"]')].find((b) => visible(b) && rx.test(labelOf(b).trim()));
 
   // The visible clickable element whose own text matches `rx` (menu items have no label)
   function byText(rx, root = document.body) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     for (let n = walker.nextNode(); n; n = walker.nextNode()) {
       if (!rx.test(n.nodeValue.trim())) continue;
-      const el = n.parentElement.closest('button, a, [role="menuitem"], [role="menuitemradio"], [role="button"], li') || n.parentElement;
+      const el =
+        n.parentElement.closest('button, a, [role="menuitem"], [role="menuitemradio"], [role="button"], li') ||
+        n.parentElement;
       if (visible(el)) return el;
     }
     return null;
@@ -257,8 +269,9 @@
   function near(from, rx, skip) {
     const main = document.querySelector('main');
     for (let el = from?.parentElement; el && el !== document.body && !el.contains(main); el = el.parentElement) {
-      const found = [...el.querySelectorAll('button, [role="button"]')]
-        .find((b) => b !== skip && visible(b) && rx.test((labelOf(b) || b.textContent).trim()));
+      const found = [...el.querySelectorAll('button, [role="button"]')].find(
+        (b) => b !== skip && visible(b) && rx.test((labelOf(b) || b.textContent).trim()),
+      );
       if (found) return found;
     }
     return null;
@@ -273,16 +286,20 @@
   async function command(rx, missing) {
     const button = byLabel(document, rx);
     if (button) return button.click();
-    if (!await busy(() => menuItem(byLabel(document, MORE_OPTIONS), rx))) toast(missing);
+    if (!(await busy(() => menuItem(byLabel(document, MORE_OPTIONS), rx)))) toast(missing);
   }
 
   // ---------- Chat ----------
   // The message box, or the frame of Google Chat holding it
   function chatTarget() {
-    return editorIn(document) || [...document.querySelectorAll('iframe')].find((f) => {
-      const r = f.getBoundingClientRect();
-      return r.width > 150 && r.height > 150;
-    }) || null;
+    return (
+      editorIn(document) ||
+      [...document.querySelectorAll('iframe')].find((f) => {
+        const r = f.getBoundingClientRect();
+        return r.width > 150 && r.height > 150;
+      }) ||
+      null
+    );
   }
 
   function focusChat(target) {
@@ -291,7 +308,9 @@
     try {
       const box = target.contentDocument && editorIn(target.contentDocument);
       if (box) return box.focus();
-    } catch { /* cross-origin */ }
+    } catch {
+      /* cross-origin */
+    }
     target.contentWindow.postMessage({ [MSG]: 'focus' }, '*');
   }
 
@@ -355,9 +374,13 @@
   }
 
   for (const type of ['play', 'volumechange', 'loadedmetadata']) {
-    document.addEventListener(type, (e) => {
-      if (soundOff && e.target instanceof HTMLMediaElement) silence(e.target);
-    }, true);
+    document.addEventListener(
+      type,
+      (e) => {
+        if (soundOff && e.target instanceof HTMLMediaElement) silence(e.target);
+      },
+      true,
+    );
   }
 
   // ---------- Own video ----------
@@ -369,8 +392,8 @@
     return /^matrix(3d)?\(-1,/.test(getComputedStyle(video).transform);
   }
 
-  const tileOptions = (root) => [...root.querySelectorAll('button, [role="button"]')]
-    .find((b) => TILE_OPTIONS.test(labelOf(b).trim()));
+  const tileOptions = (root) =>
+    [...root.querySelectorAll('button, [role="button"]')].find((b) => TILE_OPTIONS.test(labelOf(b).trim()));
 
   // Your name, read on your tile's options button: it labels the bar Meet leaves once minimized
   let ownName = '';
@@ -380,8 +403,13 @@
     const video = [...document.querySelectorAll('video')].find((v) => visible(v) && isOwnVideo(v));
     if (!video) return null;
     let tile = video.parentElement;
-    while (tile.parentElement && tile.parentElement !== document.body && !tileOptions(tile)
-      && !tile.matches('[data-participant-id], [data-requested-participant-id]')) tile = tile.parentElement;
+    while (
+      tile.parentElement &&
+      tile.parentElement !== document.body &&
+      !tileOptions(tile) &&
+      !tile.matches('[data-participant-id], [data-requested-participant-id]')
+    )
+      tile = tile.parentElement;
     for (const type of ['pointerover', 'pointerenter', 'mouseover', 'mouseenter', 'pointermove', 'mousemove']) {
       video.dispatchEvent(new MouseEvent(type, { bubbles: true, view: window }));
     }
@@ -424,39 +452,48 @@
   }
 
   // Hides your video with Meet's own "Minimize" while it shows, else brings it back
-  const toggleOwnVideo = () => busy(async () => {
-    const options = await ownOptions();
-    if (options) {
-      if (!await menuItem(options, MINIMIZE)) return toast('No “Minimize” option on your video');
-      blur();
-      return closeNotice();
-    }
-    const restore = restoreButton();
-    if (restore) restore.click();
-    else toast('Your video was not found');
-  });
+  const toggleOwnVideo = () =>
+    busy(async () => {
+      const options = await ownOptions();
+      if (options) {
+        if (!(await menuItem(options, MINIMIZE))) return toast('No “Minimize” option on your video');
+        blur();
+        return closeNotice();
+      }
+      const restore = restoreButton();
+      if (restore) restore.click();
+      else toast('Your video was not found');
+    });
 
   // ---------- Layout ----------
   // Picks the layout after the current one in Meet's "Change layout" dialog, then closes it
-  const nextLayout = () => busy(async () => {
-    if (!await menuItem(byLabel(document, MORE_OPTIONS), CHANGE_LAYOUT)) return toast('No “Change layout” in Meet’s menu');
-    const radios = await waitFor(() => {
-      const found = [...document.querySelectorAll('[role="dialog"] input[type="radio"], [role="dialog"] [role="radio"]')]
-        .filter((r) => !r.disabled);
-      return found.length > 1 ? found : null;
+  const nextLayout = () =>
+    busy(async () => {
+      if (!(await menuItem(byLabel(document, MORE_OPTIONS), CHANGE_LAYOUT)))
+        return toast('No “Change layout” in Meet’s menu');
+      const radios = await waitFor(() => {
+        const found = [
+          ...document.querySelectorAll('[role="dialog"] input[type="radio"], [role="dialog"] [role="radio"]'),
+        ].filter((r) => !r.disabled);
+        return found.length > 1 ? found : null;
+      });
+      if (!radios) return toast('Meet’s layouts were not found');
+      const checked = (r) => r.checked || r.getAttribute('aria-checked') === 'true';
+      const radio = radios[(radios.findIndex(checked) + 1) % radios.length];
+      radio.click();
+      const label = (
+        (radio.labels?.[0] || radio.closest('label'))?.textContent ||
+        radio.getAttribute('aria-label') ||
+        ''
+      )
+        .replace(/\s+/g, ' ')
+        .trim();
+      const dialog = radio.closest('[role="dialog"]');
+      const close = dialog && byLabel(dialog, CLOSE);
+      if (close) close.click();
+      else escape();
+      toast(label ? `Layout: ${label}` : 'Next layout');
     });
-    if (!radios) return toast('Meet’s layouts were not found');
-    const checked = (r) => r.checked || r.getAttribute('aria-checked') === 'true';
-    const radio = radios[(radios.findIndex(checked) + 1) % radios.length];
-    radio.click();
-    const label = ((radio.labels?.[0] || radio.closest('label'))?.textContent || radio.getAttribute('aria-label') || '')
-      .replace(/\s+/g, ' ').trim();
-    const dialog = radio.closest('[role="dialog"]');
-    const close = dialog && byLabel(dialog, CLOSE);
-    if (close) close.click();
-    else escape();
-    toast(label ? `Layout: ${label}` : 'Next layout');
-  });
 
   // ---------- Captions ----------
   // Meet's bottom bar opens a panel with a captions switch and a translation switch: flip the one
@@ -464,7 +501,13 @@
   async function captionsSwitch(rx, missing) {
     const toggle = [...document.querySelectorAll('button, [role="button"]')].find((b) => {
       const label = labelOf(b).trim();
-      return visible(b) && !b.closest('main') && CAPTIONS_PANEL.test(label) && !CAPTIONS.test(label) && !TRANSLATION.test(label);
+      return (
+        visible(b) &&
+        !b.closest('main') &&
+        CAPTIONS_PANEL.test(label) &&
+        !CAPTIONS.test(label) &&
+        !TRANSLATION.test(label)
+      );
     });
     let item = near(toggle, rx, toggle);
     let opened = false;
@@ -489,7 +532,7 @@
   // ---------- Reactions ----------
   const PICTO = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
   // Skin tones and the emoji presentation selector, so that 👍🏽 matches Meet's 👍
-  const bare = (emoji) => emoji.replace(/[\u{1F3FB}-\u{1F3FF}️]/gu, '');
+  const bare = (emoji) => emoji.replace(/\u{FE0F}|[\u{1F3FB}-\u{1F3FF}]/gu, '');
 
   function firstEmoji(text) {
     if (!text) return null;
@@ -500,14 +543,18 @@
     return text.match(PICTO)?.[0] || null;
   }
 
-  const emojiOf = (el) => firstEmoji(el.dataset?.emoji) || firstEmoji(el.getAttribute('aria-label'))
-    || firstEmoji(el.querySelector('img')?.alt) || firstEmoji(el.getAttribute('alt')) || firstEmoji(el.textContent);
+  const emojiOf = (el) =>
+    firstEmoji(el.dataset?.emoji) ||
+    firstEmoji(el.getAttribute('aria-label')) ||
+    firstEmoji(el.querySelector('img')?.alt) ||
+    firstEmoji(el.getAttribute('alt')) ||
+    firstEmoji(el.textContent);
 
   // The emoji buttons of the reactions row: the nearest ones around its toggle (leaving out the ones
   // on chat messages), else any on the page
   function reactionButtons(toggle) {
-    const emojiButtons = (root) => [...root.querySelectorAll('button, [role="button"]')]
-      .filter((b) => b !== toggle && visible(b) && emojiOf(b));
+    const emojiButtons = (root) =>
+      [...root.querySelectorAll('button, [role="button"]')].filter((b) => b !== toggle && visible(b) && emojiOf(b));
     const main = document.querySelector('main');
     for (let el = toggle?.parentElement; el && el !== document.body && !el.contains(main); el = el.parentElement) {
       const found = emojiButtons(el);
@@ -522,10 +569,11 @@
     let buttons = reactionButtons(toggle);
     if (buttons.length || !toggle) return { buttons, toggle, opened: false };
     toggle.click();
-    buttons = await waitFor(() => {
-      const found = reactionButtons(toggle);
-      return found.length ? found : null;
-    }) || [];
+    buttons =
+      (await waitFor(() => {
+        const found = reactionButtons(toggle);
+        return found.length ? found : null;
+      })) || [];
     return { buttons, toggle, opened: true };
   }
 
@@ -546,8 +594,9 @@
     let box = row.buttons[0].parentElement;
     while (box && !row.buttons.every((b) => box.contains(b))) box = box.parentElement;
     for (let i = 0; box && i < 3 && !box.contains(row.toggle); i++, box = box.parentElement) {
-      const others = [...box.querySelectorAll('button, [role="button"]')]
-        .filter((b) => visible(b) && !emojiOf(b) && !LEAVE_CALL.test(labelOf(b)));
+      const others = [...box.querySelectorAll('button, [role="button"]')].filter(
+        (b) => visible(b) && !emojiOf(b) && !LEAVE_CALL.test(labelOf(b)),
+      );
       if (others.length) return others[others.length - 1];
     }
     return null;
@@ -555,8 +604,10 @@
 
   // The search box of Meet's emoji picker ("Rechercher")
   const SEARCH = /search|recherch/i;
-  const searchBox = () => [...document.querySelectorAll('input')].find((i) => visible(i) && !i.closest(EDITOR)
-    && SEARCH.test(`${i.placeholder} ${labelOf(i)}`));
+  const searchBox = () =>
+    [...document.querySelectorAll('input')].find(
+      (i) => visible(i) && !i.closest(EDITOR) && SEARCH.test(`${i.placeholder} ${labelOf(i)}`),
+    );
 
   // Opens Meet's emoji picker (the "+" at the end of the reactions row) with the cursor in its search:
   // type or paste an emoji there, then pick it
@@ -646,62 +697,70 @@
   let holdTimer = 0; // set while r is down and the reaction picker not shown yet
 
   // Capture phase, so that Meet's own handlers never see the shortcuts
-  window.addEventListener('keydown', (e) => {
-    if (e.isComposing || escaping) return;
-    const el = e.target instanceof Element ? e.target : null;
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.isComposing || escaping) return;
+      const el = e.target instanceof Element ? e.target : null;
 
-    // Shift and the other modifiers alone neither pick nor cancel (on AZERTY, digits need Shift);
-    // r, still held, repeats
-    if (picker) {
-      if (/^(Shift|Control|Alt|Meta|CapsLock|AltGraph)$/.test(e.key)) return;
+      // Shift and the other modifiers alone neither pick nor cancel (on AZERTY, digits need Shift);
+      // r, still held, repeats
+      if (picker) {
+        if (/^(Shift|Control|Alt|Meta|CapsLock|AltGraph)$/.test(e.key)) return;
+        swallow(e);
+        if (e.key === 'r' && e.repeat) return;
+        if (!e.repeat) closePicker(e.code.match(/^(?:Digit|Numpad)([1-9])$/)?.[1]);
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        if (e.metaKey || e.ctrlKey) {
+          swallow(e);
+          closeChat();
+        } else if (help) {
+          swallow(e);
+          toggleHelp();
+        } else if (el?.closest(EDITABLE) && el !== searchBox()) {
+          // Meet's emoji picker closes on Esc by itself
+          swallow(e);
+          leaveChat();
+        }
+        return;
+      }
+
+      if (e.metaKey || e.ctrlKey || e.altKey || el?.closest(EDITABLE)) return;
+      const action = e.key === 'r' || KEYS[e.key];
+      if (!action || (help && e.key !== '?')) return;
       swallow(e);
-      if (e.key === 'r' && e.repeat) return;
-      if (!e.repeat) closePicker(e.code.match(/^(?:Digit|Numpad)([1-9])$/)?.[1]);
-      return;
-    }
 
-    if (e.key === 'Escape') {
-      if (e.metaKey || e.ctrlKey) {
-        swallow(e);
-        closeChat();
-      } else if (help) {
-        swallow(e);
-        toggleHelp();
-      } else if (el?.closest(EDITABLE) && el !== searchBox()) {
-        // Meet's emoji picker closes on Esc by itself
-        swallow(e);
-        leaveChat();
+      // r opens Meet's emoji picker on release, or shows the reaction picker once held
+      if (e.key === 'r') {
+        if (!e.repeat && !holdTimer) {
+          holdTimer = setTimeout(() => {
+            holdTimer = -1;
+            openPicker();
+          }, HOLD_MS);
+        }
+        return;
       }
-      return;
-    }
+      if (!e.repeat) action();
+    },
+    true,
+  );
 
-    if (e.metaKey || e.ctrlKey || e.altKey || el?.closest(EDITABLE)) return;
-    const action = e.key === 'r' || KEYS[e.key];
-    if (!action || (help && e.key !== '?')) return;
-    swallow(e);
-
-    // r opens Meet's emoji picker on release, or shows the reaction picker once held
-    if (e.key === 'r') {
-      if (!e.repeat && !holdTimer) {
-        holdTimer = setTimeout(() => {
-          holdTimer = -1;
-          openPicker();
-        }, HOLD_MS);
+  window.addEventListener(
+    'keyup',
+    (e) => {
+      if (e.key !== 'r' || !holdTimer) return;
+      swallow(e);
+      if (holdTimer > 0) {
+        clearTimeout(holdTimer);
+        emojiPicker();
       }
-      return;
-    }
-    if (!e.repeat) action();
-  }, true);
-
-  window.addEventListener('keyup', (e) => {
-    if (e.key !== 'r' || !holdTimer) return;
-    swallow(e);
-    if (holdTimer > 0) {
-      clearTimeout(holdTimer);
-      emojiPicker();
-    }
-    holdTimer = 0;
-  }, true);
+      holdTimer = 0;
+    },
+    true,
+  );
 
   // A release missed while another window had the focus
   window.addEventListener('blur', () => {

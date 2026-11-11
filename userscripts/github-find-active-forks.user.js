@@ -3,7 +3,7 @@
 // @name         GitHub - Find active Forks button
 // @author       Celuni
 // @description  Adds a button to find active Forks
-// @version      2.1.0
+// @version      2.1.1
 // @match        https://github.com/*
 // @grant        none
 // @run-at       document-idle
@@ -35,8 +35,7 @@
 
   const buildButton = (actions, href) => {
     const reference =
-      actions.querySelector('[data-testid="fork-button"]') ??
-      actions.querySelector('[data-component="Button"]');
+      actions.querySelector('[data-testid="fork-button"]') ?? actions.querySelector('[data-component="Button"]');
 
     const link = document.createElement('a');
     link.id = BUTTON_ID;

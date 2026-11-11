@@ -2,7 +2,7 @@
 // @name         Twitch — Followed channels on the home page
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.1.1
+// @version      1.1.2
 // @description  Replaces the Twitch home page (featured carousel, recommended streams, categories) with the channels you follow: live ones as stream cards, the others as a grid of avatars. The carousel and recommendations are not even fetched, so the carousel's live stream never plays, and the side bar keeps only the followed channels. Also hides the "More options", Prime offers, Bits and Turbo buttons of the top bar, and on channel pages the Bits, upgrade and gift sub buttons, the goals, the chat's goal and leaderboard banner and the Bits, points and bonus buttons.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/twitch-home-following.user.js
@@ -38,13 +38,19 @@
   // ---------- Styles ----------
   const style = document.createElement('style');
   style.textContent = `
-    ${DECLUTTER_TOP_NAV ? `
+    ${
+      DECLUTTER_TOP_NAV
+        ? `
     [data-a-target="top-nav-container"] [data-a-target="ellipsis-button"],
     [data-a-target="top-nav-container"] [data-a-target="prime-offers-icon"],
     [data-a-target="top-nav-container"] [data-a-target="top-nav-get-bits-button"],
     /* The Turbo button is the only labelled button of the top bar once logged in (logged out, those are Log in / Sign up) */
-    html:has([data-a-target="top-nav-avatar"]) [data-a-target="top-nav-container"] button:has([data-a-target="tw-core-button-label-text"]) { display: none !important; }` : ''}
-    ${DECLUTTER_CHANNEL ? `
+    html:has([data-a-target="top-nav-avatar"]) [data-a-target="top-nav-container"] button:has([data-a-target="tw-core-button-label-text"]) { display: none !important; }`
+        : ''
+    }
+    ${
+      DECLUTTER_CHANNEL
+        ? `
     [data-twhf-hidden],
     [data-a-target="top-nav-get-bits-button"],
     [data-a-target="manage-sub-button"],
@@ -54,7 +60,9 @@
     .chat-room__content > div:first-child:has(.tw-transition-group):not(:has([role="log"], .chat-input)),
     [data-test-selector="community-points-summary"] { display: none !important; }
     /* Left of the chat box: the Bits and points balance and the bonus to claim; hidden, not removed, so the settings and Chat buttons stay right */
-    .chat-input__buttons-container > div:first-child:not(:has([data-a-target="chat-settings"], [data-a-target="chat-send-button"])) { visibility: hidden !important; }` : ''}
+    .chat-input__buttons-container > div:first-child:not(:has([data-a-target="chat-settings"], [data-a-target="chat-send-button"])) { visibility: hidden !important; }`
+        : ''
+    }
     /* The side bar keeps only the followed channels: no recommended live channels, categories or "viewers also watch" */
     .side-nav-section:not(:has(.followed-side-nav-header)) { display: none !important; }
     /* Everything of the home page but the followed channels, whatever of it still renders */
@@ -108,36 +116,48 @@
   function hookGraphQL(operations, followedEvent) {
     const blocked = new Set(operations);
     const pageFetch = window.fetch;
-    const stub = (op) => ({ data: null, errors: [{ message: 'Blocked by a userscript' }], extensions: { operationName: op?.operationName } });
+    const stub = (op) => ({
+      data: null,
+      errors: [{ message: 'Blocked by a userscript' }],
+      extensions: { operationName: op?.operationName },
+    });
     const json = (value) => new Response(JSON.stringify(value), { headers: { 'Content-Type': 'application/json' } });
 
     function sideNav(result) {
       const sections = result?.data?.sideNav?.sections;
       if (!sections?.edges) return result;
       sections.edges = sections.edges.filter((e) => e?.node?.id?.startsWith('provider-side-nav-followed-channels'));
-      const logins = sections.edges.flatMap((e) => e.node.content?.edges ?? []).map((e) => e?.node?.login).filter(Boolean);
+      const logins = sections.edges
+        .flatMap((e) => e.node.content?.edges ?? [])
+        .map((e) => e?.node?.login)
+        .filter(Boolean);
       document.dispatchEvent(new CustomEvent(followedEvent, { detail: JSON.stringify(logins) }));
       return result;
     }
 
     window.fetch = function (input, init) {
       try {
-        const url = typeof input === 'string' ? input : input?.url ?? String(input);
-        if (!url.startsWith('https://gql.twitch.tv/gql') || typeof init?.body !== 'string') return pageFetch.call(window, input, init);
+        const url = typeof input === 'string' ? input : (input?.url ?? String(input));
+        if (!url.startsWith('https://gql.twitch.tv/gql') || typeof init?.body !== 'string')
+          return pageFetch.call(window, input, init);
         const body = JSON.parse(init.body);
         const ops = Array.isArray(body) ? body : [body];
         const home = location.pathname === '/';
         const drop = ops.map((op) => home && blocked.has(op?.operationName));
-        if (!drop.includes(true) && !ops.some((op) => op?.operationName === 'SideNav')) return pageFetch.call(window, input, init);
+        if (!drop.includes(true) && !ops.some((op) => op?.operationName === 'SideNav'))
+          return pageFetch.call(window, input, init);
         // Put the answers back in the batch's order, as Twitch matches them by position
         const answer = (results) => {
           let k = 0;
-          const all = ops.map((op, i) => (drop[i] ? stub(op) : op?.operationName === 'SideNav' ? sideNav(results[k++]) : results[k++]));
+          const all = ops.map((op, i) =>
+            drop[i] ? stub(op) : op?.operationName === 'SideNav' ? sideNav(results[k++]) : results[k++],
+          );
           return json(Array.isArray(body) ? all : all[0]);
         };
         const kept = ops.filter((_, i) => !drop[i]);
         if (!kept.length) return Promise.resolve(answer([]));
-        return pageFetch.call(window, input, { ...init, body: JSON.stringify(Array.isArray(body) ? kept : kept[0]) })
+        return pageFetch
+          .call(window, input, { ...init, body: JSON.stringify(Array.isArray(body) ? kept : kept[0]) })
           .then((res) => res.json())
           .then((results) => answer(Array.isArray(results) ? results : [results]));
       } catch {
@@ -208,53 +228,90 @@
     const href = `/${c.login}`;
     // Cache-bust the preview so a refresh shows a current frame
     const preview = `${c.stream.previewImageURL}?t=${Math.floor(Date.now() / REFRESH_MS)}`;
-    return el('li', {},
-      el('a', { className: 'twhf-thumb', href, title: c.stream.title },
+    return el(
+      'li',
+      {},
+      el(
+        'a',
+        { className: 'twhf-thumb', href, title: c.stream.title },
         el('img', { src: preview, alt: '', loading: 'lazy' }),
         el('span', { className: 'twhf-badge', textContent: 'Live' }),
-        el('span', { className: 'twhf-viewers', textContent: `${number.format(c.stream.viewersCount)} viewers` })),
-      el('div', { className: 'twhf-meta' },
+        el('span', { className: 'twhf-viewers', textContent: `${number.format(c.stream.viewersCount)} viewers` }),
+      ),
+      el(
+        'div',
+        { className: 'twhf-meta' },
         el('a', { href }, el('img', { src: c.profileImageURL, alt: '', loading: 'lazy' })),
-        el('div', {},
-          el('a', { href, title: c.stream.title }, el('p', { className: 'twhf-title', textContent: c.stream.title || c.displayName })),
+        el(
+          'div',
+          {},
+          el(
+            'a',
+            { href, title: c.stream.title },
+            el('p', { className: 'twhf-title', textContent: c.stream.title || c.displayName }),
+          ),
           el('a', { href }, el('p', { textContent: c.displayName })),
-          el('p', { textContent: c.stream.game?.displayName ?? '' }))));
+          el('p', { textContent: c.stream.game?.displayName ?? '' }),
+        ),
+      ),
+    );
   }
 
   function offlineCard(c) {
     const last = c.lastBroadcast?.startedAt;
-    return el('li', {},
-      el('a', { href: `/${c.login}`, title: last ? `${c.displayName} — last live ${since(last)}` : c.displayName },
+    return el(
+      'li',
+      {},
+      el(
+        'a',
+        { href: `/${c.login}`, title: last ? `${c.displayName} — last live ${since(last)}` : c.displayName },
         el('img', { src: c.profileImageURL, alt: '', loading: 'lazy' }),
         el('span', { className: 'twhf-name', textContent: c.displayName }),
-        el('span', { className: 'twhf-since', textContent: since(last) })));
+        el('span', { className: 'twhf-since', textContent: since(last) }),
+      ),
+    );
   }
 
   function head() {
-    return el('div', { className: 'twhf-head' },
+    return el(
+      'div',
+      { className: 'twhf-head' },
       el('h2', { textContent: 'Followed channels' }),
-      el('a', { href: '/directory/following', textContent: 'Following page' }));
+      el('a', { href: '/directory/following', textContent: 'Following page' }),
+    );
   }
 
   function build(channels) {
     // Not a list: the reason there is none (logged out, loading, API error)
-    if (typeof channels === 'string') return el('section', { id: GRID_ID }, head(), el('p', { className: 'twhf-status', textContent: channels }));
+    if (typeof channels === 'string')
+      return el('section', { id: GRID_ID }, head(), el('p', { className: 'twhf-status', textContent: channels }));
     const live = channels.filter((c) => c.stream).sort((x, y) => y.stream.viewersCount - x.stream.viewersCount);
-    const offline = channels.filter((c) => !c.stream)
+    const offline = channels
+      .filter((c) => !c.stream)
       .sort((x, y) => (y.lastBroadcast?.startedAt ?? '').localeCompare(x.lastBroadcast?.startedAt ?? ''));
-    return el('section', { id: GRID_ID },
+    return el(
+      'section',
+      { id: GRID_ID },
       head(),
       ...(live.length
-        ? [el('h3', { textContent: `Live (${live.length})` }), el('ul', { className: 'twhf-live' }, ...live.map(liveCard))]
+        ? [
+            el('h3', { textContent: `Live (${live.length})` }),
+            el('ul', { className: 'twhf-live' }, ...live.map(liveCard)),
+          ]
         : [el('h3', { textContent: 'Nobody you follow is live' })]),
       ...(offline.length
-        ? [el('h3', { textContent: `Offline (${offline.length})` }), el('ul', { className: 'twhf-offline' }, ...offline.map(offlineCard))]
-        : []));
+        ? [
+            el('h3', { textContent: `Offline (${offline.length})` }),
+            el('ul', { className: 'twhf-offline' }, ...offline.map(offlineCard)),
+          ]
+        : []),
+    );
   }
 
   // ---------- Channel page buttons ----------
   // Hiding a button alone leaves the spacing of its wrappers: hide the outermost wrapper that holds only it
-  const CHANNEL_BUTTONS = '[data-a-target="top-nav-get-bits-button"], [data-a-target="manage-sub-button"], [data-a-target="gift-button"]';
+  const CHANNEL_BUTTONS =
+    '[data-a-target="top-nav-get-bits-button"], [data-a-target="manage-sub-button"], [data-a-target="gift-button"]';
 
   function hideChannelButtons() {
     // React may reuse a wrapper for another button: unhide those that no longer hold one
@@ -264,7 +321,8 @@
     for (const button of document.querySelectorAll(CHANNEL_BUTTONS)) {
       if (button.closest('[data-a-target="top-nav-container"]')) continue; // the top bar has its own rules
       let node = button;
-      while (node.parentElement?.childElementCount === 1 && node.parentElement !== document.body) node = node.parentElement;
+      while (node.parentElement?.childElementCount === 1 && node.parentElement !== document.body)
+        node = node.parentElement;
       node.dataset.twhfHidden = '';
     }
   }
@@ -300,7 +358,10 @@
     document.documentElement.toggleAttribute('data-twhf-home', home);
     const main = home ? document.querySelector(MAIN) : null;
     const existing = document.getElementById(GRID_ID);
-    if (!main) { existing?.remove(); return; }
+    if (!main) {
+      existing?.remove();
+      return;
+    }
     if (Date.now() - fetchedAt > REFRESH_MS) refresh();
     // Should the carousel still load, its hidden player would keep playing the featured stream
     for (const video of document.querySelectorAll('[data-a-target="front-page-carousel"] video')) {
@@ -316,7 +377,10 @@
   new MutationObserver(() => {
     if (queued) return;
     queued = true;
-    requestAnimationFrame(() => { queued = false; run(); });
+    requestAnimationFrame(() => {
+      queued = false;
+      run();
+    });
   }).observe(document.documentElement, { childList: true, subtree: true });
   setInterval(run, REFRESH_MS);
   run();

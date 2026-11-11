@@ -2,7 +2,7 @@
 // @name         YouTube — Fold related videos
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.1.1
+// @version      1.1.2
 // @description  Folds the right column of a YouTube video (filter chips and related videos) so the video takes its space; a small round button on the right edge unfolds it. The choice is remembered.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/youtube-fold-related.user.js
@@ -78,8 +78,13 @@
     const path = document.createElementNS(SVG_NS, 'path');
     path.setAttribute('d', 'M7 4l6 6-6 6'); // › : push the column out; rotated ‹ to pull it back
     for (const [k, v] of Object.entries({
-      fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-    })) path.setAttribute(k, v);
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': '2',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+    }))
+      path.setAttribute(k, v);
     svg.appendChild(path);
     return svg;
   }
@@ -129,7 +134,10 @@
   new MutationObserver(() => {
     if (queued) return;
     queued = true;
-    requestAnimationFrame(() => { queued = false; run(); });
+    requestAnimationFrame(() => {
+      queued = false;
+      run();
+    });
   }).observe(document.documentElement, { childList: true, subtree: true });
   window.addEventListener('yt-navigate-finish', run);
 })();

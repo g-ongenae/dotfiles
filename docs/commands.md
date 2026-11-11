@@ -108,6 +108,8 @@ wrappers around three of them.
 | --- | --- |
 | `./install.sh` | install or update this machine — see the [README](../README.md#install) |
 | `./scripts/lint.sh [--fix]` | shfmt and ShellCheck over every shell file |
+| `npm run lint` / `npm run lint:fix` | ESLint and Prettier over every JavaScript file |
+| `python3 scripts/check-userscript-versions.py origin/main` | fail when a changed userscript kept its `@version` |
 | `bash scripts/t3.sh …` | the script behind `t3`, usable on a host without this checkout |
 | `bash scripts/print-pretty.sh '@b@green[[Done]]'` | echo with colour markup, for your own scripts |
 | `python3 scripts/t3-service.py setup` | create the T3 Code user service; `t3 setup` calls this |

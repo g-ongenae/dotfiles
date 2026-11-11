@@ -2,7 +2,7 @@
 // @name         Slack — Fold sidebar
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.0.1
+// @version      1.0.2
 // @description  Adds a button left of the back/forward arrows of Slack's top bar that folds the sidebar (workspace name, channels, DMs…) so the conversation takes its space. The choice is remembered.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/slack-fold-sidebar.user.js
@@ -62,12 +62,19 @@
     const svg = document.createElementNS(SVG_NS, 'svg');
     svg.setAttribute('viewBox', '0 0 20 20');
     svg.setAttribute('aria-hidden', 'true');
-    for (const d of ['M3.75 3.5h12.5c.69 0 1.25.56 1.25 1.25v10.5c0 .69-.56 1.25-1.25 1.25H3.75c-.69 0-1.25-.56-1.25-1.25V4.75c0-.69.56-1.25 1.25-1.25Z', 'M7.5 3.5v13']) {
+    for (const d of [
+      'M3.75 3.5h12.5c.69 0 1.25.56 1.25 1.25v10.5c0 .69-.56 1.25-1.25 1.25H3.75c-.69 0-1.25-.56-1.25-1.25V4.75c0-.69.56-1.25 1.25-1.25Z',
+      'M7.5 3.5v13',
+    ]) {
       const path = document.createElementNS(SVG_NS, 'path');
       path.setAttribute('d', d);
       for (const [k, v] of Object.entries({
-        fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linejoin': 'round',
-      })) path.setAttribute(k, v);
+        fill: 'none',
+        stroke: 'currentColor',
+        'stroke-width': '1.5',
+        'stroke-linejoin': 'round',
+      }))
+        path.setAttribute(k, v);
       svg.appendChild(path);
     }
     return svg;
@@ -103,6 +110,9 @@
   new MutationObserver(() => {
     if (queued) return;
     queued = true;
-    requestAnimationFrame(() => { queued = false; run(); });
+    requestAnimationFrame(() => {
+      queued = false;
+      run();
+    });
   }).observe(document.documentElement, { childList: true, subtree: true });
 })();

@@ -1,0 +1,16 @@
+{
+  "name": "dotfiles",
+  "private": true,
+  "description": "Development tooling for the JavaScript files of this repository",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint . && prettier --check \"**/*.{js,mjs}\"",
+    "lint:fix": "eslint --fix . && prettier --write \"**/*.{js,mjs}\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.0"
+  }
+}

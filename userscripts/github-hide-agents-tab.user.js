@@ -2,7 +2,7 @@
 // @name         GitHub — Hide the Agents tab
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.3.0
+// @version      1.3.1
 // @description  Hides the "Agents" tab of the repository navigation bar, its entry in the overflow menu shown on narrow windows, the Copilot button (and its dropdown) of the page header, and the Copilot panel button of the pull request header.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/github-hide-agents-tab.user.js
@@ -41,7 +41,8 @@
   const COPILOT_ICON = 'header :is(button, a):has(svg.octicon-copilot)';
   // The Copilot panel button of the pull request header (Overview and Files changed), right of
   // "Submit review": unlabelled too, so matched by its icon, with the tooltip wrapped next to it
-  const COPILOT_PANEL = '[data-testid="diff-comparison-viewer-sticky-header-bar"] div:has(> button > svg.octicon-copilot)';
+  const COPILOT_PANEL =
+    '[data-testid="diff-comparison-viewer-sticky-header-bar"] div:has(> button > svg.octicon-copilot)';
 
   // ---------- Styles ----------
   // Injected at document-start so the tab never flashes

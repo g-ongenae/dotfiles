@@ -1,0 +1,2 @@
+# Vendored Zsh plugins are upstream submodules, not ours to reformat.
+zsh/plugins/

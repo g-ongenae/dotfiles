@@ -2,7 +2,7 @@
 // @name         LinkedIn — Declutter & wide feed
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.4.9
+// @version      1.4.10
 // @description  Hides Jobs, For Business, Premium upsells, Groups/Newsletters/Events, the footer and the right rail; widens the feed and single posts and lays out the posts of company and profile pages like the feed; moves the composer to the left column; shows post images beside the text; adds panel buttons folding the left column of the feed and the side column of company and profile pages (folded by default); removes "Show translation" on French/English posts.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/linkedin-declutter.user.js
@@ -161,7 +161,9 @@
   });
   const watched = new WeakSet();
 
-  const hide = (el, reason = '') => { if (el && !el.hasAttribute(HIDE)) el.setAttribute(HIDE, reason); };
+  const hide = (el, reason = '') => {
+    if (el && !el.hasAttribute(HIDE)) el.setAttribute(HIDE, reason);
+  };
 
   /** Climb from `el` to the ancestor that is a sibling-level block of `other` (i.e. whose parent contains `other`). */
   function blockOf(el, other) {
@@ -204,7 +206,10 @@
     const t = n.nodeValue.trim();
     if (!t || t.length > 40 || !n.parentElement) return;
     for (const k in RX) {
-      if (RX[k].test(t)) { found[k].add(n.parentElement); return; }
+      if (RX[k].test(t)) {
+        found[k].add(n.parentElement);
+        return;
+      }
     }
   }
 
@@ -214,7 +219,10 @@
     for (const k in found) for (const el of found[k]) if (!el.isConnected) found[k].delete(el);
     for (const root of roots) {
       if (!root.isConnected) continue;
-      if (root.nodeType === Node.TEXT_NODE) { classify(root); continue; }
+      if (root.nodeType === Node.TEXT_NODE) {
+        classify(root);
+        continue;
+      }
       if (root.nodeType !== Node.ELEMENT_NODE) continue;
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
       for (let n = walker.nextNode(); n; n = walker.nextNode()) classify(n);
@@ -224,15 +232,17 @@
 
   // ---------- Language detection (stop-word scoring) ----------
   // Order matters: on a tie the first language wins, so fr/en come last to stay conservative.
-  const STOP = Object.fromEntries(Object.entries({
-    es: 'el los las una del y es por para con que en se no lo al su como más pero muy está son este esta de la',
-    it: 'il lo gli una di e è che per con non sono del della nel come più ma anche questo la',
-    pt: 'o os as um uma do da dos das e é não para com que em no na por mais mas como muito são de',
-    de: 'der die das und ist nicht ich du wir sie mit für auf ein eine zu den dem von auch es sich',
-    nl: 'de het een en is van op te dat niet ik je we met voor zijn maar ook om',
-    fr: 'le la les une des du de et est pas pour qui dans sur avec ce cette ces sont mais au aux il elle ils nous vous je ne plus son sa ses leur être fait très tout comme bien aussi qu c j',
-    en: 'the and is are was were to of in on for with that this it be not you we they have has but at by from your our will can just what about',
-  }).map(([lang, words]) => [lang, new Set(words.split(' '))]));
+  const STOP = Object.fromEntries(
+    Object.entries({
+      es: 'el los las una del y es por para con que en se no lo al su como más pero muy está son este esta de la',
+      it: 'il lo gli una di e è che per con non sono del della nel come più ma anche questo la',
+      pt: 'o os as um uma do da dos das e é não para com que em no na por mais mas como muito são de',
+      de: 'der die das und ist nicht ich du wir sie mit für auf ein eine zu den dem von auch es sich',
+      nl: 'de het een en is van op te dat niet ik je we met voor zijn maar ook om',
+      fr: 'le la les une des du de et est pas pour qui dans sur avec ce cette ces sont mais au aux il elle ils nous vous je ne plus son sa ses leur être fait très tout comme bien aussi qu c j',
+      en: 'the and is are was were to of in on for with that this it be not you we they have has but at by from your our will can just what about',
+    }).map(([lang, words]) => [lang, new Set(words.split(' '))]),
+  );
 
   function detectLang(text) {
     const words = text.toLowerCase().match(/\p{L}+/gu) || [];
@@ -242,7 +252,10 @@
     for (const [lang, set] of Object.entries(STOP)) {
       let score = 0;
       for (const w of words) if (set.has(w)) score++;
-      if (score > bestScore) { best = lang; bestScore = score; }
+      if (score > bestScore) {
+        best = lang;
+        bestScore = score;
+      }
     }
     return bestScore >= 2 && bestScore / words.length >= 0.08 ? best : null;
   }
@@ -305,7 +318,8 @@
     // Quote repost: the media belongs to the quoted post (a card with its own text, no <h2>).
     // Lay out that card instead of pushing the whole of it beside the reposter's text.
     const quoted = box.parentElement.closest(`:has(${TEXT_BOX})`);
-    if (quoted && post.contains(quoted) && quoted !== post && !box.contains(quoted.querySelector(TEXT_BOX))) post = quoted;
+    if (quoted && post.contains(quoted) && quoted !== post && !box.contains(quoted.querySelector(TEXT_BOX)))
+      post = quoted;
     if (post.hasAttribute(POST)) return;
     let item = box;
     while (item.parentElement !== post) item = item.parentElement;
@@ -373,8 +387,13 @@
     const path = document.createElementNS(SVG_NS, 'path');
     path.setAttribute('d', ICONS[name]);
     for (const [k, v] of Object.entries({
-      fill: 'none', stroke: 'currentColor', 'stroke-width': '1.8', 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-    })) path.setAttribute(k, v);
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': '1.8',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+    }))
+      path.setAttribute(k, v);
     svg.appendChild(path);
     return svg;
   }
@@ -440,16 +459,29 @@
     const cs = getComputedStyle(text);
     const lineH = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.43;
     const textMin = Math.min(text.scrollHeight, 3 * lineH); // LinkedIn's 3 lines at least
-    const mediaH = Math.round(Math.min(frame.parentElement.getBoundingClientRect().width * (h / w), span - textMin - CARD_GAP_PX));
+    const mediaH = Math.round(
+      Math.min(frame.parentElement.getBoundingClientRect().width * (h / w), span - textMin - CARD_GAP_PX),
+    );
     if (mediaH < 100) return;
     for (const el of chain) {
       for (const [k, v] of Object.entries({
-        width: '100%', height: `${mediaH}px`, 'max-width': 'none', 'max-height': 'none', 'padding-top': '0', 'padding-bottom': '0',
-      })) el.style.setProperty(k, v, 'important');
+        width: '100%',
+        height: `${mediaH}px`,
+        'max-width': 'none',
+        'max-height': 'none',
+        'padding-top': '0',
+        'padding-bottom': '0',
+      }))
+        el.style.setProperty(k, v, 'important');
     }
     for (const [k, v] of Object.entries({
-      width: '100%', height: `${mediaH}px`, 'max-width': 'none', 'max-height': 'none', 'object-fit': 'contain',
-    })) media.style.setProperty(k, v, 'important');
+      width: '100%',
+      height: `${mediaH}px`,
+      'max-width': 'none',
+      'max-height': 'none',
+      'object-fit': 'contain',
+    }))
+      media.style.setProperty(k, v, 'important');
     const room = span - mediaH - CARD_GAP_PX;
     text.style.setProperty('--lkc-max', `${Math.max(3, Math.floor(room / lineH)) * lineH}px`);
     card.setAttribute(CARD, String(cardW));
@@ -553,7 +585,8 @@
     let box = el;
     for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
       // While LinkedIn re-renders a page it is nearly empty: never climb to the app root then
-      if (p.querySelector(`h1, h2, ${TEXT_BOX}, [role="listitem"]`) || p.textContent.length > 1500 || holdsPage(p, bar)) break;
+      if (p.querySelector(`h1, h2, ${TEXT_BOX}, [role="listitem"]`) || p.textContent.length > 1500 || holdsPage(p, bar))
+        break;
       box = p;
     }
     return box === el ? null : box;
@@ -722,10 +755,13 @@
     const isGrid = getComputedStyle(grid).display.includes('grid');
     // Without "Saved items" (single post), the left column is whatever sits left of the center one
     const cLeft = centerCol.getBoundingClientRect().left;
-    const left = leftCol && leftCol.parentElement === grid ? leftCol : [...grid.children].find((c) => {
-      const r = c.getBoundingClientRect();
-      return c !== centerCol && !c.hasAttribute(HIDE) && r.width > 0 && r.right <= cLeft + 1;
-    }) || null;
+    const left =
+      leftCol && leftCol.parentElement === grid
+        ? leftCol
+        : [...grid.children].find((c) => {
+            const r = c.getBoundingClientRect();
+            return c !== centerCol && !c.hasAttribute(HIDE) && r.width > 0 && r.right <= cLeft + 1;
+          }) || null;
     if (isGrid) {
       const lw = left ? Math.round(left.getBoundingClientRect().width) : 0;
       if (left && !lw) return; // not laid out yet, retry on next pass
@@ -776,28 +812,39 @@
     const wide = onFeed || onPost; // right rail hidden, center column widened
     const onPage = /^\/(company|in|school|showcase)\//.test(path);
 
-    const startPost = [document.getElementById('shareboxProfilePictureComponentRef'), ...f.startPost]
-      .find((el) => el && !el.closest(`[${MOVED}]`));
-    const center = startPost
-      || (composerHome && composerHome.isConnected ? composerHome : null)
-      || document.querySelector('main [data-urn*="activity"], main [data-id*="activity"]')
+    const startPost = [document.getElementById('shareboxProfilePictureComponentRef'), ...f.startPost].find(
+      (el) => el && !el.closest(`[${MOVED}]`),
+    );
+    const center =
+      startPost ||
+      (composerHome && composerHome.isConnected ? composerHome : null) ||
+      document.querySelector('main [data-urn*="activity"], main [data-id*="activity"]') ||
       // (not the text of the image viewer: the "right rail" next to it would be the whole page)
-      || (onPost ? [...document.querySelectorAll(TEXT_BOX)].find((t) => !inOverlay(t)) : null);
+      (onPost ? [...document.querySelectorAll(TEXT_BOX)].find((t) => !inOverlay(t)) : null);
     const rightAnchor = f.puzzles[0] || f.addFeed[0] || f.copyright[0];
     const saved = document.querySelector('a[href*="/my-items"]');
     const centerCol = center && blockOf(center, rightAnchor || saved);
 
     // Top navigation: Jobs, For Business, Premium
-    const bar = topBar(f.me.find((el) => {
-      const r = el.getBoundingClientRect();
-      return r.height > 0 && r.bottom < 120;
-    }));
+    const bar = topBar(
+      f.me.find((el) => {
+        const r = el.getBoundingClientRect();
+        return r.height > 0 && r.bottom < 120;
+      }),
+    );
     // Safety net: a box hidden mid re-render that turns out to hold the whole page is shown again
     // (once hidden, "Me" has no size and `bar` is not found: any "Me" will do for the rules that climb)
     for (const el of [document.querySelector('main'), bar, ...f.me]) {
       const blank = el && el.closest(`[${HIDE}]`);
-      if (!blank || (el !== bar && !blank.querySelector('main') && !['rail', 'footer'].includes(blank.getAttribute(HIDE)))) continue;
-      console.warn(`[linkedin-declutter] unhid a box holding the page (hidden as "${blank.getAttribute(HIDE)}")`, blank);
+      if (
+        !blank ||
+        (el !== bar && !blank.querySelector('main') && !['rail', 'footer'].includes(blank.getAttribute(HIDE)))
+      )
+        continue;
+      console.warn(
+        `[linkedin-declutter] unhid a box holding the page (hidden as "${blank.getAttribute(HIDE)}")`,
+        blank,
+      );
       blank.removeAttribute(HIDE);
     }
     const inTopBar = (el) => !!bar && bar.contains(el);
@@ -918,13 +965,19 @@
     // Composer and feed sort go below "Saved items" (feed page only).
     // Runs after the layout code above, which locates the feed column through the composer.
     // The composer is a listitem too: the first real post is the first listitem without it
-    const firstPost = centerCol && [...centerCol.querySelectorAll('[role="listitem"]')]
-      .find((li) => !(startPost && li.contains(startPost)) && !f.feedView.some((e) => li.contains(e)));
+    const firstPost =
+      centerCol &&
+      [...centerCol.querySelectorAll('[role="listitem"]')].find(
+        (li) => !(startPost && li.contains(startPost)) && !f.feedView.some((e) => li.contains(e)),
+      );
     // The left column stretches to the feed height: insert into the card stack, right after "Saved items"
     const profile = leftCol && leftCol.querySelector('a[href*="/in/"]');
     const savedCard = profile && blockOf(saved, profile);
     if (onFeed && savedCard && firstPost) {
-      const moves = [['composer', startPost], ['sort', f.feedView.find((e) => centerCol.contains(e))]];
+      const moves = [
+        ['composer', startPost],
+        ['sort', f.feedView.find((e) => centerCol.contains(e))],
+      ];
       for (const [kind, el] of moves) {
         const block = el && blockOf(el, firstPost);
         if (!block || block === centerCol || !centerCol.contains(block)) continue;
@@ -950,7 +1003,10 @@
 
     // Pause videos once they leave the screen (they keep buffering otherwise)
     for (const v of document.querySelectorAll('video')) {
-      if (!watched.has(v)) { watched.add(v); offscreen.observe(v); }
+      if (!watched.has(v)) {
+        watched.add(v);
+        offscreen.observe(v);
+      }
     }
 
     // "Recommended for you" (people to follow) cards in the feed
@@ -966,8 +1022,7 @@
       const lang = detectLang(text);
       if (lang === 'fr' || lang === 'en') {
         const parent = btn.parentElement;
-        const onlyChild = parent && parent.children.length === 1
-          && parent.innerText.trim() === btn.innerText.trim();
+        const onlyChild = parent && parent.children.length === 1 && parent.innerText.trim() === btn.innerText.trim();
         hide(onlyChild ? parent : btn);
       }
     }
@@ -981,7 +1036,10 @@
   const schedule = () => {
     if (queued) return;
     queued = true;
-    idle(() => { queued = false; run(); });
+    idle(() => {
+      queued = false;
+      run();
+    });
   };
   new MutationObserver((records) => {
     for (const r of records) pendingRoots.push(...r.addedNodes);

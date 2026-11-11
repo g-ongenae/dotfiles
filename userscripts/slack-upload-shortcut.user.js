@@ -2,7 +2,7 @@
 // @name         Slack — Upload shortcut
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.2.0
+// @version      1.2.1
 // @description  Cmd+U (Ctrl+U off macOS) opens the file picker of the message composer, like "Upload from your computer" in its "+" menu. It only fires from a composer or the conversation, not from the search box or other inputs.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/slack-upload-shortcut.user.js
@@ -75,14 +75,18 @@
   const useMeta = MODIFIER === 'auto' ? isMac : MODIFIER === 'meta';
 
   // Capture phase, so Slack's own handlers (and the browser's) never see the shortcut
-  window.addEventListener('keydown', (e) => {
-    if (e.isComposing) return;
-    const modifier = useMeta ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey;
-    if (!modifier || e.altKey || e.shiftKey || e.code !== 'KeyU' || e.repeat) return;
-    const box = composer();
-    if (!box) return;
-    e.preventDefault();
-    e.stopPropagation();
-    openUpload(box);
-  }, true);
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.isComposing) return;
+      const modifier = useMeta ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey;
+      if (!modifier || e.altKey || e.shiftKey || e.code !== 'KeyU' || e.repeat) return;
+      const box = composer();
+      if (!box) return;
+      e.preventDefault();
+      e.stopPropagation();
+      openUpload(box);
+    },
+    true,
+  );
 })();

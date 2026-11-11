@@ -2,7 +2,7 @@
 // @name         Google Meet — Float call controls
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.1.1
+// @version      1.1.2
 // @description  Gives the videos the whole window in a Google Meet call: the tiles stretch to fill it, and the call controls (and the reactions row) either float over the bottom of the video, fading out when the mouse rests, or fold against the side, opening on hover. A button next to the controls switches between docked, floating and side; the choice is remembered. Also hides the Gemini button.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/google-meet-float-controls.user.js
@@ -129,8 +129,16 @@
     svg.setAttribute('aria-hidden', 'true');
     const frame = document.createElementNS(SVG_NS, 'rect');
     for (const [k, v] of Object.entries({
-      x: 3, y: 4, width: 18, height: 16, rx: 2, fill: 'none', stroke: 'currentColor', 'stroke-width': 2,
-    })) frame.setAttribute(k, v);
+      x: 3,
+      y: 4,
+      width: 18,
+      height: 16,
+      rx: 2,
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': 2,
+    }))
+      frame.setAttribute(k, v);
     const bar = document.createElementNS(SVG_NS, 'rect');
     const b = BARS[m];
     for (const [k, v] of Object.entries({ x: b.x, y: b.y, width: b.w, height: b.h, rx: 1, fill: 'currentColor' })) {
@@ -173,12 +181,17 @@
   const SIDES = ['left', 'top', 'width', 'height'];
   const boxOf = (el) => SIDES.map((k) => parseFloat(el.style[k]));
   const same = (a, b) => !!a && !!b && a.every((v, i) => Math.abs(v - b[i]) < 0.5);
-  const setBox = (el, b) => SIDES.forEach((k, i) => { el.style[k] = `${b[i]}px`; });
+  const setBox = (el, b) =>
+    SIDES.forEach((k, i) => {
+      el.style[k] = `${b[i]}px`;
+    });
 
   let stage = null;
   function layout() {
     if (!stage) return;
-    const tiles = [...stage.children].filter((el) => el.style.width.endsWith('px') && el.querySelector('[data-participant-id]'));
+    const tiles = [...stage.children].filter(
+      (el) => el.style.width.endsWith('px') && el.querySelector('[data-participant-id]'),
+    );
     for (const el of tiles) {
       const b = boxOf(el);
       if (!same(b, ourBox.get(el))) meetBox.set(el, b);
@@ -220,13 +233,21 @@
   function queueLayout() {
     if (layoutQueued) return;
     layoutQueued = true;
-    requestAnimationFrame(() => { layoutQueued = false; layout(); });
+    requestAnimationFrame(() => {
+      layoutQueued = false;
+      layout();
+    });
   }
   const stageResized = new ResizeObserver(queueLayout);
   // A tile moved, came or went, or its video was re-cropped
   const stageChanged = new MutationObserver((records) => {
-    if (records.some((r) => r.target === stage || r.target.parentElement === stage
-      || r.target.firstElementChild?.tagName === 'VIDEO')) queueLayout();
+    if (
+      records.some(
+        (r) =>
+          r.target === stage || r.target.parentElement === stage || r.target.firstElementChild?.tagName === 'VIDEO',
+      )
+    )
+      queueLayout();
   });
 
   // ---------- Idle fade ----------
@@ -286,7 +307,10 @@
   new MutationObserver(() => {
     if (queued) return;
     queued = true;
-    requestAnimationFrame(() => { queued = false; run(); });
+    requestAnimationFrame(() => {
+      queued = false;
+      run();
+    });
   }).observe(document.documentElement, { childList: true, subtree: true });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
   else run();

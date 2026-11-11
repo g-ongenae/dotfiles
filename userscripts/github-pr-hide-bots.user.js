@@ -2,7 +2,7 @@
 // @name         GitHub — Hide bots on pull requests
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.1.0
+// @version      1.1.1
 // @description  Adds a "Hide bots" button to pull request conversations: it hides the comments and reviews of bots and AI reviewers (except SonarCloud, Socket and algoanbot), the replies written by Claude (Co-Authored-By: Claude … noreply@anthropic.com or 🤖 Generated with Claude Code), the @coderabbitai review commands, the resolved threads and the timeline events, leaving the description, the commits, the human comments and the linked issues and pull requests. Works on the Overview preview (the button sits left of All / Unresolved / Mine) and on the classic conversation (in the page header). The choice is remembered.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/github-pr-hide-bots.user.js
@@ -51,7 +51,9 @@
 
   function isBot(a) {
     if (!a || KEEP_BOTS.includes(login(a))) return false;
-    return /\/apps\//.test(a.getAttribute('href') || '') || /[?&]bot=|%5Bbot%5D|\[bot\]/i.test(a.dataset.hovercardUrl || '');
+    return (
+      /\/apps\//.test(a.getAttribute('href') || '') || /[?&]bot=|%5Bbot%5D|\[bot\]/i.test(a.dataset.hovercardUrl || '')
+    );
   }
 
   const isNoiseText = (text) => AUTO_REPLY.test(text) || BOT_COMMAND.test(text);
@@ -82,7 +84,8 @@
   }
 
   // Elements of root not inside a nested <article> (its threads), and these threads themselves
-  const own = (root, sel) => [...root.querySelectorAll(sel)].filter((el) => el.parentElement.closest('article') === root);
+  const own = (root, sel) =>
+    [...root.querySelectorAll(sel)].filter((el) => el.parentElement.closest('article') === root);
 
   function classifyOverviewReview(item, review) {
     const author = own(review, AUTHOR)[0];
@@ -90,24 +93,36 @@
     const hidden = [];
     let visibleThreads = 0;
     for (const thread of own(review, 'article')) {
-      if (thread.querySelector('[aria-label^="Unresolve conversation"]')) { hidden.push(thread); continue; }
+      if (thread.querySelector('[aria-label^="Unresolve conversation"]')) {
+        hidden.push(thread);
+        continue;
+      }
       // Each comment: the widest block around its header holding no other comment
-      const comments = [...thread.querySelectorAll(HEADER)]
-        .map((h) => widest(h, thread, (p) => p.querySelectorAll(HEADER).length === 1));
+      const comments = [...thread.querySelectorAll(HEADER)].map((h) =>
+        widest(h, thread, (p) => p.querySelectorAll(HEADER).length === 1),
+      );
       // Folded and not loaded: started by the review's author, so as noisy as the review
       const noise = comments.length ? comments.map(isNoise) : [bot];
-      if (noise.every(Boolean)) { hidden.push(thread); continue; }
+      if (noise.every(Boolean)) {
+        hidden.push(thread);
+        continue;
+      }
       visibleThreads++;
       // Keep the first comment for context, even a bot's, when a human answered it
-      comments.forEach((c, i) => { if (i > 0 && noise[i]) hidden.push(c); });
+      comments.forEach((c, i) => {
+        if (i > 0 && noise[i]) hidden.push(c);
+      });
     }
 
     const body = own(review, BODY)[0];
     const text = body?.textContent.trim() || '';
     const humanBody = !bot && text !== '' && !isNoiseText(text);
     const header = own(review, HEADER)[0];
-    const verdict = !bot && !!header && (!!header.querySelector('[class*="approvedStatus"]')
-      || [...header.querySelectorAll('span')].some((s) => VERDICT.test(s.textContent.trim())));
+    const verdict =
+      !bot &&
+      !!header &&
+      (!!header.querySelector('[class*="approvedStatus"]') ||
+        [...header.querySelectorAll('span')].some((s) => VERDICT.test(s.textContent.trim())));
 
     if (!humanBody && !visibleThreads && !verdict) return [item];
     // The body without the threads that follow it
@@ -153,15 +168,26 @@
     const hidden = [];
     let visibleThreads = 0;
     for (const thread of item.querySelectorAll('.js-resolvable-timeline-thread-container')) {
-      if (thread.dataset.resolved === 'true') { hidden.push(thread); continue; }
+      if (thread.dataset.resolved === 'true') {
+        hidden.push(thread);
+        continue;
+      }
       const comments = [...thread.querySelectorAll('.js-comments-holder > [id^="discussion_r"]')];
       // Not loaded yet: leave it, it is classified once its comments arrive
-      if (!comments.length && thread.querySelector('include-fragment')) { visibleThreads++; continue; }
+      if (!comments.length && thread.querySelector('include-fragment')) {
+        visibleThreads++;
+        continue;
+      }
       const noise = comments.map(isNoise);
-      if (noise.every(Boolean)) { hidden.push(thread); continue; }
+      if (noise.every(Boolean)) {
+        hidden.push(thread);
+        continue;
+      }
       visibleThreads++;
       // Keep the first comment for context, even a bot's, when a human answered it
-      comments.forEach((c, i) => { if (i > 0 && noise[i]) hidden.push(c); });
+      comments.forEach((c, i) => {
+        if (i > 0 && noise[i]) hidden.push(c);
+      });
     }
 
     const bot = isBot(item.querySelector('a.author'));
@@ -169,7 +195,8 @@
     const text = body?.querySelector('.comment-body')?.textContent.trim() || '';
     const humanBody = !bot && text !== '' && !isNoiseText(text);
     // Approvals and change requests of humans stay, even without a comment
-    const verdict = !bot && !!item.querySelector('.TimelineItem-badge .octicon-check, .TimelineItem-badge .octicon-file-diff');
+    const verdict =
+      !bot && !!item.querySelector('.TimelineItem-badge .octicon-check, .TimelineItem-badge .octicon-file-diff');
 
     if (!humanBody && !visibleThreads && !verdict) return [item];
     if (!humanBody && body) hidden.push(body.closest('.TimelineItem') || body);
@@ -186,13 +213,14 @@
 
   function mark() {
     count = 0;
-    for (const { items, classify } of VIEWS) for (const item of document.querySelectorAll(items)) {
-      const hidden = new Set(classify(item));
-      if (hidden.has(item)) count++;
-      for (const el of item.querySelectorAll(`[${HIDE}]`)) if (!hidden.has(el)) el.removeAttribute(HIDE);
-      item.toggleAttribute(HIDE, hidden.has(item));
-      for (const el of hidden) if (el !== item) el.setAttribute(HIDE, '');
-    }
+    for (const { items, classify } of VIEWS)
+      for (const item of document.querySelectorAll(items)) {
+        const hidden = new Set(classify(item));
+        if (hidden.has(item)) count++;
+        for (const el of item.querySelectorAll(`[${HIDE}]`)) if (!hidden.has(el)) el.removeAttribute(HIDE);
+        item.toggleAttribute(HIDE, hidden.has(item));
+        for (const el of hidden) if (el !== item) el.setAttribute(HIDE, '');
+      }
   }
 
   function label(btn) {
@@ -207,7 +235,8 @@
     btn.id = BTN;
     btn.type = 'button';
     btn.className = 'Button Button--secondary Button--medium';
-    btn.title = 'Hide the bot and AI comments, the replies written by Claude, the @coderabbitai review commands, the resolved threads and the timeline events';
+    btn.title =
+      'Hide the bot and AI comments, the replies written by Claude, the @coderabbitai review commands, the resolved threads and the timeline events';
     btn.addEventListener('click', () => {
       on = !on;
       localStorage.setItem(KEY, on ? '1' : '0');
@@ -223,15 +252,20 @@
     const views = document.querySelector('ul[aria-label="Comments view mode"]')?.parentElement;
     const actions = document.querySelector('[data-component="PH_Actions"]');
     // Only move on change: the observer watches the DOM
-    if (views) { if (btn.nextElementSibling !== views) views.before(btn); }
-    else if (actions) { if (btn.parentElement !== actions) actions.prepend(btn); }
-    else if (btn.parentElement !== document.body) document.body.appendChild(btn);
+    if (views) {
+      if (btn.nextElementSibling !== views) views.before(btn);
+    } else if (actions) {
+      if (btn.parentElement !== actions) actions.prepend(btn);
+    } else if (btn.parentElement !== document.body) document.body.appendChild(btn);
     btn.classList.toggle('ghb-floating', btn.parentElement === document.body);
   }
 
   function run() {
     let btn = document.getElementById(BTN);
-    if (!CONVERSATION.test(location.pathname)) { btn?.remove(); return; }
+    if (!CONVERSATION.test(location.pathname)) {
+      btn?.remove();
+      return;
+    }
     btn ||= makeButton();
     mark();
     place(btn);
@@ -243,6 +277,9 @@
   new MutationObserver(() => {
     if (queued) return;
     queued = true;
-    requestAnimationFrame(() => { queued = false; run(); });
+    requestAnimationFrame(() => {
+      queued = false;
+      run();
+    });
   }).observe(document.documentElement, { childList: true, subtree: true });
 })();
