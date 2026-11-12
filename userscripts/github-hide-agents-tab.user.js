@@ -2,8 +2,8 @@
 // @name         GitHub — Hide the Agents tab
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.3.1
-// @description  Hides the "Agents" tab of the repository navigation bar, its entry in the overflow menu shown on narrow windows, the Copilot button (and its dropdown) of the page header, and the Copilot panel button of the pull request header.
+// @version      1.4.0
+// @description  Hides the "Agents" tab of the repository navigation bar, its entry in the overflow menu shown on narrow windows, the Copilot button (and its dropdown) of the page header, the Copilot panel button of the pull request header, and the "Ask about this diff" button of each file in the pull request diff.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/github-hide-agents-tab.user.js
 // @supportURL   https://github.com/g-ongenae/dotfiles/issues
@@ -43,6 +43,10 @@
   // "Submit review": unlabelled too, so matched by its icon, with the tooltip wrapped next to it
   const COPILOT_PANEL =
     '[data-testid="diff-comparison-viewer-sticky-header-bar"] div:has(> button > svg.octicon-copilot)';
+  // The "Ask about this diff" button of each file header in the pull request diff, left of
+  // "Viewed"; the wrapper holding it and its tooltip is hidden too, so no gap is left behind
+  const COPILOT_DIFF = '[data-testid="copilot-diff-explain-button"]';
+  const COPILOT_DIFF_WRAPPER = `span:has(> ${COPILOT_DIFF})`;
 
   // ---------- Styles ----------
   // Injected at document-start so the tab never flashes
@@ -53,6 +57,8 @@
     ${COPILOT} { display: none !important; }
     ${COPILOT_ICON} { display: none !important; }
     ${COPILOT_PANEL} { display: none !important; }
+    ${COPILOT_DIFF} { display: none !important; }
+    ${COPILOT_DIFF_WRAPPER} { display: none !important; }
   `;
   (document.head || document.documentElement).appendChild(style);
 })();
