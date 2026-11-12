@@ -2,8 +2,8 @@
 // @name         GitHub — README tab
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.1.0
-// @description  Moves the README of GitHub repositories out of the Code tab into its own "README" tab, first in the repository navigation bar: Code shows the files only, README shows the README (and its License / Code of conduct tabs) instead of the files. The repository home opens on the README tab.
+// @version      1.2.0
+// @description  Moves the README of GitHub repositories out of the Code tab into its own "README" tab, first in the repository navigation bar: Code shows the files only, README shows the README (and its License / Code of conduct tabs) instead of the files. The repository home opens on the README tab; the tab is disabled on pages without a README.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/github-readme-tab.user.js
 // @supportURL   https://github.com/g-ongenae/dotfiles/issues
@@ -28,6 +28,8 @@
   const VIEW = 'data-ghrt-readme'; // on <html> while the README tab is open
   const BOX = 'data-ghrt-box'; // the README box
   const CODE = 'data-ghrt-code'; // the branch bar, the files… hidden by the README tab
+  // GitHub's 404 / 500 pages, which keep the repository navigation
+  const ERROR_PAGE = '[data-static-error-asset]';
   // The path the Code tab was clicked for, which opens on the files rather than the README;
   // kept in the session should GitHub load the page in full
   const CODE_KEY = 'ghrt-code-path';
@@ -39,6 +41,7 @@
   style.textContent = `
     html:not([${VIEW}]) :is([${BOX}], div:has(> div > div > ${README_NAV})) { display: none !important; }
     html[${VIEW}] [${CODE}] { display: none !important; }
+    #${TAB_ID}[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
   `;
   (document.head || document.documentElement).appendChild(style);
 
@@ -69,6 +72,11 @@
     return box;
   }
 
+  // Known to have no README: a file list without a README box, or an error page. Elsewhere (other
+  // tabs, a page still loading) the tab stays a link to the repository home
+  const noReadme = () =>
+    !document.querySelector(`[${BOX}]`) && !!document.querySelector(`[data-testid="directory-content"], ${ERROR_PAGE}`);
+
   function apply() {
     // Only where there is a README to show, so the other pages keep their tab
     const shown = readme && !!document.querySelector(`[${BOX}]`);
@@ -78,6 +86,16 @@
     if (tab) {
       if (shown) tab.setAttribute('aria-current', 'page');
       else tab.removeAttribute('aria-current');
+      const disabled = noReadme();
+      if (disabled !== (tab.getAttribute('aria-disabled') === 'true')) {
+        if (disabled) {
+          tab.setAttribute('aria-disabled', 'true');
+          tab.title = 'No README here';
+        } else {
+          tab.removeAttribute('aria-disabled');
+          tab.removeAttribute('title');
+        }
+      }
     }
     if (!code) return;
     if (shown && code.hasAttribute('aria-current')) {
@@ -144,6 +162,10 @@
       const link = e.target.closest?.(`#${TAB_ID}, ${CODE_TAB}`);
       if (!link) return;
       if (link.id === TAB_ID) {
+        if (link.getAttribute('aria-disabled') === 'true') {
+          e.preventDefault();
+          return;
+        }
         // Other pages navigate to the repository home
         if (!document.querySelector(`[${BOX}]`)) return;
         e.preventDefault();
