@@ -2,8 +2,8 @@
 // @name         GitHub — README tab
 // @namespace    https://github.com/g-ongenae/dotfiles
 // @author       g-ongenae
-// @version      1.0.0
-// @description  Moves the README of GitHub repositories out of the Code tab into its own "README" tab, first in the repository navigation bar: Code shows the files only, README shows the README (and its License / Code of conduct tabs) instead of the files.
+// @version      1.1.0
+// @description  Moves the README of GitHub repositories out of the Code tab into its own "README" tab, first in the repository navigation bar: Code shows the files only, README shows the README (and its License / Code of conduct tabs) instead of the files. The repository home opens on the README tab.
 // @license      MIT
 // @homepageURL  https://github.com/g-ongenae/dotfiles/blob/main/userscripts/github-readme-tab.user.js
 // @supportURL   https://github.com/g-ongenae/dotfiles/issues
@@ -28,6 +28,9 @@
   const VIEW = 'data-ghrt-readme'; // on <html> while the README tab is open
   const BOX = 'data-ghrt-box'; // the README box
   const CODE = 'data-ghrt-code'; // the branch bar, the files… hidden by the README tab
+  // The path the Code tab was clicked for, which opens on the files rather than the README;
+  // kept in the session should GitHub load the page in full
+  const CODE_KEY = 'ghrt-code-path';
 
   // ---------- Styles ----------
   // Injected at document-start so the README never flashes under the files. Until the script
@@ -67,18 +70,20 @@
   }
 
   function apply() {
-    document.documentElement.toggleAttribute(VIEW, readme);
+    // Only where there is a README to show, so the other pages keep their tab
+    const shown = readme && !!document.querySelector(`[${BOX}]`);
+    document.documentElement.toggleAttribute(VIEW, shown);
     const tab = document.getElementById(TAB_ID);
     const code = document.querySelector(CODE_TAB);
     if (tab) {
-      if (readme) tab.setAttribute('aria-current', 'page');
+      if (shown) tab.setAttribute('aria-current', 'page');
       else tab.removeAttribute('aria-current');
     }
     if (!code) return;
-    if (readme && code.hasAttribute('aria-current')) {
+    if (shown && code.hasAttribute('aria-current')) {
       code.removeAttribute('aria-current');
       code.dataset.ghrtCurrent = '';
-    } else if (!readme && 'ghrtCurrent' in code.dataset) {
+    } else if (!shown && 'ghrtCurrent' in code.dataset) {
       delete code.dataset.ghrtCurrent;
       // Give the underline back to Code, unless GitHub moved it to another tab meanwhile
       if (!document.querySelector(`${NAV} a[aria-current]:not(#${TAB_ID})`)) code.setAttribute('aria-current', 'page');
@@ -145,11 +150,17 @@
         readme = true;
         history.replaceState(history.state, '', HASH);
       } else {
+        const target = new URL(link.href).pathname;
+        if (target !== location.pathname) {
+          // From the other tabs and directories, Code goes to the home, on the files
+          sessionStorage.setItem(CODE_KEY, target);
+          return;
+        }
         if (!readme) return;
+        // Already on the home: just switch back to the files
+        e.preventDefault();
         readme = false;
         history.replaceState(history.state, '', location.pathname + location.search);
-        // Already on the files: just switch back; from a directory, let Code go to the home
-        if (new URL(link.href).pathname === location.pathname) e.preventDefault();
       }
       apply();
     },
@@ -165,10 +176,14 @@
 
   // ---------- Main pass (GitHub navigates with Turbo and React) ----------
   function run() {
-    // A new page opens on Code, unless its URL asks for the README
+    // The repository home opens on the README, unless reached through the Code tab; directories
+    // open on the files, being browsed through, unless their URL asks for the README
     if (location.pathname !== path) {
       path = location.pathname;
-      readme = location.hash === HASH;
+      const viaCode = sessionStorage.getItem(CODE_KEY) === path;
+      sessionStorage.removeItem(CODE_KEY);
+      const home = path.split('/').filter(Boolean).length === 2;
+      readme = location.hash === HASH || (home && !viaCode);
     }
     markSections();
     mountTab();

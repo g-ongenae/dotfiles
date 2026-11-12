@@ -261,6 +261,8 @@ Violentmonkey offers to install it and later checks it for updates:
   License / Code of conduct tabs instead of the files. The tab opens on
   `#readme-ov-file` (also the sidebar's **Readme** link), so it can be linked
   to and survives a reload; from the other tabs it goes to the repository home.
+  The repository home opens on **README** when it has one (unless reached
+  through **Code**); directories open on their files.
 - `google-meet-float-controls.user.js` gives the videos the whole window in a
   Google Meet call: the tiles stretch over the room Meet keeps for its bottom
   bar and its 16:9 boxes (cameras are cropped to fit, screen shares
