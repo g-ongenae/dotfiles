@@ -295,6 +295,13 @@ Violentmonkey offers to install it and later checks it for updates:
   choice is remembered. It also closes the
   **Enhance this slide** AI button under the slide whenever it shows up
   (`FOLD_RAIL_BY_DEFAULT` and `CLOSE_AI_NUDGE` at the top of the script).
+- `hackernews-keyboard.user.js` drives Hacker News from the keyboard: **j** /
+  **k** (or **↓** / **↑**) move to the next / previous story, or comment in a
+  discussion (highlighted, skipping folded replies), **o** opens its link in a
+  new tab (a comment's first link), **d** opens its discussion and **f** folds
+  or unfolds a comment with its replies; **n** goes to the next page, **.** /
+  **t** to the top, **r** reloads and **h** opens the home page; **Esc** leaves
+  the comment box. **?** lists the shortcuts.
 - `linkedin-compose.user.js` makes LinkedIn's **Start a post** dialog fill the
   window; adds **B**, **I** and **S** buttons (and Cmd/Ctrl+B, Cmd/Ctrl+I,
   Cmd/Ctrl+Shift+X, which also work in comments) that toggle bold, italic or

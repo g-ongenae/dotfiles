@@ -31,6 +31,7 @@ userscripts:
   - google-meet-float-controls.user.js
   - google-meet-keyboard.user.js
   - google-slides-declutter.user.js
+  - hackernews-keyboard.user.js
   - linkedin-compose.user.js
   - linkedin-declutter.user.js
   - linkedin-keyboard.user.js
