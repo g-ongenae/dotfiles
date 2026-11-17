@@ -361,6 +361,23 @@ Violentmonkey offers to install it and later checks it for updates:
   (watch history off) with a grid of your subscribed channels, read from the
   sidebar; channels with new videos come first and carry a blue dot.
 
+One more script is made for a phone's browser, so it is not on the page: open
+[its raw URL](https://raw.githubusercontent.com/g-ongenae/dotfiles/main/userscripts/demonicscans-favorites.user.js)
+on the phone, in a browser running Violentmonkey (Firefox for Android has it).
+
+- `demonicscans-favorites.user.js` keeps a list of favorite titles on
+  [Demonic Scans](https://demonicscans.org), without an account. Each title
+  page gets an **Add to favorites** button under the site's own Bookmark
+  button, and a star in the navigation bar opens the list: each title with its
+  cover, its latest chapter (a link to it) and that chapter's date, most recent
+  first, dates of the last day highlighted. From a chapter being read, the list
+  also offers to add its title. Opening the list reads again the latest
+  chapters read more than an hour ago (`STALE_MS` at the top of the script),
+  and its refresh button reads them all; the star of a row removes the title,
+  with an **Undo**, and the phone's back button closes the list. The favorites
+  are kept in the site's storage on that browser only: clearing the site's
+  data erases them.
+
 `--firefox-policy` additionally resolves the real AMO IDs and generates
 `~/.config/dotfiles/firefox-policies.json`. This optional extension policy is
 **not** deployed automatically: native Firefox, LibreWolf, Zen and Flatpak builds have
