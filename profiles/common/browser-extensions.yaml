@@ -35,6 +35,7 @@ userscripts:
   - linkedin-compose.user.js
   - linkedin-declutter.user.js
   - linkedin-keyboard.user.js
+  - reddit-declutter.user.js
   - slack-declutter.user.js
   - slack-fold-sidebar.user.js
   - slack-upload-shortcut.user.js

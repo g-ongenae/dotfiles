@@ -332,6 +332,12 @@ Violentmonkey offers to install it and later checks it for updates:
   of the page, **h** opens the feed and **u** your profile; in a post or comment
   being written, **Cmd+U** (**Ctrl+U** off macOS) adds an image and **Esc**
   leaves a comment box. **?** lists the shortcuts.
+- `reddit-declutter.user.js` hides Reddit's sign-up panel on the left (shown
+  logged out; the navigation shown logged in stays), the right column (related
+  posts, community card, footer links), ads, the feed of other posts under the
+  comments and Google's sign-in pop-up, giving their room to the main column;
+  on a post's own page, it shows the whole text without **Read more**. Each
+  part has a setting at the top of the script.
 - `slack-declutter.user.js` hides Slack's **Find a conversation** filter, the
   **Huddles**, **Later** and **Directories** entries of the sidebar, and the
   **Help** button of the top bar, closing the gaps they leave; it also folds
