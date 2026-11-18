@@ -35,7 +35,7 @@ RUNTIME = HOME / '.local/share/dotfiles/t3/appimage'
 # exists, so that the server's own version follows the AppImage's.
 RUNTIMES = (RUNTIME, HOME / '.local/opt/t3code/squashfs-root')
 T3_REPO = 'pingdotgg/t3code'
-T3_ASSET = 'T3-Code-*-x86_64.AppImage'
+T3_ASSET = 'T3-Code-x86_64.AppImage'
 LABELS = ('com.dotfiles.t3code', 'com.t3tools.t3code.service')
 
 

@@ -65,7 +65,7 @@ native:
   - chromium
   - libfuse2t64
 binary-releases:
-  - pingdotgg/t3code t3-code T3-Code-*-x86_64.AppImage
+  - pingdotgg/t3code t3-code T3-Code-x86_64.AppImage
 repositories:
   - https://pkgs.tailscale.com/stable/debian/trixie.noarmor.gpg /usr/share/keyrings/tailscale-archive-keyring.gpg
   - https://pkgs.tailscale.com/stable/debian/trixie.tailscale-keyring.list /etc/apt/sources.list.d/tailscale.list

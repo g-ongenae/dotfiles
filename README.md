@@ -40,7 +40,7 @@ or access the network.
 - Applying a profile for a different OS is rejected.
 - Fedora means dnf-based Workstation, not Atomic/rpm-ostree.
 - Linux release binaries support x86_64 and aarch64, except the current Fedora
-  Proxyman and Debian T3 Code AppImages, which are x86_64-only.
+  Proxyman and Debian T3 Code AppImages, which are installed on x86_64 only.
 
 ### Running selected steps
 
