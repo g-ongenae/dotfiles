@@ -438,7 +438,7 @@ class T3Tests(unittest.TestCase):
             'spec = importlib.util.spec_from_file_location("t3_update", sys.argv[1])\n'
             'update = importlib.util.module_from_spec(spec); spec.loader.exec_module(update)\n'
             'content = sys.argv[2].encode()\n'
-            'asset = {"name": "T3-Code-1-x86_64.AppImage", "browser_download_url": "url",\n'
+            'asset = {"name": "T3-Code-x86_64.AppImage", "browser_download_url": "url",\n'
             '         "digest": "sha256:" + hashlib.sha256(content).hexdigest()}\n'
             'update.latest_release = lambda repository: {"tag_name": "v1", "assets": [asset]}\n'
             'update.fetch = lambda url: content\n'
