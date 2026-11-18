@@ -306,8 +306,11 @@ class Installer:
         arch = {'arm64': 'aarch64', 'amd64': 'x86_64'}.get(arch, arch)
         if arch not in ('x86_64', 'aarch64'):
             raise ValueError(f'Unsupported release architecture: {arch}')
-        if name in ('proxyman', 't3-code') and arch != 'x86_64':
+        if name == 'proxyman' and arch != 'x86_64':
             raise ValueError(f'{name} does not publish an ARM Linux AppImage')
+        if name == 't3-code' and arch != 'x86_64':
+            # Upstream publishes an ARM AppImage, but `t3 update` only fetches the x86_64 one.
+            raise ValueError(f'{name} is installed on x86_64 Linux only')
         pattern = pattern.format(arch=arch, arm='arm64' if arch == 'aarch64' else arch,
                                  debarch='arm64' if arch == 'aarch64' else 'amd64',
                                  fnm='arm64' if arch == 'aarch64' else 'linux')
