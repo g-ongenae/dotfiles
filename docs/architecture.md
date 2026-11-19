@@ -13,8 +13,6 @@ to check that both still work.
 
 ```text
 install.sh                   # ensures Python 3, then runs scripts/install.py
-package.json                 # ESLint and Prettier, behind `npm run lint`
-eslint.config.mjs
 apps/
   finicky.template.js        # macOS browser routing, copied to ~/.finicky.js
 docs/                        # this documentation
@@ -76,7 +74,7 @@ needed.
 
 ## How the shell files load
 
-The split is between what a *person* needs and what a *process* needs.
+The split is between what a _person_ needs and what a _process_ needs.
 
 `shell/interactive/` holds anything needed by a person at a prompt: aliases,
 completion, keybindings, history, Starship, Atuin, fzf, zoxide, and fnm's
@@ -118,16 +116,19 @@ naming it in two places:
 
 ## Validation
 
-### Shell files
+### Linting and formatting
 
 ```bash
-./scripts/lint.sh          # report formatting differences and ShellCheck findings
-./scripts/lint.sh --fix    # reformat in place, then run ShellCheck
+./scripts/lint.sh          # report formatting differences and lint findings
+./scripts/lint.sh --fix    # reformat in place, then report what is left
 ```
 
-`scripts/lint.sh` covers every shell file in the repository, tracked or newly
-added, except the vendored plugins under `zsh/plugins/`, which belong to their
-upstreams.
+`scripts/lint.sh` covers every file in the repository, tracked or newly added,
+except the vendored plugins under `zsh/plugins/`, which belong to their
+upstreams. [`.github/workflows/lint.yml`](../.github/workflows/lint.yml) runs
+the same script on every push and pull request.
+
+#### Shell files
 
 - **Formatting** comes from [shfmt](https://github.com/mvdan/sh), configured by
   the `[*.{sh,bash,zsh}]` section of `.editorconfig`, so editors with
@@ -137,27 +138,14 @@ upstreams.
   line with `# shellcheck shell=...`. Zsh files are formatted but not linted,
   because ShellCheck has no Zsh dialect.
 
-Both tools are installed by every profile, and
-[`.github/workflows/lint.yml`](../.github/workflows/lint.yml) runs the same
-script on every push and pull request.
+Both tools are installed by every profile.
 
-### JavaScript files
+#### Markdown, YAML, JSON and JavaScript
 
-```bash
-npm ci --ignore-scripts    # once: install ESLint and Prettier into node_modules/
-npm run lint               # report ESLint findings and formatting differences
-npm run lint:fix           # apply ESLint's fixes, then reformat in place
-```
-
-`npm run lint` covers `apps/finicky.template.js` and `eslint.config.mjs`, and
-skips the vendored plugins under `zsh/plugins/`.
-
-- **Linting** comes from [ESLint](https://eslint.org) with its recommended
-  rules, configured by `eslint.config.mjs`.
-- **Formatting** comes from [Prettier](https://prettier.io), configured by
-  `.prettierrc.json`: single quotes and lines of up to 120 characters.
-
-The same workflow runs these checks on every push and pull request.
+[Prettier](https://prettier.io) formats them, configured by `.prettierrc.json`:
+single quotes and lines of up to 120 characters. `scripts/lint.sh` runs it
+through `npx` at a pinned version, so the repository has no `package.json` and
+nothing to install beyond Node.
 
 ### Installer
 

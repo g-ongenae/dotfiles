@@ -1,5 +1,4 @@
-# Run the same checks as `scripts/lint.sh` and `npm run lint` on every push and
-# pull request.
+# Run the same checks as `scripts/lint.sh` on every push and pull request.
 name: lint
 
 on:
@@ -8,8 +7,8 @@ on:
   pull_request:
 
 jobs:
-  shell:
-    name: shfmt and ShellCheck
+  lint:
+    name: shfmt, ShellCheck and Prettier
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,24 +27,10 @@ jobs:
           chmod +x "$HOME/.local/bin/shfmt"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Check formatting and lint shell files
-        run: ./scripts/lint.sh
-
-
-  javascript:
-    name: ESLint and Prettier
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
+      # Prettier runs through npx at the version `scripts/lint.sh` pins.
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
 
-      # Neither tool needs an install script to run.
-      - name: Install ESLint and Prettier
-        run: npm ci --ignore-scripts
-
-      - name: Check formatting and lint JavaScript files
-        run: npm run lint
+      - name: Check formatting and lint
+        run: ./scripts/lint.sh

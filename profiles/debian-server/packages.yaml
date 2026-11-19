@@ -51,7 +51,7 @@ native:
   - python3-venv
   - shellcheck
   - openssh-client
-# This machine is already reached by SSH. Do not install/restart sshd here.
+  # This machine is already reached by SSH. Do not install/restart sshd here.
   - iproute2
   - wakeonlan
   - ethtool
