@@ -70,7 +70,10 @@ class InstallerTests(unittest.TestCase):
                 self.args.profile = profile
                 self.args.apply = False
                 self.args.only = list(installer.STEPS)
-                self.assertEqual(installer.Installer(self.args).execute(), 0)
+                install = installer.Installer(self.args)
+                # Not the checkout's own identity, which exists on a configured machine.
+                install.identity = self.home / '.gitconfig.local'
+                self.assertEqual(install.execute(), 0)
                 self.assertEqual(list(self.home.iterdir()), [])
 
     def test_server_plan_excludes_desktop_and_daemon_install(self):
