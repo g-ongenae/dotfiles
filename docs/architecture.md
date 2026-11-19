@@ -42,7 +42,6 @@ shell/
   macos/                     # Homebrew paths and Mac-specific commands
   linux/                     # Linux paths and network commands
   server/                    # terminal editor and headless Chromium environment
-userscripts/                 # Violentmonkey scripts, linked from the browser setup page
 scripts/
   install.py                 # standard-library installer behind install.sh
   t3-service.py              # creates and controls the T3 Code user service
@@ -52,7 +51,6 @@ scripts/
   update-repos.sh            # the `update_repos` helper
   print-pretty.sh            # colour markup for shell output
   lint.sh                    # shfmt and ShellCheck over every shell file
-  check-userscript-versions.py  # a changed userscript must raise its @version
 secret/                      # starship.toml, when you keep one here
 zsh/
   plugins/                   # pinned plugin submodules
@@ -60,7 +58,6 @@ zsh/
 tests/
   test_install.py
   test_t3.py
-  test_userscript_versions.py
   test_wakeonlan.py
 ```
 
@@ -152,24 +149,15 @@ npm run lint               # report ESLint findings and formatting differences
 npm run lint:fix           # apply ESLint's fixes, then reformat in place
 ```
 
-`npm run lint` covers the userscripts, `apps/finicky.template.js` and
-`eslint.config.mjs`, and skips the vendored plugins under `zsh/plugins/`.
+`npm run lint` covers `apps/finicky.template.js` and `eslint.config.mjs`, and
+skips the vendored plugins under `zsh/plugins/`.
 
 - **Linting** comes from [ESLint](https://eslint.org) with its recommended
-  rules, configured by `eslint.config.mjs`. Userscripts are checked as classic
-  browser scripts.
+  rules, configured by `eslint.config.mjs`.
 - **Formatting** comes from [Prettier](https://prettier.io), configured by
   `.prettierrc.json`: single quotes and lines of up to 120 characters.
 
-Userscripts carry one more rule: a changed script must raise its `@version`,
-because Violentmonkey and Greasy Fork only fetch a new copy when that number
-grows.
-
-```bash
-python3 scripts/check-userscript-versions.py origin/main    # working tree against main
-```
-
-The same workflow runs both checks on every push and pull request.
+The same workflow runs these checks on every push and pull request.
 
 ### Installer
 

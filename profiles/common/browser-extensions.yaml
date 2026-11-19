@@ -18,27 +18,21 @@ chromium:
 # against /Applications/Firefox.app (not LibreWolf or Zen).
 macos-firefox-autoconfig:
   - g-ongenae/firefox-memory-guard
-# Files in userscripts/, installed from GitHub through Violentmonkey.
-userscripts:
-  - github-find-active-forks.user.js
-  - github-fold-comments.user.js
-  - github-fold-profile.user.js
-  - github-hide-agents-tab.user.js
-  - github-hide-sidebar-sections.user.js
-  - github-notifications-hide-repos.user.js
-  - github-pr-hide-bots.user.js
-  - github-readme-tab.user.js
-  - google-meet-float-controls.user.js
-  - google-meet-keyboard.user.js
-  - google-slides-declutter.user.js
-  - hackernews-keyboard.user.js
-  - linkedin-compose.user.js
-  - linkedin-declutter.user.js
-  - linkedin-keyboard.user.js
-  - reddit-declutter.user.js
-  - slack-declutter.user.js
-  - slack-fold-sidebar.user.js
-  - slack-upload-shortcut.user.js
-  - twitch-home-following.user.js
-  - youtube-fold-related.user.js
-  - youtube-home-subscriptions.user.js
+# Userscripts, kept in https://github.com/g-ongenae/userscripts and installed
+# through Violentmonkey. The browsers step reads these sources in --apply mode
+# and lists the scripts on the browser setup page, with a zip that Violentmonkey
+# imports in one go.
+# Greasy Fork users (the number in their profile URL): every script they publish.
+greasyfork-users:
+  - '1663163'
+# Greasy Fork script sets, such as a user's Favorites (the number in the set's
+# ?set= URL). Greasy Fork currently refuses set listings to scripts (HTTP 403),
+# so a set is linked from the page instead; prefer greasyfork-scripts.
+greasyfork-sets:
+# Single Greasy Fork scripts (the number in their URL), such as favorites by
+# other authors.
+greasyfork-scripts:
+# Userscripts published outside Greasy Fork: HTTPS URLs ending in .user.js.
+# find-active-forks is a modified copy of Greasy Fork script 397171.
+userscript-urls:
+  - https://raw.githubusercontent.com/g-ongenae/userscripts/main/userscripts/github/find-active-forks.user.js
