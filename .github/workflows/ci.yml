@@ -40,13 +40,18 @@ jobs:
 
   test:
     name: Tests on Python ${{ matrix.python }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         # 3.9 is what a fresh Mac runs the installer with, from the Command
-        # Line Tools; 3.x is the latest release.
-        python: ['3.9', '3.x']
+        # Line Tools; 3.x is the latest release. actions/setup-python has no
+        # 3.9 build for Ubuntu 26.04, so that one stays on 24.04.
+        include:
+          - python: '3.9'
+            os: ubuntu-24.04
+          - python: '3.x'
+            os: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -57,6 +62,17 @@ jobs:
       # The runner has Bash but not Zsh, whose startup files the tests source.
       - name: Install Zsh
         run: sudo apt-get update && sudo apt-get install -y zsh
+
+      # compinit refuses, without a terminal to ask on, to load completions from
+      # directories other users can write to, and the runner image ships some.
+      # List them, then hand them to root and drop group and other write.
+      - name: Secure Zsh's completion directories
+        run: |
+          zsh -fc 'autoload -Uz compaudit; compaudit' | tee "$RUNNER_TEMP/insecure" || true
+          if [ -s "$RUNNER_TEMP/insecure" ]; then
+            xargs -d '\n' sudo chown root < "$RUNNER_TEMP/insecure"
+            xargs -d '\n' sudo chmod g-w,o-w < "$RUNNER_TEMP/insecure"
+          fi
 
       - name: Run the tests
         run: python -m unittest discover -s tests -v
