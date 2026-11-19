@@ -1,4 +1,5 @@
 """Offline regression tests. No packages installed and no real dotfiles touched."""
+
 import argparse
 import base64
 import contextlib
@@ -9,7 +10,6 @@ import io
 import json
 import os
 import plistlib
-from pathlib import Path
 import re
 import shlex
 import shutil
@@ -17,8 +17,9 @@ import subprocess
 import tarfile
 import tempfile
 import unittest
-from unittest.mock import patch
 import zipfile
+from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location('installer', ROOT / 'scripts/install.py')
@@ -32,8 +33,9 @@ class InstallerTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.home = Path(self.temp.name) / "user's home é"
         self.home.mkdir()
-        self.args = argparse.Namespace(home=self.home, profile='debian-server',
-                                       apply=True, only=['shell'], firefox_policy=False)
+        self.args = argparse.Namespace(
+            home=self.home, profile='debian-server', apply=True, only=['shell'], firefox_policy=False
+        )
         self.install = installer.Installer(self.args)
         self.install.identity = self.home / '.gitconfig.local'
         self.output = io.StringIO()
@@ -66,11 +68,18 @@ class InstallerTests(unittest.TestCase):
 
     def test_every_profile_dry_run_is_offline_and_read_only(self):
         for profile in installer.PROFILES:
-            with self.subTest(profile=profile), patch.object(installer, 'fetch', side_effect=AssertionError('network')), patch.object(installer.subprocess, 'run', side_effect=AssertionError('process')):
+            with (
+                self.subTest(profile=profile),
+                patch.object(installer, 'fetch', side_effect=AssertionError('network')),
+                patch.object(installer.subprocess, 'run', side_effect=AssertionError('process')),
+            ):
                 self.args.profile = profile
                 self.args.apply = False
                 self.args.only = list(installer.STEPS)
-                self.assertEqual(installer.Installer(self.args).execute(), 0)
+                install = installer.Installer(self.args)
+                # Not the checkout's own identity, which exists on a configured machine.
+                install.identity = self.home / '.gitconfig.local'
+                self.assertEqual(install.execute(), 0)
                 self.assertEqual(list(self.home.iterdir()), [])
 
     def test_server_plan_excludes_desktop_and_daemon_install(self):
@@ -87,10 +96,13 @@ class InstallerTests(unittest.TestCase):
         self.args.profile = 'macos'
         self.args.only = ['extensions']
         install = installer.Installer(self.args)
-        installed = '\n'.join((
-            'github.vscode-pull-request-github',
-            'MS-CEINTL.vscode-language-pack-fr',
-        ))
+        installed = '\n'.join(
+            (
+                'github.vscode-pull-request-github',
+                'MS-CEINTL.vscode-language-pack-fr',
+            )
+        )
+
         def run(*args, **kwargs):
             if args[1:] == ('-p', 'process.execPath'):
                 return '/usr/bin/node'
@@ -98,13 +110,17 @@ class InstallerTests(unittest.TestCase):
                 return installed
             return ''
 
-        with patch.object(installer.shutil, 'which', return_value='/usr/local/bin/code'), \
-                patch.object(install, 'run', side_effect=run) as run_mock:
+        with (
+            patch.object(installer.shutil, 'which', return_value='/usr/local/bin/code'),
+            patch.object(install, 'run', side_effect=run) as run_mock,
+        ):
             install.extensions()
 
         calls = [call.args for call in run_mock.call_args_list]
         self.assertEqual(calls[1], ('code', '--list-extensions'))
-        installed_calls = [call for call in calls if call[1:] == ('--install-extension', 'GitHub.vscode-pull-request-github')]
+        installed_calls = [
+            call for call in calls if call[1:] == ('--install-extension', 'GitHub.vscode-pull-request-github')
+        ]
         self.assertFalse(installed_calls)
         self.assertFalse(any('copilot' in ' '.join(map(str, call)).casefold() for call in calls))
 
@@ -120,12 +136,17 @@ class InstallerTests(unittest.TestCase):
             with self.subTest(profile=profile):
                 self.args.profile = profile
                 install = installer.Installer(self.args)
-                with patch.object(installer, 'fetch', return_value=b'repository data'), \
-                        patch.object(install, 'run', return_value='') as run:
+                with (
+                    patch.object(installer, 'fetch', return_value=b'repository data'),
+                    patch.object(install, 'run', return_value='') as run,
+                ):
                     install.vendor_packages()
                 calls = [call.args for call in run.call_args_list]
-                package_call = next(i for i, call in enumerate(calls)
-                                    if call[:3] in (('sudo', 'apt-get', 'install'), ('sudo', 'dnf', 'install')))
+                package_call = next(
+                    i
+                    for i, call in enumerate(calls)
+                    if call[:3] in (('sudo', 'apt-get', 'install'), ('sudo', 'dnf', 'install'))
+                )
                 repository_calls = [i for i, call in enumerate(calls) if call[:2] == ('sudo', 'install')]
                 self.assertTrue(repository_calls)
                 self.assertLess(max(repository_calls), package_call)
@@ -147,13 +168,15 @@ class InstallerTests(unittest.TestCase):
                     self.args.update = update
                     install = installer.Installer(self.args)
 
-                    def run(*argv, **kwargs):
+                    def run(*argv, installed=installed, **kwargs):
                         return installed if argv[1:] == ('list', '--formula') else ''
 
-                    with patch.object(installer.shutil, 'which', return_value='/opt/homebrew/bin/brew'), \
-                            patch.object(installer, 'APPLICATIONS', applications), \
-                            patch.object(install, 'run', side_effect=run) as calls, \
-                            patch.object(install, 'node'):
+                    with (
+                        patch.object(installer.shutil, 'which', return_value='/opt/homebrew/bin/brew'),
+                        patch.object(installer, 'APPLICATIONS', applications),
+                        patch.object(install, 'run', side_effect=run) as calls,
+                        patch.object(install, 'node'),
+                    ):
                         install.packages()
                     commands = [call.args for call in calls.call_args_list]
                     unlink = ('/opt/homebrew/bin/brew', 'unlink', 'openssh')
@@ -168,8 +191,10 @@ class InstallerTests(unittest.TestCase):
 
     def test_private_identity_is_prompted_and_written(self):
         answers = iter(('Test User', 'test@example.test', 'octocat', 'gitlabcat', 'bucketcat'))
-        with patch.object(installer.sys.stdin, 'isatty', return_value=True), \
-             patch('builtins.input', side_effect=lambda _: next(answers)):
+        with (
+            patch.object(installer.sys.stdin, 'isatty', return_value=True),
+            patch('builtins.input', side_effect=lambda _: next(answers)),
+        ):
             self.install.ensure_identity()
         content = self.install.identity.read_text()
         self.assertIn('email = "test@example.test"', content)
@@ -177,15 +202,24 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(self.install.identity.stat().st_mode & 0o777, 0o600)
 
     def test_missing_identity_requires_an_interactive_terminal(self):
-        with patch.object(installer.sys.stdin, 'isatty', return_value=False), self.assertRaisesRegex(ValueError, 'interactive terminal'):
+        with (
+            patch.object(installer.sys.stdin, 'isatty', return_value=False),
+            self.assertRaisesRegex(ValueError, 'interactive terminal'),
+        ):
             self.install.ensure_identity()
         self.assertFalse(self.install.identity.exists())
 
     def test_update_selects_package_apply_mode(self):
         observed = {}
-        with patch.object(installer, 'detect_profile', return_value='debian-server'), \
-             patch.object(installer.Installer, 'execute', autospec=True,
-                          side_effect=lambda instance: observed.update(vars(instance.args)) or 0):
+        with (
+            patch.object(installer, 'detect_profile', return_value='debian-server'),
+            patch.object(
+                installer.Installer,
+                'execute',
+                autospec=True,
+                side_effect=lambda instance: observed.update(vars(instance.args)) or 0,
+            ),
+        ):
             self.assertEqual(installer.main(['--update']), 0)
         self.assertTrue(observed['apply'])
         self.assertTrue(observed['update'])
@@ -222,13 +256,25 @@ class InstallerTests(unittest.TestCase):
         self.shell()
         snapshot = {p.relative_to(self.home): p.read_bytes() for p in self.home.rglob('*') if p.is_file()}
         self.shell()
-        self.assertEqual(snapshot, {p.relative_to(self.home): p.read_bytes() for p in self.home.rglob('*') if p.is_file()})
+        self.assertEqual(
+            snapshot, {p.relative_to(self.home): p.read_bytes() for p in self.home.rglob('*') if p.is_file()}
+        )
         self.assertIn('MY_SETTING=kept', rc.read_text())
         self.assertEqual(rc.read_text().count('# >>> dotfiles environment >>>'), 1)
         config = self.home / '.gitconfig'
         env = dict(os.environ, HOME=str(self.home), GIT_CONFIG_NOSYSTEM='1')
-        for key, expected in (('user.email', 'preserved@example.test'), ('core.editor', 'vim'), ('core.excludesFile', str(ROOT / 'git/.gitignore_global'))):
-            result = subprocess.run(['git', 'config', '--file', str(config), '--includes', '--get', key], env=env, text=True, capture_output=True, check=True)
+        for key, expected in (
+            ('user.email', 'preserved@example.test'),
+            ('core.editor', 'vim'),
+            ('core.excludesFile', str(ROOT / 'git/.gitignore_global')),
+        ):
+            result = subprocess.run(
+                ['git', 'config', '--file', str(config), '--includes', '--get', key],
+                env=env,
+                text=True,
+                capture_output=True,
+                check=True,
+            )
             self.assertEqual(result.stdout.strip(), expected)
         self.assertNotIn('[user]', (ROOT / 'git/.gitconfig').read_text())
 
@@ -239,12 +285,19 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(result.stdout, 'preserved')
 
     def test_desktop_git_settings_are_quoted_and_profile_specific(self):
-        for profile, editor, gui in (('macos', 'code --wait', '!open -a "GitHub Desktop"'),
-                                     ('fedora', 'codium --wait', '!github-desktop')):
+        for profile, editor, gui in (
+            ('macos', 'code --wait', '!open -a "GitHub Desktop"'),
+            ('fedora', 'codium --wait', '!github-desktop'),
+        ):
             self.args.profile = profile
             self.shell()
             for key, expected in (('core.editor', editor), ('alias.k', gui)):
-                result = subprocess.run(['git', 'config', '--file', str(self.install.config / 'gitconfig'), '--get', key], text=True, capture_output=True, check=True)
+                result = subprocess.run(
+                    ['git', 'config', '--file', str(self.install.config / 'gitconfig'), '--get', key],
+                    text=True,
+                    capture_output=True,
+                    check=True,
+                )
                 self.assertEqual(result.stdout.strip(), expected)
 
     def test_migration_of_exact_legacy_template(self):
@@ -263,7 +316,9 @@ class InstallerTests(unittest.TestCase):
         self.assertFalse(self.install.config.exists())
 
     def test_modified_legacy_bash_resolver_is_detected_before_writes(self):
-        (self.home / '.bashrc').write_text('for DOTFILE in "$DOTFILES_DIR"/system/{env,alias}.sh; do\n  . "$DOTFILE"\ndone\n')
+        (self.home / '.bashrc').write_text(
+            'for DOTFILE in "$DOTFILES_DIR"/system/{env,alias}.sh; do\n  . "$DOTFILE"\ndone\n'
+        )
         with self.assertRaisesRegex(ValueError, 'customized legacy'):
             self.shell()
         self.assertFalse(self.install.config.exists())
@@ -291,17 +346,29 @@ class InstallerTests(unittest.TestCase):
             'PATH="$HOME/bin:$PATH"; HOMEBREW_PREFIX="$HOME/brew"; '
             '. "$DOTFILES_DIR/shell/interactive/init.bash"; '
             'printf "%s:%s:%s:%s" "${BASH_VERSINFO[0]}" "${BASH_VERSINFO[1]}" '
-            '"${FRAMEWORK_CALLED:-no}" "${MODERN_INTEGRATION_CALLED:-no}"', interactive=True)
+            '"${FRAMEWORK_CALLED:-no}" "${MODERN_INTEGRATION_CALLED:-no}"',
+            interactive=True,
+        )
         major, minor, framework, integration = result.stdout.split(':')
         expected = 'yes' if (int(major), int(minor)) >= (4, 2) else 'no'
         self.assertEqual((framework, integration), (expected, expected))
 
     def bash(self, command, interactive=False):
-        env = dict(HOME=str(self.home), PATH='/usr/bin:/bin', TERM='dumb',
-                   DOTFILES_DIR=str(ROOT), DOTFILES_PROFILE=self.args.profile)
+        env = {
+            'HOME': str(self.home),
+            'PATH': '/usr/bin:/bin',
+            'TERM': 'dumb',
+            'DOTFILES_DIR': str(ROOT),
+            'DOTFILES_PROFILE': self.args.profile,
+        }
         binary = os.environ.get('DOTFILES_TEST_BASH', 'bash')
-        result = subprocess.run([binary, '--noprofile', '--norc', '-ic' if interactive else '-c', command],
-                                env=env, text=True, capture_output=True, check=True)
+        result = subprocess.run(
+            [binary, '--noprofile', '--norc', '-ic' if interactive else '-c', command],
+            env=env,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
         return result
 
     def test_ssh_bash_environment_precedes_early_return(self):
@@ -314,7 +381,9 @@ class InstallerTests(unittest.TestCase):
     def test_common_environment_is_silent_and_path_is_idempotent(self):
         node = self.home / '.local/share/fnm/node-versions/v24/bin'
         node.mkdir(parents=True)
-        self.install.write(self.install.config / 'node-path.sh', 'dotfiles_prepend_path ' + shlex.quote(str(node)) + '\n')
+        self.install.write(
+            self.install.config / 'node-path.sh', 'dotfiles_prepend_path ' + shlex.quote(str(node)) + '\n'
+        )
         command = '. "$DOTFILES_DIR/shell/common/init.sh"; old_path=$PATH; . "$DOTFILES_DIR/shell/common/init.sh"; test "$PATH" = "$old_path"; printf "%s" "$PATH"'
         result = self.bash(command)
         self.assertTrue(result.stdout.startswith(str(node) + ':'))
@@ -323,8 +392,12 @@ class InstallerTests(unittest.TestCase):
     def test_existing_node_path_is_moved_ahead_of_other_managers(self):
         node = self.home / 'node bin'
         node.mkdir()
-        self.install.write(self.install.config / 'node-path.sh', 'dotfiles_prepend_path ' + shlex.quote(str(node)) + '\n')
-        result = self.bash('PATH="/bin:' + str(node) + ':/usr/bin"; . "$DOTFILES_DIR/shell/common/init.sh"; printf "%s" "$PATH"')
+        self.install.write(
+            self.install.config / 'node-path.sh', 'dotfiles_prepend_path ' + shlex.quote(str(node)) + '\n'
+        )
+        result = self.bash(
+            'PATH="/bin:' + str(node) + ':/usr/bin"; . "$DOTFILES_DIR/shell/common/init.sh"; printf "%s" "$PATH"'
+        )
         self.assertTrue(result.stdout.startswith(str(node) + ':'))
         self.assertEqual(result.stdout.count(str(node)), 1)
 
@@ -363,13 +436,20 @@ class InstallerTests(unittest.TestCase):
         extracted = os.environ.get('DOTFILES_TEST_ZSH_ROOT')
         if extracted:
             # Optional extracted Debian packages, without installing anything.
-            prefix = 'module_path=(' + shlex.quote(extracted) + '/usr/lib/*/zsh/5.9 $module_path); fpath=(' + shlex.quote(extracted) + '/usr/share/zsh/functions/**/*(/N) $fpath); '
+            prefix = (
+                'module_path=('
+                + shlex.quote(extracted)
+                + '/usr/lib/*/zsh/5.9 $module_path); fpath=('
+                + shlex.quote(extracted)
+                + '/usr/share/zsh/functions/**/*(/N) $fpath); '
+            )
         self.shell()
         command = prefix + '. "$HOME/.zshenv"; . "$HOME/.zshrc"; '
         command += 'alias g rp' if interactive else 'printf "%s:%s" "$DOTFILES_PROFILE" "$EDITOR"; (( ! $+aliases[g] ))'
-        env = dict(HOME=str(self.home), PATH='/usr/bin:/bin', TERM='dumb')
-        return subprocess.run([binary, '-f', '-ic' if interactive else '-c', command],
-                              env=env, text=True, capture_output=True, check=True)
+        env = {'HOME': str(self.home), 'PATH': '/usr/bin:/bin', 'TERM': 'dumb'}
+        return subprocess.run(
+            [binary, '-f', '-ic' if interactive else '-c', command], env=env, text=True, capture_output=True, check=True
+        )
 
     def test_noninteractive_zsh_is_silent_except_requested_output(self):
         result = self.zsh()
@@ -383,7 +463,10 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(result.stderr, '')
 
     def test_interactive_bash_has_common_and_linux_aliases(self):
-        result = self.bash('. "$DOTFILES_DIR/shell/common/init.sh"; . "$DOTFILES_DIR/shell/interactive/init.bash"; alias g rp; ! alias b 2>/dev/null', interactive=True)
+        result = self.bash(
+            '. "$DOTFILES_DIR/shell/common/init.sh"; . "$DOTFILES_DIR/shell/interactive/init.bash"; alias g rp; ! alias b 2>/dev/null',
+            interactive=True,
+        )
         self.assertIn("alias g='git'", result.stdout)
         self.assertIn("alias rp='ss -ltnp'", result.stdout)
 
@@ -394,10 +477,12 @@ class InstallerTests(unittest.TestCase):
             path = fake_bin / tool
             path.write_text("#!/bin/sh\nprintf '%s\\n' 'export STARSHIP_LOADED=yes'\n")
             path.chmod(0o755)
-        command = ('PATH="$HOME/bin:$PATH"; . "$DOTFILES_DIR/shell/common/init.sh"; '
-                   '. "$DOTFILES_DIR/shell/interactive/init.bash"; '
-                   'printf "%s:%s:%s:" "${DOTFILES_AGENT:-}" "${GIT_PAGER:-}" "${STARSHIP_LOADED:-no}"; '
-                   'alias ls grep 2>/dev/null || printf "plain"')
+        command = (
+            'PATH="$HOME/bin:$PATH"; . "$DOTFILES_DIR/shell/common/init.sh"; '
+            '. "$DOTFILES_DIR/shell/interactive/init.bash"; '
+            'printf "%s:%s:%s:" "${DOTFILES_AGENT:-}" "${GIT_PAGER:-}" "${STARSHIP_LOADED:-no}"; '
+            'alias ls grep 2>/dev/null || printf "plain"'
+        )
         for variable in ('CLAUDECODE', 'CODEX_THREAD_ID', 'CODEX_SANDBOX', 'GEMINI_CLI'):
             with self.subTest(agent=variable):
                 result = self.bash(f'export {variable}=1; ' + command, interactive=True)
@@ -409,9 +494,7 @@ class InstallerTests(unittest.TestCase):
         self.assertIn("alias grep='grep --color=auto", result.stdout)
 
     def test_shared_t3_replaces_old_bashrc_helper_at_the_prompt(self):
-        (self.home / '.bashrc').write_text(
-            't3() { printf "old helper"; }\n'
-            'case $- in *i*) ;; *) return ;; esac\n')
+        (self.home / '.bashrc').write_text('t3() { printf "old helper"; }\ncase $- in *i*) ;; *) return ;; esac\n')
         self.shell()
         result = self.bash('. "$HOME/.bashrc"; t3 --help', interactive=True)
         self.assertIn('tailscale connect', result.stdout)
@@ -445,9 +528,9 @@ class InstallerTests(unittest.TestCase):
                 if not directory.is_dir() or not any(directory.iterdir()):
                     continue  # submodule not checked out; wiring is still verified
                 self.assertTrue(
-                    (directory / f'{name}.zsh').is_file()
-                    or (directory / f'{name}.plugin.zsh').is_file(),
-                    f'{name} has no {name}.zsh or {name}.plugin.zsh entrypoint')
+                    (directory / f'{name}.zsh').is_file() or (directory / f'{name}.plugin.zsh').is_file(),
+                    f'{name} has no {name}.zsh or {name}.plugin.zsh entrypoint',
+                )
 
     def test_removed_volta_plugin_is_not_referenced_anywhere(self):
         # Brew's volta formula ships _volta; the plugin only fought fnm for PATH.
@@ -466,8 +549,10 @@ class InstallerTests(unittest.TestCase):
         binary.chmod(0o755)
         nested = self.home / 'workspace/packages/app/src'
         nested.mkdir(parents=True)
-        result = self.bash('. "$HOME/.bashrc"; cd ' + shlex.quote(str(nested)) +
-                           '; printf "%s:" "$(type -t nx)"; nx build app', interactive=True)
+        result = self.bash(
+            '. "$HOME/.bashrc"; cd ' + shlex.quote(str(nested)) + '; printf "%s:" "$(type -t nx)"; nx build app',
+            interactive=True,
+        )
         self.assertEqual(result.stdout, 'function:workspace nx: build app')
 
     def test_nx_reports_a_clear_error_outside_a_workspace(self):
@@ -476,8 +561,7 @@ class InstallerTests(unittest.TestCase):
         outside = self.home / 'elsewhere'
         outside.mkdir()
         with self.assertRaises(subprocess.CalledProcessError) as caught:
-            self.bash('. "$HOME/.bashrc"; cd ' + shlex.quote(str(outside)) + '; nx build',
-                      interactive=True)
+            self.bash('. "$HOME/.bashrc"; cd ' + shlex.quote(str(outside)) + '; nx build', interactive=True)
         self.assertEqual(caught.exception.returncode, 127)
         self.assertIn('no node_modules/.bin/nx found', caught.exception.stderr)
 
@@ -500,9 +584,15 @@ class InstallerTests(unittest.TestCase):
             installer.extract_binary(self.home / 'test.zip', 'tool')
 
     def test_checksum_mismatch_stops_before_install(self):
-        metadata = {'assets': [{'name': 'tool', 'browser_download_url': 'https://example.test/tool',
-                                'digest': 'sha256:' + '0' * 64}]}
-        with patch.object(installer, 'fetch', side_effect=[json.dumps(metadata).encode(), b'bad']), self.assertRaisesRegex(ValueError, 'Checksum mismatch'):
+        metadata = {
+            'assets': [
+                {'name': 'tool', 'browser_download_url': 'https://example.test/tool', 'digest': 'sha256:' + '0' * 64}
+            ]
+        }
+        with (
+            patch.object(installer, 'fetch', side_effect=[json.dumps(metadata).encode(), b'bad']),
+            self.assertRaisesRegex(ValueError, 'Checksum mismatch'),
+        ):
             self.install.release('example/tool tool tool')
         self.assertFalse(self.install.bin.exists())
 
@@ -513,17 +603,24 @@ class InstallerTests(unittest.TestCase):
             entry.size = 4
             archive.addfile(entry, io.BytesIO(b'tool'))
         payload = stream.getvalue()
-        metadata = {'version': '1.2.2', 'url': 'https://example.test/cli.tar.gz',
-                    'sha512': hashlib.sha512(payload).hexdigest()}
+        metadata = {
+            'version': '1.2.2',
+            'url': 'https://example.test/cli.tar.gz',
+            'sha512': hashlib.sha512(payload).hexdigest(),
+        }
         for profile in installer.PROFILES:
             for machine, arch in (('x86_64', 'amd64'), ('aarch64', 'arm64')):
                 with self.subTest(profile=profile, machine=machine):
                     self.args.profile = profile
                     install = installer.Installer(self.args)
                     self.assertIn('antigravity', install.common['agents'])
-                    with patch.object(installer.platform, 'machine', return_value=machine), \
-                            patch.object(installer, 'fetch', side_effect=[json.dumps(metadata).encode(), payload]) as fetch, \
-                            patch.object(installer.subprocess, 'run', side_effect=AssertionError('unexpected installer execution')):
+                    with (
+                        patch.object(installer.platform, 'machine', return_value=machine),
+                        patch.object(installer, 'fetch', side_effect=[json.dumps(metadata).encode(), payload]) as fetch,
+                        patch.object(
+                            installer.subprocess, 'run', side_effect=AssertionError('unexpected installer execution')
+                        ),
+                    ):
                         install.antigravity()
                     system = 'darwin' if profile == 'macos' else 'linux'
                     self.assertTrue(fetch.call_args_list[0].args[0].endswith(f'/manifests/{system}_{arch}.json'))
@@ -537,9 +634,11 @@ class InstallerTests(unittest.TestCase):
         binary = self.install.bin / 'agy'
         binary.write_bytes(b'previous version')
         metadata = {'version': '1.2.2', 'url': 'https://example.test/cli.tar.gz', 'sha512': '0' * 128}
-        with patch.object(installer.platform, 'machine', return_value='x86_64'), \
-                patch.object(installer, 'fetch', side_effect=[json.dumps(metadata).encode(), b'bad']), \
-                self.assertRaisesRegex(ValueError, 'Checksum mismatch'):
+        with (
+            patch.object(installer.platform, 'machine', return_value='x86_64'),
+            patch.object(installer, 'fetch', side_effect=[json.dumps(metadata).encode(), b'bad']),
+            self.assertRaisesRegex(ValueError, 'Checksum mismatch'),
+        ):
             self.install.antigravity()
         self.assertEqual(binary.read_bytes(), b'previous version')
 
@@ -558,8 +657,11 @@ class InstallerTests(unittest.TestCase):
         self.assertIn('https://update.greasyfork.org/scripts/606132.user.js', page)
         self.assertIn('>Find active forks</a>', page)
         self.args.profile = 'macos'
-        with patch.object(installer, 'fetch', side_effect=self.greasyfork), \
-                patch.object(self.install, 'run'), patch.object(self.install, 'unduck'):
+        with (
+            patch.object(installer, 'fetch', side_effect=self.greasyfork),
+            patch.object(self.install, 'run'),
+            patch.object(self.install, 'unduck'),
+        ):
             self.install.browsers()
         page = (self.install.config / 'browser-extensions.html').read_text()
         self.assertNotIn('/switchyard/', page)
@@ -567,7 +669,9 @@ class InstallerTests(unittest.TestCase):
         self.assertIn('jhkfjpfhioaoopiapaipleecedggpimi', page)
         self.assertIn('jdkfjefccncegmcelnnbfmmibppjchgi', page)
 
-    FORKS_URL = 'https://raw.githubusercontent.com/g-ongenae/userscripts/main/userscripts/github/find-active-forks.user.js'
+    FORKS_URL = (
+        'https://raw.githubusercontent.com/g-ongenae/userscripts/main/userscripts/github/find-active-forks.user.js'
+    )
 
     @staticmethod
     def userscript(name, version='1.0.0'):
@@ -576,12 +680,32 @@ class InstallerTests(unittest.TestCase):
     def greasyfork(self, url):
         """Answer `fetch` like Greasy Fork and GitHub do for the manifest's userscripts."""
         scripts = [
-            {'id': 606132, 'name': 'Reddit — Declutter', 'code_url': 'https://update.greasyfork.org/scripts/606132/Reddit.user.js',
-             'code_updated_at': '2026-11-18T15:01:16.000Z', 'deleted': False},
-            {'id': 604905, 'name': 'GitHub — Fold comments', 'code_url': 'https://update.greasyfork.org/scripts/604905/GitHub.user.js',
-             'code_updated_at': '2026-11-11T19:12:58.000Z', 'deleted': False},
-            {'id': 1, 'name': 'Deleted', 'code_url': 'https://update.greasyfork.org/scripts/1/Deleted.user.js', 'deleted': True},
-            {'id': 2, 'name': 'A style', 'code_url': 'https://update.greasyfork.org/scripts/2/Style.user.css', 'deleted': False},
+            {
+                'id': 606132,
+                'name': 'Reddit — Declutter',
+                'code_url': 'https://update.greasyfork.org/scripts/606132/Reddit.user.js',
+                'code_updated_at': '2026-11-18T15:01:16.000Z',
+                'deleted': False,
+            },
+            {
+                'id': 604905,
+                'name': 'GitHub — Fold comments',
+                'code_url': 'https://update.greasyfork.org/scripts/604905/GitHub.user.js',
+                'code_updated_at': '2026-11-11T19:12:58.000Z',
+                'deleted': False,
+            },
+            {
+                'id': 1,
+                'name': 'Deleted',
+                'code_url': 'https://update.greasyfork.org/scripts/1/Deleted.user.js',
+                'deleted': True,
+            },
+            {
+                'id': 2,
+                'name': 'A style',
+                'code_url': 'https://update.greasyfork.org/scripts/2/Style.user.css',
+                'deleted': False,
+            },
         ]
         answers = {
             'https://api.greasyfork.org/en/users/1663163.json': {'id': 1663163, 'name': 'Test', 'scripts': scripts},
@@ -602,17 +726,31 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(self.install.failures, [])
         self.assertEqual(fetch.call_count, 4)
         links = re.findall(r'<li><a href="([^"]+)">([^<]+)</a>', section)
-        self.assertEqual(links, [('https://update.greasyfork.org/scripts/606132.user.js', 'Reddit — Declutter'),
-                                 ('https://update.greasyfork.org/scripts/604905.user.js', 'GitHub — Fold comments'),
-                                 (self.FORKS_URL, 'Find active forks')])
+        self.assertEqual(
+            links,
+            [
+                ('https://update.greasyfork.org/scripts/606132.user.js', 'Reddit — Declutter'),
+                ('https://update.greasyfork.org/scripts/604905.user.js', 'GitHub — Fold comments'),
+                (self.FORKS_URL, 'Find active forks'),
+            ],
+        )
         self.assertIn('open them all</button>', section)
         archive_path = self.install.config / 'userscripts.zip'
         self.assertIn(html.escape(str(archive_path)), section)
         with zipfile.ZipFile(archive_path) as archive:
-            self.assertEqual(archive.namelist(), ['Reddit — Declutter.user.js', 'GitHub — Fold comments.user.js',
-                                                  'Find active forks.user.js', 'violentmonkey'])
+            self.assertEqual(
+                archive.namelist(),
+                [
+                    'Reddit — Declutter.user.js',
+                    'GitHub — Fold comments.user.js',
+                    'Find active forks.user.js',
+                    'violentmonkey',
+                ],
+            )
             self.assertEqual(archive.getinfo('Reddit — Declutter.user.js').date_time, (2026, 11, 18, 15, 1, 16))
-            self.assertEqual(archive.read('Find active forks.user.js').decode(), self.userscript('Find active forks', '2.1.1'))
+            self.assertEqual(
+                archive.read('Find active forks.user.js').decode(), self.userscript('Find active forks', '2.1.1')
+            )
             backup = json.loads(archive.read('violentmonkey'))
         self.assertEqual(backup['scripts']['Find active forks'], {'custom': {'lastInstallURL': self.FORKS_URL}})
         # An unchanged set of scripts leaves the zip alone.
@@ -645,6 +783,7 @@ class InstallerTests(unittest.TestCase):
             if url == 'https://update.greasyfork.org/scripts/604905.user.js':
                 raise installer.urllib.error.URLError('reset')
             return self.greasyfork(url)
+
         with patch.object(installer, 'fetch', side_effect=fetch):
             section = self.install.userscripts({'greasyfork-users': ['1663163']})
         self.assertEqual(len(self.install.failures), 1)
@@ -655,8 +794,15 @@ class InstallerTests(unittest.TestCase):
 
     def test_greasy_fork_script_sets_and_single_scripts_are_read_page_by_page(self):
         def listing(number, count):
-            return [{'id': number * 1000 + n, 'name': f'Script {number}.{n}', 'code_url': f'https://example.test/{n}.user.js'}
-                    for n in range(count)]
+            return [
+                {
+                    'id': number * 1000 + n,
+                    'name': f'Script {number}.{n}',
+                    'code_url': f'https://example.test/{n}.user.js',
+                }
+                for n in range(count)
+            ]
+
         url = 'https://api.greasyfork.org/en/scripts.json?set=7&per_page=100'
         pages = {url: listing(1, 100), url + '&page=2': listing(2, 3)}
         with patch.object(installer, 'fetch', side_effect=lambda u: json.dumps(pages[u]).encode()):
@@ -665,11 +811,16 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(scripts[-1]['url'], 'https://update.greasyfork.org/scripts/2002.user.js')
         single = {'id': 397171, 'name': 'Find forks', 'code_url': 'https://example.test/f.user.js'}
         with patch.object(installer, 'fetch', return_value=json.dumps(single).encode()):
-            self.assertEqual([s['name'] for s in installer.greasyfork_scripts('https://example.test/s.json')], ['Find forks'])
+            self.assertEqual(
+                [s['name'] for s in installer.greasyfork_scripts('https://example.test/s.json')], ['Find forks']
+            )
         sources = installer.userscript_sources({'greasyfork-sets': ['7'], 'greasyfork-scripts': ['397171']})
         self.assertEqual([source[2] for source in sources], [url, 'https://api.greasyfork.org/en/scripts/397171.json'])
-        for config in ({'greasyfork-users': ['me']}, {'userscript-urls': ['http://example.test/a.user.js']},
-                       {'userscript-urls': ['https://example.test/a.js']}):
+        for config in (
+            {'greasyfork-users': ['me']},
+            {'userscript-urls': ['http://example.test/a.user.js']},
+            {'userscript-urls': ['https://example.test/a.js']},
+        ):
             with self.subTest(config=config), self.assertRaises(ValueError):
                 installer.userscript_sources(config)
 
@@ -678,55 +829,85 @@ class InstallerTests(unittest.TestCase):
         app.mkdir()
         checkout = self.install.data / 'firefox-autoconfig/firefox-memory-guard'
         self.args.profile = 'macos'
-        with patch.object(installer, 'FIREFOX_APP', app), patch.object(self.install, 'run') as run, \
-                patch.object(self.install, 'unduck'), patch.object(self.install, 'userscripts', return_value=''):
+        with (
+            patch.object(installer, 'FIREFOX_APP', app),
+            patch.object(self.install, 'run') as run,
+            patch.object(self.install, 'unduck'),
+            patch.object(self.install, 'userscripts', return_value=''),
+        ):
             self.install.browsers()
             checkout.mkdir(parents=True)
             self.install.browsers()
-        self.assertEqual([call.args for call in run.call_args_list], [
-            ('git', 'clone', '--depth=1', 'https://github.com/g-ongenae/firefox-memory-guard.git', checkout),
-            ('sh', checkout / 'autoconfig/install.sh', app),
-            ('git', '-C', checkout, 'pull', '--ff-only'),
-            ('sh', checkout / 'autoconfig/install.sh', app),
-        ])
+        self.assertEqual(
+            [call.args for call in run.call_args_list],
+            [
+                ('git', 'clone', '--depth=1', 'https://github.com/g-ongenae/firefox-memory-guard.git', checkout),
+                ('sh', checkout / 'autoconfig/install.sh', app),
+                ('git', '-C', checkout, 'pull', '--ff-only'),
+                ('sh', checkout / 'autoconfig/install.sh', app),
+            ],
+        )
         self.args.profile = 'fedora'
-        with patch.object(self.install, 'run') as run, patch.object(self.install, 'unduck'), patch.object(self.install, 'userscripts', return_value=''):
+        with (
+            patch.object(self.install, 'run') as run,
+            patch.object(self.install, 'unduck'),
+            patch.object(self.install, 'userscripts', return_value=''),
+        ):
             self.install.browsers()
         run.assert_not_called()
 
     def test_firefox_autoconfig_skips_missing_firefox_and_reports_clone_failure(self):
         self.args.profile = 'macos'
-        with patch.object(installer, 'FIREFOX_APP', self.home / 'missing.app'), \
-                patch.object(self.install, 'run') as run, patch.object(self.install, 'unduck'), patch.object(self.install, 'userscripts', return_value=''):
+        with (
+            patch.object(installer, 'FIREFOX_APP', self.home / 'missing.app'),
+            patch.object(self.install, 'run') as run,
+            patch.object(self.install, 'unduck'),
+            patch.object(self.install, 'userscripts', return_value=''),
+        ):
             self.install.browsers()
         run.assert_not_called()
         app = self.home / 'Firefox.app'
         app.mkdir()
         failure = subprocess.CalledProcessError(1, 'git')
-        with patch.object(installer, 'FIREFOX_APP', app), \
-                patch.object(self.install, 'run', side_effect=failure), patch.object(self.install, 'unduck'), patch.object(self.install, 'userscripts', return_value=''):
+        with (
+            patch.object(installer, 'FIREFOX_APP', app),
+            patch.object(self.install, 'run', side_effect=failure),
+            patch.object(self.install, 'unduck'),
+            patch.object(self.install, 'userscripts', return_value=''),
+        ):
             self.install.browsers()
         self.assertEqual(len(self.install.failures), 1)
         self.assertIn('firefox-memory-guard', self.install.failures[0])
 
     def test_unduck_policy_keeps_other_policies_and_engines(self):
-        existing = {'policies': {'DisableTelemetry': True, 'SearchEngines': {
-            'Add': [{'Name': 'Other', 'URLTemplate': 'https://example.test/?q={searchTerms}'},
-                    {'Name': 'Unduck', 'URLTemplate': 'https://old.example.test/?q={searchTerms}'}],
-            'Remove': ['Google'], 'Default': 'Other'}}}
+        existing = {
+            'policies': {
+                'DisableTelemetry': True,
+                'SearchEngines': {
+                    'Add': [
+                        {'Name': 'Other', 'URLTemplate': 'https://example.test/?q={searchTerms}'},
+                        {'Name': 'Unduck', 'URLTemplate': 'https://old.example.test/?q={searchTerms}'},
+                    ],
+                    'Remove': ['Google'],
+                    'Default': 'Other',
+                },
+            }
+        }
         merged = json.loads(installer.with_unduck(json.dumps(existing)))
         self.assertTrue(merged['policies']['DisableTelemetry'])
         engines = merged['policies']['SearchEngines']
         self.assertEqual(engines['Add'], [existing['policies']['SearchEngines']['Add'][0], installer.UNDUCK_ENGINE])
         self.assertEqual((engines['Remove'], engines['Default']), (['Google'], 'Unduck'))
-        self.assertEqual(json.loads(installer.with_unduck('')),
-                         {'policies': {'SearchEngines': {'Add': [installer.UNDUCK_ENGINE], 'Default': 'Unduck'}}})
+        self.assertEqual(
+            json.loads(installer.with_unduck('')),
+            {'policies': {'SearchEngines': {'Add': [installer.UNDUCK_ENGINE], 'Default': 'Unduck'}}},
+        )
 
     def test_unduck_link_carries_the_backup(self):
         data, link = installer.unduck_backup()
         prefix = installer.UNDUCK_URL + '?page=settings#import='
         self.assertTrue(link.startswith(prefix))
-        encoded = link[len(prefix):]
+        encoded = link[len(prefix) :]
         self.assertRegex(encoded, r'^[\w-]+$')
         backup = json.loads(base64.urlsafe_b64decode(encoded + '=' * (-len(encoded) % 4)))
         self.assertEqual(backup, json.loads((installer.ROOT / 'profiles/common/unduck-backup.json').read_text()))
@@ -747,14 +928,28 @@ class InstallerTests(unittest.TestCase):
         domains = {call[2] for call in first if call[0] == 'defaults'}
         self.assertEqual(domains, {'org.mozilla.firefox', 'com.google.Chrome'})
         engines = next(call[4] for call in first if call[3] == 'SearchEngines')
-        self.assertEqual(plistlib.loads(f'<plist version="1.0">{engines}</plist>'.encode()),
-                         {'Add': [installer.UNDUCK_ENGINE], 'Default': 'Unduck'})
-        self.assertIn(('defaults', 'write', 'com.google.Chrome', 'DefaultSearchProviderSearchURL', '-string',
-                       installer.UNDUCK_ENGINE['URLTemplate']), first)
-        self.assertEqual([call for call in first if call[0] == 'open'], [
-            ('open', '-a', applications / 'Firefox.app', link),
-            ('open', '-a', applications / 'Google Chrome.app', link),
-        ])
+        self.assertEqual(
+            plistlib.loads(f'<plist version="1.0">{engines}</plist>'.encode()),
+            {'Add': [installer.UNDUCK_ENGINE], 'Default': 'Unduck'},
+        )
+        self.assertIn(
+            (
+                'defaults',
+                'write',
+                'com.google.Chrome',
+                'DefaultSearchProviderSearchURL',
+                '-string',
+                installer.UNDUCK_ENGINE['URLTemplate'],
+            ),
+            first,
+        )
+        self.assertEqual(
+            [call for call in first if call[0] == 'open'],
+            [
+                ('open', '-a', applications / 'Firefox.app', link),
+                ('open', '-a', applications / 'Google Chrome.app', link),
+            ],
+        )
         self.assertFalse(any(call.args[0] == 'open' for call in run.call_args_list))
         self.assertTrue(any(call.args[0] == 'defaults' for call in run.call_args_list))
 
@@ -763,22 +958,29 @@ class InstallerTests(unittest.TestCase):
         distribution.write_text('{"policies": {"DisableAppUpdate": true}}')
         target = self.home / 'etc/firefox/policies/policies.json'
         self.args.profile = 'fedora'
-        with patch.object(installer, 'FEDORA_FIREFOX_POLICIES', target), \
-                patch.object(installer, 'FEDORA_FIREFOX_DISTRIBUTION', distribution), \
-                patch.object(self.install, 'run') as run, patch.object(self.install, 'launch') as launch:
+        with (
+            patch.object(installer, 'FEDORA_FIREFOX_POLICIES', target),
+            patch.object(installer, 'FEDORA_FIREFOX_DISTRIBUTION', distribution),
+            patch.object(self.install, 'run') as run,
+            patch.object(self.install, 'launch') as launch,
+        ):
             self.install.unduck()
         staged = self.install.data / 'firefox-search-policies.json'
         policies = json.loads(staged.read_text())['policies']
         self.assertTrue(policies['DisableAppUpdate'])
         self.assertEqual(policies['SearchEngines']['Default'], 'Unduck')
-        self.assertEqual([call.args for call in run.call_args_list],
-                         [('sudo', 'install', '-D', '-m', '644', staged, target)])
+        self.assertEqual(
+            [call.args for call in run.call_args_list], [('sudo', 'install', '-D', '-m', '644', staged, target)]
+        )
         link = installer.unduck_backup()[1]
-        self.assertEqual([call.args for call in launch.call_args_list], [
-            ('firefox', link),
-            ('flatpak', 'run', 'io.gitlab.librewolf-community', link),
-            ('flatpak', 'run', 'app.zen_browser.zen', link),
-        ])
+        self.assertEqual(
+            [call.args for call in launch.call_args_list],
+            [
+                ('firefox', link),
+                ('flatpak', 'run', 'io.gitlab.librewolf-community', link),
+                ('flatpak', 'run', 'app.zen_browser.zen', link),
+            ],
+        )
 
 
 if __name__ == '__main__':

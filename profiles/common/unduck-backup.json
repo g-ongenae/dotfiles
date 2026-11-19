@@ -9,13 +9,7 @@
       "c": "Online Services",
       "sc": "Google",
       "u": "https://docs.google.com/spreadsheets/u/0/?q={{{s}}}",
-      "ts": [
-        "gsheets",
-        "gspreadsheets",
-        "gsh",
-        "sheet",
-        "sheets"
-      ]
+      "ts": ["gsheets", "gspreadsheets", "gsh", "sheet", "sheets"]
     },
     {
       "t": "gslides",
@@ -24,9 +18,7 @@
       "c": "Online Services",
       "sc": "Google",
       "u": "https://slides.google.com/presentation/u/0/?q={{{s}}}",
-      "ts": [
-        "slides"
-      ]
+      "ts": ["slides"]
     },
     {
       "t": "gd",
@@ -35,10 +27,7 @@
       "c": "Online Services",
       "sc": "Google",
       "u": "https://docs.google.com/document/u/0/?q={{{s}}}",
-      "ts": [
-        "gdocs",
-        "docs"
-      ]
+      "ts": ["gdocs", "docs"]
     },
     {
       "t": "gcal",
@@ -47,10 +36,7 @@
       "c": "Online Services",
       "sc": "Google",
       "u": "https://calendar.google.com/calendar/b/0/r/search?q={{{s}}}",
-      "ts": [
-        "calendar",
-        "cal"
-      ]
+      "ts": ["calendar", "cal"]
     },
     {
       "t": "dd",
@@ -59,9 +45,7 @@
       "c": "Tech",
       "sc": "Programming",
       "u": "https://app.datadoghq.eu/logs?query={{{s}}}",
-      "ts": [
-        "datadog"
-      ]
+      "ts": ["datadog"]
     },
     {
       "t": "drive",
@@ -70,9 +54,7 @@
       "c": "Online Services",
       "sc": "Google",
       "u": "https://drive.google.com/drive/search?q={{{s}}}",
-      "ts": [
-        "gdrive"
-      ]
+      "ts": ["gdrive"]
     }
   ],
   "enabled": [

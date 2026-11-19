@@ -1,0 +1,62 @@
+# Run `scripts/lint.sh` and the test suite on every push and pull request.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    name: shfmt, ShellCheck, Ruff and Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ShellCheck is preinstalled on the runner; shfmt is not. Use the release
+      # binary: `go install` needs whatever Go toolchain shfmt requires, and the
+      # runner cannot always download it. Retry, as GitHub's release downloads
+      # sometimes answer with a transient 5xx.
+      - name: Install shfmt
+        env:
+          SHFMT_VERSION: v3.14.1
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 -o "$HOME/.local/bin/shfmt" \
+            "https://github.com/mvdan/sh/releases/download/$SHFMT_VERSION/shfmt_${SHFMT_VERSION}_linux_amd64"
+          chmod +x "$HOME/.local/bin/shfmt"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # Ruff runs through uvx and Prettier through npx, at the versions
+      # `scripts/lint.sh` pins.
+      - uses: astral-sh/setup-uv@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check formatting and lint
+        run: ./scripts/lint.sh
+
+  test:
+    name: Tests on Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.9 is what a fresh Mac runs the installer with, from the Command
+        # Line Tools; 3.x is the latest release.
+        python: ['3.9', '3.x']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      # The runner has Bash but not Zsh, whose startup files the tests source.
+      - name: Install Zsh
+        run: sudo apt-get update && sudo apt-get install -y zsh
+
+      - name: Run the tests
+        run: python -m unittest discover -s tests -v

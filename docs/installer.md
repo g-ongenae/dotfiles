@@ -22,17 +22,17 @@ have, and what it deliberately leaves alone. For running it, see
 
 ## Package choices
 
-| Component | macOS | Fedora | Debian server |
-| --- | --- | --- | --- |
-| Browser routing | [Finicky] | [Switchyard] (Flatpak) | — |
-| Launcher | [Raycast] | [Vicinae] (COPR) | — |
-| Browsers | [LibreWolf], [Firefox], [Zen], [Chrome], [Ungoogled Chromium] | [LibreWolf], [Firefox], [Zen] | [Chromium] for headless use |
-| Editor | [VS Code] | [VSCodium] | [Vim] |
-| Git GUI | [GitHub Desktop] | [shiftkey's GitHub Desktop] | — |
-| Proxy inspector | [Proxyman] | [Proxyman AppImage] | — |
-| Agents | [Claude Code], [Gemini CLI], [Antigravity CLI] | [Codex], [Claude Code], [Gemini CLI], [Antigravity CLI] | [Codex], [Claude Code], [Gemini CLI] |
-| [Tailscale] | Standalone desktop app | Official stable RPM repository | Official stable APT repository |
-| [T3 Code] | npm package | npm package | upstream AppImage |
+| Component       | macOS                                                         | Fedora                                                  | Debian server                        |
+| --------------- | ------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------ |
+| Browser routing | [Finicky]                                                     | [Switchyard] (Flatpak)                                  | —                                    |
+| Launcher        | [Raycast]                                                     | [Vicinae] (COPR)                                        | —                                    |
+| Browsers        | [LibreWolf], [Firefox], [Zen], [Chrome], [Ungoogled Chromium] | [LibreWolf], [Firefox], [Zen]                           | [Chromium] for headless use          |
+| Editor          | [VS Code]                                                     | [VSCodium]                                              | [Vim]                                |
+| Git GUI         | [GitHub Desktop]                                              | [shiftkey's GitHub Desktop]                             | —                                    |
+| Proxy inspector | [Proxyman]                                                    | [Proxyman AppImage]                                     | —                                    |
+| Agents          | [Claude Code], [Gemini CLI], [Antigravity CLI]                | [Codex], [Claude Code], [Gemini CLI], [Antigravity CLI] | [Codex], [Claude Code], [Gemini CLI] |
+| [Tailscale]     | Standalone desktop app                                        | Official stable RPM repository                          | Official stable APT repository       |
+| [T3 Code]       | npm package                                                   | npm package                                             | upstream AppImage                    |
 
 The Fedora Flatpak list also contains [Apostrophe], [Buffer], [Drum Machine],
 [Eloquent], [FocusWriter], [OBS Studio], [Sound Recorder], and [SSH Pilot].

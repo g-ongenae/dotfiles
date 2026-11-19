@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Profile installer. Standard library only; dry runs never write or use the network."""
+
 import argparse
 import ast
 import base64
+
 # Brew may upgrade and clean up this very interpreter mid-run, so preload the
 # modules that hostname lookups and tarfile.open would otherwise import lazily.
 import bz2  # noqa: F401
@@ -15,7 +17,6 @@ import io
 import json
 import lzma  # noqa: F401
 import os
-from pathlib import Path
 import platform
 import plistlib
 import re
@@ -27,6 +28,7 @@ import tarfile
 import tempfile
 import urllib.request
 import zipfile
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PROFILES = ('macos', 'fedora', 'debian-server')
@@ -104,7 +106,7 @@ def detect_profile():
     if sys.platform == 'darwin':
         return 'macos'
     release = Path('/etc/os-release')
-    values = dict(re.findall(r'^(\w+)=(.*)$', release.read_text(), re.M)) if release.exists() else {}
+    values = dict(re.findall(r'^(\w+)=(.*)$', release.read_text(), re.MULTILINE)) if release.exists() else {}
     distro = values.get('ID', '').strip('"')
     if distro == 'fedora':
         return 'fedora'
@@ -145,14 +147,25 @@ def userscript_sources(config):
     """
     sources = []
     for section, label, page, api in (
-            ('greasyfork-users', 'Greasy Fork user', 'users/{}', 'users/{}.json'),
-            ('greasyfork-sets', 'Greasy Fork script set', 'scripts?set={}', 'scripts.json?set={}&per_page=' + str(GREASYFORK_PAGE)),
-            ('greasyfork-scripts', 'Greasy Fork script', 'scripts/{}', 'scripts/{}.json')):
+        ('greasyfork-users', 'Greasy Fork user', 'users/{}', 'users/{}.json'),
+        (
+            'greasyfork-sets',
+            'Greasy Fork script set',
+            'scripts?set={}',
+            'scripts.json?set={}&per_page=' + str(GREASYFORK_PAGE),
+        ),
+        ('greasyfork-scripts', 'Greasy Fork script', 'scripts/{}', 'scripts/{}.json'),
+    ):
         for identifier in config.get(section, []):
             if not identifier.isdigit():
                 raise ValueError(f'{section}: expected a numeric Greasy Fork id, got {identifier}')
-            sources.append((f'{label} {identifier}', 'https://greasyfork.org/' + page.format(identifier),
-                            GREASYFORK_API + api.format(identifier)))
+            sources.append(
+                (
+                    f'{label} {identifier}',
+                    'https://greasyfork.org/' + page.format(identifier),
+                    GREASYFORK_API + api.format(identifier),
+                )
+            )
     for url in config.get('userscript-urls', []):
         if not url.startswith('https://') or not url.endswith('.user.js'):
             raise ValueError(f'userscript-urls: expected an HTTPS .user.js URL, got {url}')
@@ -174,14 +187,20 @@ def greasyfork_scripts(url):
             page = json.loads(fetch(f'{url}&page={number}'))
             data += page
     scripts = data if isinstance(data, list) else data.get('scripts', [data])
-    return [{'name': script['name'], 'url': f'https://update.greasyfork.org/scripts/{script["id"]}.user.js',
-             'updated': script.get('code_updated_at')}
-            for script in scripts if not script.get('deleted') and script.get('code_url', '').endswith('.user.js')]
+    return [
+        {
+            'name': script['name'],
+            'url': f'https://update.greasyfork.org/scripts/{script["id"]}.user.js',
+            'updated': script.get('code_updated_at'),
+        }
+        for script in scripts
+        if not script.get('deleted') and script.get('code_url', '').endswith('.user.js')
+    ]
 
 
 def userscript_name(code, fallback):
     """The `@name` of a userscript, or `fallback` when its header has none."""
-    match = re.search(r'^//\s*@name\s+(.+?)\s*$', code.split('==/UserScript==', 1)[0], re.M)
+    match = re.search(r'^//\s*@name\s+(.+?)\s*$', code.split('==/UserScript==', 1)[0], re.MULTILINE)
     return match.group(1) if match else fallback
 
 
@@ -206,7 +225,9 @@ def violentmonkey_backup(scripts):
             numbers = [int(n) for n in re.findall(r'\d+', script.get('updated') or '')[:6]]
             info = zipfile.ZipInfo(name + '.user.js', tuple(numbers) if len(numbers) == 6 else (1980, 1, 1, 0, 0, 0))
             archive.writestr(info, script['code'], zipfile.ZIP_DEFLATED)
-        archive.writestr(zipfile.ZipInfo('violentmonkey'), json.dumps({'scripts': entries}, indent=2, ensure_ascii=False))
+        archive.writestr(
+            zipfile.ZipInfo('violentmonkey'), json.dumps({'scripts': entries}, indent=2, ensure_ascii=False)
+        )
     return stream.getvalue()
 
 
@@ -222,13 +243,14 @@ def with_unduck(text):
 def plist_value(value):
     """A value as the XML fragment `defaults write` accepts."""
     document = plistlib.dumps(value).decode()
-    return document[document.index('<plist version="1.0">') + 21:document.rindex('</plist>')].strip()
+    return document[document.index('<plist version="1.0">') + 21 : document.rindex('</plist>')].strip()
 
 
 def unduck_backup():
     """The bangs backup, compacted, and the Unduck link that imports it in a browser."""
-    data = json.dumps(json.loads((ROOT / 'profiles/common/unduck-backup.json').read_text()),
-                      separators=(',', ':'), ensure_ascii=False).encode()
+    data = json.dumps(
+        json.loads((ROOT / 'profiles/common/unduck-backup.json').read_text()), separators=(',', ':'), ensure_ascii=False
+    ).encode()
     return data, UNDUCK_URL + '?page=settings#import=' + base64.urlsafe_b64encode(data).decode().rstrip('=')
 
 
@@ -253,7 +275,9 @@ class Installer:
         self.env['HOME'] = str(self.home)
         self.env['PATH'] = str(self.bin) + os.pathsep + self.env.get('PATH', '/usr/bin:/bin')
         if args.profile == 'macos':
-            self.env['PATH'] += ':/opt/homebrew/bin:/usr/local/bin:/Applications/Visual Studio Code.app/Contents/Resources/app/bin'
+            self.env['PATH'] += (
+                ':/opt/homebrew/bin:/usr/local/bin:/Applications/Visual Studio Code.app/Contents/Resources/app/bin'
+            )
         self.env['FNM_DIR'] = str(self.home / '.local/share/fnm')
         self.env['PATH'] += os.pathsep + self.env['FNM_DIR']
         self.failures = []
@@ -263,9 +287,12 @@ class Installer:
         print('+ ' + shlex.join(argv), flush=True)
         if not self.args.apply:
             return ''
-        return subprocess.run(argv, cwd=cwd, env=env or self.env, check=True,
-                              stdout=subprocess.PIPE if capture else None,
-                              text=True).stdout or ''
+        return (
+            subprocess.run(
+                argv, cwd=cwd, env=env or self.env, check=True, stdout=subprocess.PIPE if capture else None, text=True
+            ).stdout
+            or ''
+        )
 
     def sudo(self, *argv):
         return self.run('sudo', *argv)
@@ -275,8 +302,14 @@ class Installer:
         argv = [str(x) for x in argv]
         print('+ ' + shlex.join(argv) + ' &', flush=True)
         if self.args.apply:
-            subprocess.Popen(argv, env=self.env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                             stderr=subprocess.DEVNULL, start_new_session=True)
+            subprocess.Popen(
+                argv,
+                env=self.env,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
 
     def write(self, path, content, executable=False):
         content = content.encode() if isinstance(content, str) else content
@@ -314,7 +347,7 @@ class Installer:
         if text.count(start) != text.count(end) or text.count(start) > 1:
             raise ValueError(f'Malformed managed block in {path}; refusing to overwrite')
         if start in text:
-            text = re.sub(re.escape(start) + r'.*?' + re.escape(end) + r'\n?', '', text, flags=re.S)
+            text = re.sub(re.escape(start) + r'.*?' + re.escape(end) + r'\n?', '', text, flags=re.DOTALL)
         block = start + '\n' + body.rstrip() + '\n' + end + '\n'
         self.write(path, block + text if prepend else text.rstrip() + '\n' + block)
 
@@ -326,8 +359,14 @@ class Installer:
             # Legacy Bash profiles are no longer migrated, only refused: a
             # machine still carrying one is handled by hand.
             text = migrate_startup(filename, path.read_text())
-            if re.search(r'^[^#\n]*(?:ZDOTDIR\s*=|/(?:run|system)/(?:\{?env|alias|\.zshrc)|CURRENT_SCRIPT=\$BASH_SOURCE|for completion_file in)', text, re.M):
-                raise ValueError(f'{path} has customized legacy startup/ZDOTDIR settings. Back it up and remove those settings before applying the shell step.')
+            if re.search(
+                r'^[^#\n]*(?:ZDOTDIR\s*=|/(?:run|system)/(?:\{?env|alias|\.zshrc)|CURRENT_SCRIPT=\$BASH_SOURCE|for completion_file in)',
+                text,
+                re.MULTILINE,
+            ):
+                raise ValueError(
+                    f'{path} has customized legacy startup/ZDOTDIR settings. Back it up and remove those settings before applying the shell step.'
+                )
 
     def ensure_identity(self):
         fields = (
@@ -340,8 +379,12 @@ class Installer:
         if self.identity.exists():
             missing = []
             for key, _ in fields:
-                result = subprocess.run(('git', 'config', '--file', str(self.identity), '--get', key),
-                                        env=self.env, capture_output=True, text=True)
+                result = subprocess.run(
+                    ('git', 'config', '--file', str(self.identity), '--get', key),
+                    env=self.env,
+                    capture_output=True,
+                    text=True,
+                )
                 if result.returncode or not result.stdout.strip():
                     missing.append(key)
             if missing:
@@ -353,11 +396,14 @@ class Installer:
         if not self.args.apply:
             return
         if not sys.stdin.isatty():
-            raise ValueError(f'{self.identity} is missing; run the shell step from an interactive terminal to create it')
+            raise ValueError(
+                f'{self.identity} is missing; run the shell step from an interactive terminal to create it'
+            )
         values = {}
         for key, label in fields:
-            current = subprocess.run(('git', 'config', '--global', '--get', key), env=self.env,
-                                     capture_output=True, text=True).stdout.strip()
+            current = subprocess.run(
+                ('git', 'config', '--global', '--get', key), env=self.env, capture_output=True, text=True
+            ).stdout.strip()
             prompt = f'{label}' + (f' [{current}]' if current else '') + ': '
             value = input(prompt).strip() or current
             if not value or '\n' in value or '\r' in value:
@@ -387,9 +433,12 @@ class Installer:
         if name == 't3-code' and arch != 'x86_64':
             # Upstream publishes an ARM AppImage, but `t3 update` only fetches the x86_64 one.
             raise ValueError(f'{name} is installed on x86_64 Linux only')
-        pattern = pattern.format(arch=arch, arm='arm64' if arch == 'aarch64' else arch,
-                                 debarch='arm64' if arch == 'aarch64' else 'amd64',
-                                 fnm='arm64' if arch == 'aarch64' else 'linux')
+        pattern = pattern.format(
+            arch=arch,
+            arm='arm64' if arch == 'aarch64' else arch,
+            debarch='arm64' if arch == 'aarch64' else 'amd64',
+            fnm='arm64' if arch == 'aarch64' else 'linux',
+        )
         print(f'Latest release: {repo} / {pattern} -> {name} ({kind})')
         if not self.args.apply:
             return
@@ -417,14 +466,18 @@ class Installer:
                 self.sudo('dnf', 'install', '-y', path)
             elif kind == 'appimage':
                 self.write(self.bin / name, content, executable=True)
-                self.write(self.home / '.local/share/applications' / f'{name}.desktop',
-                           f'[Desktop Entry]\nType=Application\nName=Proxyman\nExec="{self.bin / name}" %U\nTerminal=false\nCategories=Development;\n')
+                self.write(
+                    self.home / '.local/share/applications' / f'{name}.desktop',
+                    f'[Desktop Entry]\nType=Application\nName=Proxyman\nExec="{self.bin / name}" %U\nTerminal=false\nCategories=Development;\n',
+                )
             else:
                 self.write(self.bin / name, extract_binary(path, name), executable=True)
                 if name == 'uv':
                     self.write(self.bin / 'uvx', extract_binary(path, 'uvx'), executable=True)
-        self.write(self.data / 'versions' / (repo.replace('/', '__') + '.json'),
-                   json.dumps({'tag': release['tag_name'], 'asset': asset['name'], 'sha256': actual}, indent=2) + '\n')
+        self.write(
+            self.data / 'versions' / (repo.replace('/', '__') + '.json'),
+            json.dumps({'tag': release['tag_name'], 'asset': asset['name'], 'sha256': actual}, indent=2) + '\n',
+        )
 
     def source_tool(self, tool):
         print(f'Install source tool: {tool}')
@@ -440,16 +493,22 @@ class Installer:
             self.write(self.data / 'docs/zsh-lovers.html', fetch('https://grml.org/zsh/zsh-lovers.html'))
         elif tool == 'git-latest':
             refs = self.run('git', 'ls-remote', '--tags', 'https://github.com/git/git.git', capture=True)
-            tags = re.findall(r'refs/tags/(v\d+\.\d+\.\d+)$', refs, re.M)
+            tags = re.findall(r'refs/tags/(v\d+\.\d+\.\d+)$', refs, re.MULTILINE)
             if not tags:
                 raise ValueError('Cannot resolve latest stable Git tag')
             tag = max(tags, key=lambda s: tuple(map(int, s[1:].split('.'))))
-            current = subprocess.run([str(self.bin / 'git'), '--version'], capture_output=True, text=True).stdout.strip() if (self.bin / 'git').exists() else ''
+            current = (
+                subprocess.run([str(self.bin / 'git'), '--version'], capture_output=True, text=True).stdout.strip()
+                if (self.bin / 'git').exists()
+                else ''
+            )
             if current == 'git version ' + tag[1:]:
                 return
             with tempfile.TemporaryDirectory(prefix='dotfiles-git-') as directory:
                 self.run('git', 'clone', '--depth=1', '--branch', tag, 'https://github.com/git/git.git', directory)
-                self.run('make', f'-j{min(os.cpu_count() or 2, 8)}', f'prefix={self.home / ".local"}', 'all', cwd=directory)
+                self.run(
+                    'make', f'-j{min(os.cpu_count() or 2, 8)}', f'prefix={self.home / ".local"}', 'all', cwd=directory
+                )
                 self.run('make', f'prefix={self.home / ".local"}', 'install', cwd=directory)
         else:
             raise ValueError(f'Unknown source tool {tool}')
@@ -459,13 +518,18 @@ class Installer:
         self.run('fnm', 'default', 'lts-latest')
         if self.args.apply:
             # fnm exec's child gets the selected Node without shell eval.
-            output = self.run('fnm', 'exec', '--log-level=quiet', '--using=lts-latest', 'node', '-p', 'process.execPath', capture=True)
+            output = self.run(
+                'fnm', 'exec', '--log-level=quiet', '--using=lts-latest', 'node', '-p', 'process.execPath', capture=True
+            )
             self.env['PATH'] = str(Path(output.strip()).parent) + os.pathsep + self.env['PATH']
             # Keep global tools with fnm even if an old npmrc/manager overrides
             # npm's prefix; otherwise pnpm can still fall through to Volta.
             self.env['npm_config_prefix'] = str(Path(output.strip()).parent.parent)
             self.env.pop('NPM_CONFIG_PREFIX', None)
-            self.write(self.config / 'node-path.sh', 'dotfiles_prepend_path ' + shlex.quote(str(Path(output.strip()).parent)) + '\n')
+            self.write(
+                self.config / 'node-path.sh',
+                'dotfiles_prepend_path ' + shlex.quote(str(Path(output.strip()).parent)) + '\n',
+            )
         packages = manifest(ROOT / 'profiles/common/npm-packages.yaml')
         selected = packages['common'] + packages.get(self.args.profile, [])
         self.run('npm', 'install', '--global', *selected)
@@ -487,8 +551,9 @@ class Installer:
         print('Install Antigravity CLI from the official native release manifest')
         if not self.args.apply:
             return
-        arch = {'x86_64': 'amd64', 'amd64': 'amd64', 'arm64': 'arm64',
-                'aarch64': 'arm64'}.get(platform.machine().lower())
+        arch = {'x86_64': 'amd64', 'amd64': 'amd64', 'arm64': 'arm64', 'aarch64': 'arm64'}.get(
+            platform.machine().lower()
+        )
         if not arch:
             raise ValueError('Antigravity CLI requires x86_64 or arm64')
         system = 'darwin' if self.args.profile == 'macos' else 'linux'
@@ -504,9 +569,10 @@ class Installer:
             archive = Path(directory) / 'release'
             archive.write_bytes(payload)
             self.write(self.bin / 'agy', extract_binary(archive, 'antigravity'), executable=True)
-        self.write(self.data / 'versions/antigravity.json',
-                   json.dumps({'version': release['version'], 'url': release['url'],
-                               'sha512': digest}, indent=2) + '\n')
+        self.write(
+            self.data / 'versions/antigravity.json',
+            json.dumps({'version': release['version'], 'url': release['url'], 'sha512': digest}, indent=2) + '\n',
+        )
 
     def vendor_packages(self):
         for entry in self.profile.get('repositories', []):
@@ -564,10 +630,21 @@ class Installer:
             self.sudo(manager, 'update' if manager == 'apt-get' else 'makecache')
             self.sudo(manager, 'install', '-y', *self.profile['native'])
             if self.args.profile == 'debian-server':
-                self.sudo('install', '-D', '-m', '755', ROOT / 'scripts/wakeonlan.py',
-                          '/usr/local/libexec/dotfiles-wakeonlan.py')
-                self.sudo('install', '-m', '644', ROOT / 'profiles/debian-server/dotfiles-wakeonlan.service',
-                          '/etc/systemd/system/dotfiles-wakeonlan.service')
+                self.sudo(
+                    'install',
+                    '-D',
+                    '-m',
+                    '755',
+                    ROOT / 'scripts/wakeonlan.py',
+                    '/usr/local/libexec/dotfiles-wakeonlan.py',
+                )
+                self.sudo(
+                    'install',
+                    '-m',
+                    '644',
+                    ROOT / 'profiles/debian-server/dotfiles-wakeonlan.service',
+                    '/etc/systemd/system/dotfiles-wakeonlan.service',
+                )
                 self.sudo('systemctl', 'daemon-reload')
                 self.sudo('systemctl', 'enable', '--now', 'dotfiles-wakeonlan.service')
             self.vendor_packages()
@@ -589,36 +666,58 @@ class Installer:
             for spec in self.profile.get('appimage-releases', []):
                 self.release(spec, 'appimage')
             if self.profile.get('flatpak'):
-                self.run('flatpak', 'remote-add', '--user', '--if-not-exists', 'flathub', 'https://flathub.org/repo/flathub.flatpakrepo')
+                self.run(
+                    'flatpak',
+                    'remote-add',
+                    '--user',
+                    '--if-not-exists',
+                    'flathub',
+                    'https://flathub.org/repo/flathub.flatpakrepo',
+                )
                 self.run('flatpak', 'install', '--user', '--noninteractive', '-y', 'flathub', *self.profile['flatpak'])
         for tool in self.common['uv']:
             self.run('uv', 'tool', 'install', '--upgrade', tool)
         if getattr(self.args, 'update', False):
             self.run('tldr', '--update')
         self.node()
+
     def shell(self):
         self.preflight_shell()
         self.ensure_identity()
-        session = f'export DOTFILES_DIR={shlex.quote(str(ROOT))}\nexport DOTFILES_PROFILE={shlex.quote(self.args.profile)}\n'
+        session = (
+            f'export DOTFILES_DIR={shlex.quote(str(ROOT))}\nexport DOTFILES_PROFILE={shlex.quote(self.args.profile)}\n'
+        )
         self.write(self.config / 'session.sh', session)
         hook = 'if [ -r "$HOME/.config/dotfiles/session.sh" ]; then\n  . "$HOME/.config/dotfiles/session.sh"\n  . "$DOTFILES_DIR/shell/common/init.sh"\nfi'
         self.hook(self.home / '.zshenv', hook)
-        self.hook(self.home / '.zshrc', hook + '\nif [ -n "${DOTFILES_DIR:-}" ]; then\n  . "$DOTFILES_DIR/shell/interactive/init.zsh"\nfi')
+        self.hook(
+            self.home / '.zshrc',
+            hook + '\nif [ -n "${DOTFILES_DIR:-}" ]; then\n  . "$DOTFILES_DIR/shell/interactive/init.zsh"\nfi',
+        )
         # User startup snippets can overwrite DOTFILES_DIR/PATH. Restore the
         # installed session immediately before loading prompt integrations.
-        bash_hook = 'case $- in\n  *i*)\n' + hook + '\n    if [ -n "${DOTFILES_DIR:-}" ]; then\n      . "$DOTFILES_DIR/shell/interactive/init.bash"\n    fi\n    ;;\nesac'
+        bash_hook = (
+            'case $- in\n  *i*)\n'
+            + hook
+            + '\n    if [ -n "${DOTFILES_DIR:-}" ]; then\n      . "$DOTFILES_DIR/shell/interactive/init.bash"\n    fi\n    ;;\nesac'
+        )
         # Debian's .bashrc returns early over SSH; put only environment above it.
         self.hook(self.home / '.bashrc', hook, prepend=True, label='environment')
         self.hook(self.home / '.bashrc', bash_hook)
         login = self.home / '.bash_profile'
         if not login.exists():
-            self.write(login, '# Preserve distribution login setup.\nif [ -r "$HOME/.profile" ]; then\n  . "$HOME/.profile"\nfi\n')
+            self.write(
+                login,
+                '# Preserve distribution login setup.\nif [ -r "$HOME/.profile" ]; then\n  . "$HOME/.profile"\nfi\n',
+            )
         self.hook(login, hook + '\n' + bash_hook)
         # Preserve unrelated global settings; the ignored identity include wins.
         gitconfig = (
             '[include]\n  path = ' + json.dumps(str(ROOT / 'git/.gitconfig'), ensure_ascii=False) + '\n'
             '[include]\n  path = ' + json.dumps(str(self.identity), ensure_ascii=False) + '\n'
-            '[core]\n  excludesFile = ' + json.dumps(str(ROOT / 'git/.gitignore_global'), ensure_ascii=False) + '\n  editor = vim\n'
+            '[core]\n  excludesFile = '
+            + json.dumps(str(ROOT / 'git/.gitignore_global'), ensure_ascii=False)
+            + '\n  editor = vim\n'
         )
         if self.args.profile != 'debian-server':
             gitconfig += '[core]\n  editor = ' + ('code' if self.args.profile == 'macos' else 'codium') + ' --wait\n'
@@ -627,7 +726,11 @@ class Installer:
             gitconfig += '  open = !gh repo view\n  k = !gh repo view\n'
         else:
             gitconfig += '  open = !gh repo view --web\n'
-            gitconfig += '  k = ' + json.dumps('!open -a "GitHub Desktop"' if self.args.profile == 'macos' else '!github-desktop') + '\n'
+            gitconfig += (
+                '  k = '
+                + json.dumps('!open -a "GitHub Desktop"' if self.args.profile == 'macos' else '!github-desktop')
+                + '\n'
+            )
         self.write(self.config / 'gitconfig', gitconfig)
         global_git = self.home / '.gitconfig'
         if global_git.is_symlink() and global_git.resolve() == ROOT / 'git/.gitconfig':
@@ -635,9 +738,18 @@ class Installer:
         self.hook(global_git, '[include]\n  path = ' + json.dumps(str(self.config / 'gitconfig'), ensure_ascii=False))
         if self.args.profile == 'macos':
             self.write(self.home / '.finicky.js', (ROOT / 'apps/finicky.template.js').read_bytes())
-        self.run('git', 'submodule', 'update', '--init', '--',
-                 'zsh/plugins/zsh-autosuggestions', 'zsh/plugins/zsh-syntax-highlighting',
-                 'zsh/plugins/nx-completion', 'zsh/plugins/jq', cwd=ROOT)
+        self.run(
+            'git',
+            'submodule',
+            'update',
+            '--init',
+            '--',
+            'zsh/plugins/zsh-autosuggestions',
+            'zsh/plugins/zsh-syntax-highlighting',
+            'zsh/plugins/nx-completion',
+            'zsh/plugins/jq',
+            cwd=ROOT,
+        )
 
     def extensions(self):
         if self.args.profile == 'debian-server':
@@ -647,13 +759,16 @@ class Installer:
         if self.args.apply and not shutil.which(command, path=self.env['PATH']):
             raise ValueError(f'{command} is missing; install packages first')
         if self.args.apply:
-            output = self.run('fnm', 'exec', '--log-level=quiet', '--using=default', 'node', '-p', 'process.execPath', capture=True)
+            output = self.run(
+                'fnm', 'exec', '--log-level=quiet', '--using=default', 'node', '-p', 'process.execPath', capture=True
+            )
             self.env['PATH'] = str(Path(output.strip()).parent) + os.pathsep + self.env['PATH']
         config = manifest(ROOT / 'profiles/common/vscode-extension.yaml')
         installed = set()
         if self.args.apply:
-            installed = {extension.casefold() for extension in
-                         self.run(command, '--list-extensions', capture=True).splitlines()}
+            installed = {
+                extension.casefold() for extension in self.run(command, '--list-extensions', capture=True).splitlines()
+            }
         for extension in config['common'] + config.get(self.args.profile, []):
             if extension.casefold() in installed:
                 print(f'Skip installed extension: {extension}')
@@ -682,15 +797,33 @@ class Installer:
         slugs = config['firefox'] + (config.get('fedora-firefox', []) if self.args.profile == 'fedora' else [])
         links = [(slug, 'https://addons.mozilla.org/firefox/addon/' + slug + '/') for slug in slugs]
         text = '<!doctype html><meta charset="utf-8"><title>Browser extensions</title><h1>Firefox, LibreWolf and Zen</h1><p>Open these links in each browser and confirm installation.</p><ul>'
-        text += ''.join(f'<li><a href="{html.escape(url)}">{html.escape(name)}</a></li>' for name, url in links) + '</ul>'
+        text += (
+            ''.join(f'<li><a href="{html.escape(url)}">{html.escape(name)}</a></li>' for name, url in links) + '</ul>'
+        )
         text += '<h2>Unpublished</h2><p>Not on addons.mozilla.org: follow the README to load the extension, or sign it as an unlisted add-on.</p><ul>'
-        text += ''.join(f'<li><a href="https://github.com/{html.escape(repo)}">{html.escape(repo)}</a></li>' for repo in config.get('firefox-source', [])) + '</ul>'
+        text += (
+            ''.join(
+                f'<li><a href="https://github.com/{html.escape(repo)}">{html.escape(repo)}</a></li>'
+                for repo in config.get('firefox-source', [])
+            )
+            + '</ul>'
+        )
         text += self.userscripts(config)
         if self.args.profile == 'macos':
             text += '<h1>Chrome and Chromium</h1><ul>'
-            text += ''.join(f'<li><a href="https://chromewebstore.google.com/detail/{identifier}">{label}</a></li>' for identifier, label in zip(config['chromium'], ('github-mermaid-jsdoc-viewer', 'pr-review-collector'))) + '</ul>'
+            text += (
+                ''.join(
+                    f'<li><a href="https://chromewebstore.google.com/detail/{identifier}">{label}</a></li>'
+                    for identifier, label in zip(
+                        config['chromium'], ('github-mermaid-jsdoc-viewer', 'pr-review-collector')
+                    )
+                )
+                + '</ul>'
+            )
         if self.args.profile == 'fedora':
-            text += '<p>Open Switchyard after installation to configure routing and select it as your default browser.</p>'
+            text += (
+                '<p>Open Switchyard after installation to configure routing and select it as your default browser.</p>'
+            )
         text += '<h1>Unduck</h1><p>The browsers step makes <a href="https://github.com/g-ongenae/unduck">Unduck</a> the default search engine'
         if self.args.profile == 'fedora':
             text += ' of Firefox. In the LibreWolf and Zen Flatpaks, open Unduck, right-click the address bar, choose <b>Add “Unduck”</b>, then select it as the default search engine in the settings.'
@@ -709,7 +842,10 @@ class Installer:
                 settings = {}
                 for slug in slugs:
                     addon = json.loads(fetch(f'https://addons.mozilla.org/api/v5/addons/addon/{slug}/'))
-                    settings[addon['guid']] = {'installation_mode': 'normal_installed', 'install_url': addon['current_version']['file']['url']}
+                    settings[addon['guid']] = {
+                        'installation_mode': 'normal_installed',
+                        'install_url': addon['current_version']['file']['url'],
+                    }
                 self.write(policy, json.dumps({'policies': {'ExtensionSettings': settings}}, indent=2) + '\n')
 
     def userscripts(self, config):
@@ -733,7 +869,9 @@ class Installer:
                     found = greasyfork_scripts(url)
             except (OSError, ValueError) as error:
                 unread.append((label, page))
-                self.failures.append(f'Cannot read {label} ({error}); install its userscripts from {page}, or rerun the browsers step')
+                self.failures.append(
+                    f'Cannot read {label} ({error}); install its userscripts from {page}, or rerun the browsers step'
+                )
                 continue
             known = {script['url'] for script in scripts}
             scripts += [script for script in found if script['url'] not in known]
@@ -742,24 +880,41 @@ class Installer:
                 if 'code' not in script:
                     script['code'] = fetch(script['url']).decode() if self.args.apply else ''
             except (OSError, ValueError) as error:
-                self.failures.append(f'Cannot download {script["name"]} ({error}); install it from {script["url"]}, or rerun the browsers step')
+                self.failures.append(
+                    f'Cannot download {script["name"]} ({error}); install it from {script["url"]}, or rerun the browsers step'
+                )
         packed = [script for script in scripts if script.get('code')]
         if packed or not self.args.apply:
             self.write(archive, violentmonkey_backup(packed) if self.args.apply else b'')
-        text = (f'<h2>Userscripts</h2><p>From <a href="{USERSCRIPTS_REPO}">g-ongenae/userscripts</a> and Greasy Fork. '
-                'Install Violentmonkey first.</p>')
+        text = (
+            f'<h2>Userscripts</h2><p>From <a href="{USERSCRIPTS_REPO}">g-ongenae/userscripts</a> and Greasy Fork. '
+            'Install Violentmonkey first.</p>'
+        )
         if packed:
-            text += ('<p><b>All at once:</b> open Violentmonkey&#39;s dashboard, then <b>Settings</b>, <b>Backup and maintenance</b>, '
-                     f'<b>Import from zip</b>, and choose <code>{html.escape(str(archive))}</code>. It installs every script below '
-                     'without a dialog per script, and each one keeps updating from where it came from.</p>')
+            text += (
+                '<p><b>All at once:</b> open Violentmonkey&#39;s dashboard, then <b>Settings</b>, <b>Backup and maintenance</b>, '
+                f'<b>Import from zip</b>, and choose <code>{html.escape(str(archive))}</code>. It installs every script below '
+                'without a dialog per script, and each one keeps updating from where it came from.</p>'
+            )
         if scripts:
-            text += ('<p><b>One by one:</b> open each link and confirm Violentmonkey&#39;s install dialog, or '
-                     '<button onclick="document.querySelectorAll(&#39;#userscripts a&#39;).forEach(link =&gt; window.open(link.href))">'
-                     'open them all</button> (one tab each; allow this page&#39;s pop-ups if the browser blocks them).</p><ul id="userscripts">')
-            text += ''.join(f'<li><a href="{html.escape(script["url"])}">{html.escape(script["name"])}</a></li>' for script in scripts) + '</ul>'
+            text += (
+                '<p><b>One by one:</b> open each link and confirm Violentmonkey&#39;s install dialog, or '
+                '<button onclick="document.querySelectorAll(&#39;#userscripts a&#39;).forEach(link =&gt; window.open(link.href))">'
+                'open them all</button> (one tab each; allow this page&#39;s pop-ups if the browser blocks them).</p><ul id="userscripts">'
+            )
+            text += (
+                ''.join(
+                    f'<li><a href="{html.escape(script["url"])}">{html.escape(script["name"])}</a></li>'
+                    for script in scripts
+                )
+                + '</ul>'
+            )
         if unread:
             text += '<p>Not read by the last run: install their userscripts from these pages.</p><ul>'
-            text += ''.join(f'<li><a href="{html.escape(page)}">{html.escape(label)}</a></li>' for label, page in unread) + '</ul>'
+            text += (
+                ''.join(f'<li><a href="{html.escape(page)}">{html.escape(label)}</a></li>' for label, page in unread)
+                + '</ul>'
+            )
         return text
 
     def unduck(self):
@@ -768,7 +923,11 @@ class Installer:
         Unduck keeps bangs in each browser's site storage, so they are imported by
         opening a link, and only when profiles/common/unduck-backup.json changed.
         """
-        engine = {'Name': UNDUCK_ENGINE['Name'], 'SearchURL': UNDUCK_ENGINE['URLTemplate'], 'IconURL': UNDUCK_ENGINE['IconURL']}
+        engine = {
+            'Name': UNDUCK_ENGINE['Name'],
+            'SearchURL': UNDUCK_ENGINE['URLTemplate'],
+            'IconURL': UNDUCK_ENGINE['IconURL'],
+        }
         browsers = []
         if self.args.profile == 'macos':
             search_engines = plist_value({'Add': [UNDUCK_ENGINE], 'Default': UNDUCK_ENGINE['Name']})
@@ -829,7 +988,9 @@ class Installer:
                     self.run('git', 'clone', '--depth=1', f'https://github.com/{repo}.git', checkout)
                 self.run('sh', checkout / 'autoconfig/install.sh', FIREFOX_APP)
             except subprocess.CalledProcessError:
-                self.failures.append(f'Cannot install {repo} into Firefox; check the network connection, then rerun the browsers step')
+                self.failures.append(
+                    f'Cannot install {repo} into Firefox; check the network connection, then rerun the browsers step'
+                )
 
     def execute(self):
         print(f'Profile: {self.args.profile}; mode: {"APPLY" if self.args.apply else "DRY RUN"}; home: {self.home}')
@@ -858,9 +1019,16 @@ def main(argv=None):
     mode.add_argument('--apply', action='store_true', help='perform installation (default is a dry run)')
     mode.add_argument('--dry-run', action='store_true', help='print the plan without writes/network')
     mode.add_argument('--update', action='store_true', help='apply package updates for the detected profile')
-    parser.add_argument('--home', type=Path, default=Path.home(), help='configuration destination; package installs still affect the host')
+    parser.add_argument(
+        '--home',
+        type=Path,
+        default=Path.home(),
+        help='configuration destination; package installs still affect the host',
+    )
     parser.add_argument('--only', default=','.join(STEPS), help='comma-separated: packages,shell,extensions,browsers')
-    parser.add_argument('--firefox-policy', action='store_true', help='also generate an optional Firefox extension policy')
+    parser.add_argument(
+        '--firefox-policy', action='store_true', help='also generate an optional Firefox extension policy'
+    )
     args = parser.parse_args(argv)
     if args.update:
         args.apply = True

@@ -12,18 +12,18 @@ actually installed, through the same source the installer used:
 Whatever is absent is skipped, not installed: adding a tool to a machine stays
 the installer's job.
 """
+
 import fnmatch
 import hashlib
 import json
 import os
-from pathlib import Path
 import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
 import urllib.request
-
+from pathlib import Path
 
 HOME = Path.home()
 BIN = HOME / '.local/bin'
@@ -71,8 +71,9 @@ def run(*args, **kwargs):
 
 
 def output(*args):
-    return subprocess.run([str(argument) for argument in args], check=True, env=ENV,
-                          capture_output=True, text=True).stdout
+    return subprocess.run(
+        [str(argument) for argument in args], check=True, env=ENV, capture_output=True, text=True
+    ).stdout
 
 
 def fetch(url):
@@ -92,8 +93,12 @@ def service_target():
     if sys.platform == 'darwin':
         for label in LABELS:
             target = f'gui/{os.getuid()}/{label}'
-            if subprocess.run(['launchctl', 'print', target],
-                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+            if (
+                subprocess.run(
+                    ['launchctl', 'print', target], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                ).returncode
+                == 0
+            ):
                 return target
         return None
     active = subprocess.run(['systemctl', '--user', 'is-active', '--quiet', 't3code.service'])
@@ -162,8 +167,7 @@ def update_appimage():
         staged.chmod(0o755)
         staged.replace(executable)
 
-    stale = [runtime for runtime in RUNTIMES
-             if runtime.exists() and extracted_digest(runtime) != digest]
+    stale = [runtime for runtime in RUNTIMES if runtime.exists() and extracted_digest(runtime) != digest]
     for runtime in stale:
         print(f'Extract T3 {release["tag_name"]} to {runtime}')
         extract(executable, runtime, digest)
@@ -174,8 +178,15 @@ def npm_installed(package):
     """Whether npm is the one holding this package, rather than some other source."""
     if not tool('npm'):
         return False
-    return subprocess.run(['npm', 'ls', '--global', '--depth=0', package], env=ENV,
-                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+    return (
+        subprocess.run(
+            ['npm', 'ls', '--global', '--depth=0', package],
+            env=ENV,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        ).returncode
+        == 0
+    )
 
 
 def update_t3():

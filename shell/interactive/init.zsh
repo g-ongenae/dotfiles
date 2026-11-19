@@ -53,8 +53,10 @@ compinit
 # Node version switching on directory change.
 command -v fnm > /dev/null 2>&1 && eval "$(fnm env --use-on-cd --shell zsh)"
 
-# fzf keybindings: recent versions print them, older Debian ships files.
-if command -v fzf > /dev/null 2>&1; then
+# fzf keybindings: recent versions print them, older Debian ships files. Only
+# with a terminal on stdin: without one, zsh refuses the line-editor option that
+# fzf's script saves and restores.
+if [[ -t 0 ]] && command -v fzf > /dev/null 2>&1; then
   if dotfiles_fzf=$(fzf --zsh 2> /dev/null); then
     eval "$dotfiles_fzf"
   elif [[ -r /usr/share/doc/fzf/examples/key-bindings.zsh ]]; then

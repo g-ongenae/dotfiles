@@ -13,21 +13,21 @@ scripts or noninteractive SSH commands.
 
 Every profile:
 
-| Alias | Runs | Notes |
-| --- | --- | --- |
-| `g` | `git` | |
-| `c` | `clear` | |
-| `_` | `sudo` | |
-| `n` | `npm` | |
-| `nr` | `npm run` | |
-| `reload` | `exec "$SHELL" -l` | restart the shell, picking up configuration changes |
-| `ls` | `eza` | only when eza is installed |
-| `la` | `eza --all --long` | only when eza is installed |
-| `cat` | `bat`, or `batcat` on Debian | |
-| `bat` | `batcat` | Debian only, where the executable has that name |
-| `fd` | `fdfind` | Debian only, same reason |
-| `grep` | `grep --color=auto --exclude-dir=…` | skips VCS and tooling directories (`.git`, `.venv`, …) |
-| `history` | `fc -il 1` | Zsh only: the whole history, with timestamps |
+| Alias     | Runs                                | Notes                                                  |
+| --------- | ----------------------------------- | ------------------------------------------------------ |
+| `g`       | `git`                               |                                                        |
+| `c`       | `clear`                             |                                                        |
+| `_`       | `sudo`                              |                                                        |
+| `n`       | `npm`                               |                                                        |
+| `nr`      | `npm run`                           |                                                        |
+| `reload`  | `exec "$SHELL" -l`                  | restart the shell, picking up configuration changes    |
+| `ls`      | `eza`                               | only when eza is installed                             |
+| `la`      | `eza --all --long`                  | only when eza is installed                             |
+| `cat`     | `bat`, or `batcat` on Debian        |                                                        |
+| `bat`     | `batcat`                            | Debian only, where the executable has that name        |
+| `fd`      | `fdfind`                            | Debian only, same reason                               |
+| `grep`    | `grep --color=auto --exclude-dir=…` | skips VCS and tooling directories (`.git`, `.venv`, …) |
+| `history` | `fc -il 1`                          | Zsh only: the whole history, with timestamps           |
 
 Coding agents get none of `ls`, `la`, `cat` or `grep`: they parse the output of
 the real commands.
@@ -38,23 +38,23 @@ move by word. Up arrow and Ctrl+R search history through Atuin.
 
 macOS:
 
-| Alias | Runs |
-| --- | --- |
-| `b` | `brew` |
-| `p` | `pnpm`, as `nocorrect pnpm` under Zsh |
-| `d` | `docker` |
-| `ks` | `kubectl` |
-| `vscode` | `code` |
-| `local_ip` | `ipconfig getifaddr en0` |
-| `rp` | `lsof -nP -iTCP -sTCP:LISTEN`, the listening TCP sockets |
+| Alias      | Runs                                                     |
+| ---------- | -------------------------------------------------------- |
+| `b`        | `brew`                                                   |
+| `p`        | `pnpm`, as `nocorrect pnpm` under Zsh                    |
+| `d`        | `docker`                                                 |
+| `ks`       | `kubectl`                                                |
+| `vscode`   | `code`                                                   |
+| `local_ip` | `ipconfig getifaddr en0`                                 |
+| `rp`       | `lsof -nP -iTCP -sTCP:LISTEN`, the listening TCP sockets |
 
 Linux:
 
-| Alias | Runs |
-| --- | --- |
-| `vscode` | `codium`, on Fedora |
-| `local_ip` | `hostname -I` |
-| `rp` | `ss -ltnp`, the listening TCP sockets |
+| Alias      | Runs                                  |
+| ---------- | ------------------------------------- |
+| `vscode`   | `codium`, on Fedora                   |
+| `local_ip` | `hostname -I`                         |
+| `rp`       | `ss -ltnp`, the listening TCP sockets |
 
 macOS also loads kubectl's completion and [kube-ps1], which shows the current
 cluster and namespace in the prompt. It starts switched off; turn it on with
@@ -65,15 +65,15 @@ cluster and namespace in the prompt. It starts switched off; turn it on with
 These are functions rather than aliases, either because they take arguments or
 because a completion has to be able to see them.
 
-| Command | What it does |
-| --- | --- |
-| `root` | `cd` to the top of the current Git working tree |
-| `nx …` | run the workspace-local `node_modules/.bin/nx`, found by searching upwards from the current directory, so it works from any package of a monorepo |
-| `update_repos [-e a,b]` | update every Git repository below the current directory, optionally excluding some |
-| `update_deps` | `./install.sh --update`, refreshing this machine's managed packages |
-| `t3 …` | control a T3 Code service, locally or over SSH — see [t3.md](t3.md) |
-| `dev …` | Dev Containers, macOS only — see below |
-| `q` | quit the Terminal application, macOS only |
+| Command                 | What it does                                                                                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `root`                  | `cd` to the top of the current Git working tree                                                                                                   |
+| `nx …`                  | run the workspace-local `node_modules/.bin/nx`, found by searching upwards from the current directory, so it works from any package of a monorepo |
+| `update_repos [-e a,b]` | update every Git repository below the current directory, optionally excluding some                                                                |
+| `update_deps`           | `./install.sh --update`, refreshing this machine's managed packages                                                                               |
+| `t3 …`                  | control a T3 Code service, locally or over SSH — see [t3.md](t3.md)                                                                               |
+| `dev …`                 | Dev Containers, macOS only — see below                                                                                                            |
+| `q`                     | quit the Terminal application, macOS only                                                                                                         |
 
 `nx` must stay a function: nx-completion runs `nx --help` from inside a
 completion function, where aliases are invisible.
@@ -96,7 +96,7 @@ images.
 
 Debian installs `wakeonlan` and Fedora installs `wol` for sending magic packets;
 macOS installs neither. Send one with `wakeonlan <MAC-address>` on Debian or
-`wol <MAC-address>` on Fedora. Setting a machine up to *receive* them is covered
+`wol <MAC-address>` on Fedora. Setting a machine up to _receive_ them is covered
 in [installer.md](installer.md#wake-on-lan).
 
 ## Repository scripts
@@ -104,16 +104,15 @@ in [installer.md](installer.md#wake-on-lan).
 Run these from the checkout. `t3`, `dev` and `update_repos` above are thin shell
 wrappers around three of them.
 
-| Script | Purpose |
-| --- | --- |
-| `./install.sh` | install or update this machine — see the [README](../README.md#install) |
-| `./scripts/lint.sh [--fix]` | shfmt and ShellCheck over every shell file |
-| `npm run lint` / `npm run lint:fix` | ESLint and Prettier over every JavaScript file |
-| `bash scripts/t3.sh …` | the script behind `t3`, usable on a host without this checkout |
-| `bash scripts/print-pretty.sh '@b@green[[Done]]'` | echo with colour markup, for your own scripts |
-| `python3 scripts/t3-service.py setup` | create the T3 Code user service; `t3 setup` calls this |
-| `python3 scripts/t3-update.py` | update the T3 CLI and this machine's agents; `t3 update` calls this |
-| `python3 scripts/wakeonlan.py` | re-enable Wake-on-LAN, run at boot by the systemd unit on Debian |
+| Script                                            | Purpose                                                                 |
+| ------------------------------------------------- | ----------------------------------------------------------------------- |
+| `./install.sh`                                    | install or update this machine — see the [README](../README.md#install) |
+| `./scripts/lint.sh [--fix]`                       | shfmt, ShellCheck, Ruff and Prettier over the repository                |
+| `bash scripts/t3.sh …`                            | the script behind `t3`, usable on a host without this checkout          |
+| `bash scripts/print-pretty.sh '@b@green[[Done]]'` | echo with colour markup, for your own scripts                           |
+| `python3 scripts/t3-service.py setup`             | create the T3 Code user service; `t3 setup` calls this                  |
+| `python3 scripts/t3-update.py`                    | update the T3 CLI and this machine's agents; `t3 update` calls this     |
+| `python3 scripts/wakeonlan.py`                    | re-enable Wake-on-LAN, run at boot by the systemd unit on Debian        |
 
 ## Installed command-line tools
 
