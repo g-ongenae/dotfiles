@@ -1,5 +1,5 @@
 # Run the same checks as `scripts/lint.sh` and `npm run lint` on every push and
-# pull request, and make sure every changed userscript carries a higher @version.
+# pull request.
 name: lint
 
 on:
@@ -49,18 +49,3 @@ jobs:
 
       - name: Check formatting and lint JavaScript files
         run: npm run lint
-
-  userscript-versions:
-    name: Userscript versions
-    runs-on: ubuntu-latest
-    steps:
-      # The check compares against the commit this push or pull request starts
-      # from, so it needs the history and not only the last commit.
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Check that changed userscripts raise their @version
-        env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: python3 scripts/check-userscript-versions.py "$BASE" HEAD

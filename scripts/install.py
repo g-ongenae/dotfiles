@@ -11,6 +11,7 @@ import fnmatch
 import gzip  # noqa: F401
 import hashlib
 import html
+import io
 import json
 import lzma  # noqa: F401
 import os
@@ -32,8 +33,11 @@ PROFILES = ('macos', 'fedora', 'debian-server')
 STEPS = ('packages', 'shell', 'extensions', 'browsers')
 APPLICATIONS = Path('/Applications')
 FIREFOX_APP = APPLICATIONS / 'Firefox.app'
-# Raw GitHub URLs ending in .user.js open Violentmonkey's install dialog.
-USERSCRIPTS_URL = 'https://raw.githubusercontent.com/g-ongenae/dotfiles/main/userscripts/'
+USERSCRIPTS_REPO = 'https://github.com/g-ongenae/userscripts'
+# Greasy Fork's JSON API; greasyfork.org redirects its .json pages here.
+GREASYFORK_API = 'https://api.greasyfork.org/en/'
+# Ask listings for this many scripts per page; a shorter page is the last one.
+GREASYFORK_PAGE = 100
 UNDUCK_URL = 'https://g-ongenae.github.io/unduck/'
 # Added through each Firefox-family browser's SearchEngines policy (Firefox 139+).
 UNDUCK_ENGINE = {
@@ -132,6 +136,78 @@ def extract_binary(path, name):
     else:
         return path.read_bytes()
     raise ValueError(f'Expected exactly one {name} binary in {path.name}')
+
+
+def userscript_sources(config):
+    """The manifest's userscript sources as (label, page to install from by hand, URL to read).
+
+    The URL is a Greasy Fork API URL, or the script itself for `userscript-urls`.
+    """
+    sources = []
+    for section, label, page, api in (
+            ('greasyfork-users', 'Greasy Fork user', 'users/{}', 'users/{}.json'),
+            ('greasyfork-sets', 'Greasy Fork script set', 'scripts?set={}', 'scripts.json?set={}&per_page=' + str(GREASYFORK_PAGE)),
+            ('greasyfork-scripts', 'Greasy Fork script', 'scripts/{}', 'scripts/{}.json')):
+        for identifier in config.get(section, []):
+            if not identifier.isdigit():
+                raise ValueError(f'{section}: expected a numeric Greasy Fork id, got {identifier}')
+            sources.append((f'{label} {identifier}', 'https://greasyfork.org/' + page.format(identifier),
+                            GREASYFORK_API + api.format(identifier)))
+    for url in config.get('userscript-urls', []):
+        if not url.startswith('https://') or not url.endswith('.user.js'):
+            raise ValueError(f'userscript-urls: expected an HTTPS .user.js URL, got {url}')
+        sources.append((url.rsplit('/', 1)[-1], url, url))
+    return sources
+
+
+def greasyfork_scripts(url):
+    """Read the userscripts of a Greasy Fork user, script set or single script.
+
+    Each is a dict with its name, its short install URL and when its code last
+    changed. Deleted scripts and user styles are left out.
+    """
+    data = json.loads(fetch(url))
+    if isinstance(data, list):  # a listing, such as a script set: read its next pages too
+        page, number = data, 1
+        while len(page) == GREASYFORK_PAGE:
+            number += 1
+            page = json.loads(fetch(f'{url}&page={number}'))
+            data += page
+    scripts = data if isinstance(data, list) else data.get('scripts', [data])
+    return [{'name': script['name'], 'url': f'https://update.greasyfork.org/scripts/{script["id"]}.user.js',
+             'updated': script.get('code_updated_at')}
+            for script in scripts if not script.get('deleted') and script.get('code_url', '').endswith('.user.js')]
+
+
+def userscript_name(code, fallback):
+    """The `@name` of a userscript, or `fallback` when its header has none."""
+    match = re.search(r'^//\s*@name\s+(.+?)\s*$', code.split('==/UserScript==', 1)[0], re.M)
+    return match.group(1) if match else fallback
+
+
+def violentmonkey_backup(scripts):
+    """A zip that Violentmonkey's import installs in one go, without a dialog per script.
+
+    It holds the `.user.js` files of a Violentmonkey backup plus its `violentmonkey`
+    entry, which records each script's install URL for scripts whose header has
+    no `@downloadURL`, so that every script keeps updating. Entries carry the time
+    the code last changed, not the time of this run, so an unchanged set of
+    scripts gives the same file.
+    """
+    stream, entries = io.BytesIO(), {}
+    with zipfile.ZipFile(stream, 'w') as archive:
+        for script in scripts:
+            base = name = re.sub(r'[\\/:*?"<>|]', '-', script['name'])
+            number = 1
+            while name in entries:
+                number += 1
+                name = f'{base} ({number})'
+            entries[name] = {'custom': {'lastInstallURL': script['url']}}
+            numbers = [int(n) for n in re.findall(r'\d+', script.get('updated') or '')[:6]]
+            info = zipfile.ZipInfo(name + '.user.js', tuple(numbers) if len(numbers) == 6 else (1980, 1, 1, 0, 0, 0))
+            archive.writestr(info, script['code'], zipfile.ZIP_DEFLATED)
+        archive.writestr(zipfile.ZipInfo('violentmonkey'), json.dumps({'scripts': entries}, indent=2, ensure_ascii=False))
+    return stream.getvalue()
 
 
 def with_unduck(text):
@@ -609,8 +685,7 @@ class Installer:
         text += ''.join(f'<li><a href="{html.escape(url)}">{html.escape(name)}</a></li>' for name, url in links) + '</ul>'
         text += '<h2>Unpublished</h2><p>Not on addons.mozilla.org: follow the README to load the extension, or sign it as an unlisted add-on.</p><ul>'
         text += ''.join(f'<li><a href="https://github.com/{html.escape(repo)}">{html.escape(repo)}</a></li>' for repo in config.get('firefox-source', [])) + '</ul>'
-        text += '<h2>Userscripts</h2><p>Install Violentmonkey first, then open each link to install the script.</p><ul>'
-        text += ''.join(f'<li><a href="{html.escape(USERSCRIPTS_URL + name)}">{html.escape(name)}</a></li>' for name in config.get('userscripts', [])) + '</ul>'
+        text += self.userscripts(config)
         if self.args.profile == 'macos':
             text += '<h1>Chrome and Chromium</h1><ul>'
             text += ''.join(f'<li><a href="https://chromewebstore.google.com/detail/{identifier}">{label}</a></li>' for identifier, label in zip(config['chromium'], ('github-mermaid-jsdoc-viewer', 'pr-review-collector'))) + '</ul>'
@@ -636,6 +711,56 @@ class Installer:
                     addon = json.loads(fetch(f'https://addons.mozilla.org/api/v5/addons/addon/{slug}/'))
                     settings[addon['guid']] = {'installation_mode': 'normal_installed', 'install_url': addon['current_version']['file']['url']}
                 self.write(policy, json.dumps({'policies': {'ExtensionSettings': settings}}, indent=2) + '\n')
+
+    def userscripts(self, config):
+        """Fetch the manifest's userscripts, pack them for Violentmonkey, and return the page section.
+
+        Only --apply reads the sources. A source or script that cannot be read is
+        reported and linked from the page, so it can still be installed by hand.
+        """
+        archive = self.config / 'userscripts.zip'
+        scripts, unread = [], []
+        for label, page, url in userscript_sources(config):
+            print(f'Fetch userscripts: {url}')
+            if not self.args.apply:
+                unread.append((label, page))
+                continue
+            try:
+                if url == page:  # a .user.js URL outside Greasy Fork
+                    code = fetch(url).decode()
+                    found = [{'name': userscript_name(code, label), 'url': url, 'code': code}]
+                else:
+                    found = greasyfork_scripts(url)
+            except (OSError, ValueError) as error:
+                unread.append((label, page))
+                self.failures.append(f'Cannot read {label} ({error}); install its userscripts from {page}, or rerun the browsers step')
+                continue
+            known = {script['url'] for script in scripts}
+            scripts += [script for script in found if script['url'] not in known]
+        for script in scripts:
+            try:
+                if 'code' not in script:
+                    script['code'] = fetch(script['url']).decode() if self.args.apply else ''
+            except (OSError, ValueError) as error:
+                self.failures.append(f'Cannot download {script["name"]} ({error}); install it from {script["url"]}, or rerun the browsers step')
+        packed = [script for script in scripts if script.get('code')]
+        if packed or not self.args.apply:
+            self.write(archive, violentmonkey_backup(packed) if self.args.apply else b'')
+        text = (f'<h2>Userscripts</h2><p>From <a href="{USERSCRIPTS_REPO}">g-ongenae/userscripts</a> and Greasy Fork. '
+                'Install Violentmonkey first.</p>')
+        if packed:
+            text += ('<p><b>All at once:</b> open Violentmonkey&#39;s dashboard, then <b>Settings</b>, <b>Backup and maintenance</b>, '
+                     f'<b>Import from zip</b>, and choose <code>{html.escape(str(archive))}</code>. It installs every script below '
+                     'without a dialog per script, and each one keeps updating from where it came from.</p>')
+        if scripts:
+            text += ('<p><b>One by one:</b> open each link and confirm Violentmonkey&#39;s install dialog, or '
+                     '<button onclick="document.querySelectorAll(&#39;#userscripts a&#39;).forEach(link =&gt; window.open(link.href))">'
+                     'open them all</button> (one tab each; allow this page&#39;s pop-ups if the browser blocks them).</p><ul id="userscripts">')
+            text += ''.join(f'<li><a href="{html.escape(script["url"])}">{html.escape(script["name"])}</a></li>' for script in scripts) + '</ul>'
+        if unread:
+            text += '<p>Not read by the last run: install their userscripts from these pages.</p><ul>'
+            text += ''.join(f'<li><a href="{html.escape(page)}">{html.escape(label)}</a></li>' for label, page in unread) + '</ul>'
+        return text
 
     def unduck(self):
         """Make Unduck the default search engine, then import its bangs into each browser.

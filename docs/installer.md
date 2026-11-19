@@ -211,178 +211,71 @@ addons.mozilla.org, so the page links to its repository instead (the
 `firefox-source` section). Follow its README to load it temporarily, or sign it
 as an unlisted add-on to keep it.
 
-The page also lists the userscripts in `userscripts/` (the `userscripts`
-section). Each link opens the script's raw GitHub URL on `main`, where
-Violentmonkey offers to install it and later checks it for updates:
+Violentmonkey stays on that list, but the userscripts it runs now live in
+their own repository, [g-ongenae/userscripts](https://github.com/g-ongenae/userscripts),
+and are published on [Greasy Fork](https://greasyfork.org/users/1663163-guillaume-ongenae).
+In `--apply` mode the browsers step reads the sources of the manifest's
+userscript sections (preview mode does not touch the network):
 
-- `github-find-active-forks.user.js` adds an **Active forks** button to GitHub
-  repository headers, opening [active-forks](https://techgaun.github.io/active-forks/).
-- `github-fold-comments.user.js` adds a chevron button to the header of each
-  review, comment, review comment and description of GitHub pull requests (the
-  Overview preview and the classic conversation) and issues; it folds it down
-  to its header (a review with its comment and its threads), and Alt-click
-  folds or unfolds every comment of the page. Each choice is remembered.
-- `github-fold-profile.user.js` folds the README (folded by default) and the
-  pinned repositories on GitHub user and organization profiles down to their
-  headers; a chevron button in each header unfolds it, and each state is
-  remembered.
-- `github-hide-agents-tab.user.js` hides the **Agents** tab of GitHub
-  repository navigation bars, its entry in the overflow menu, the
-  **Copilot** button (and its dropdown) of the page header, and the Copilot
-  panel button of the pull request header.
-- `github-hide-sidebar-sections.user.js` hides the **Projects**, **Milestone**,
-  **Development** and **Notifications** sections of the sidebar of GitHub pull
-  requests (the Overview preview and the classic conversation) and issues.
-- `github-notifications-hide-repos.user.js` adds a **Hide** button to the
-  header of each repository group of the GitHub notifications page; the
-  repository's notifications stay hidden after a reload. A crossed-out eye next
-  to the repository in the sidebar shows it again, and filtering on the
-  repository still lists its notifications. Hiding is display-only: hidden
-  notifications still count in the inbox badge.
-- `github-pr-hide-bots.user.js` adds a **Hide bots** button to pull request
-  conversations: left of **All / Unresolved / Mine** on the Overview preview,
-  in the page header on the classic conversation (`?overview=false`). Unlike
-  GitHub's own **Show AI and bot comments** filter, it keeps the SonarCloud and
-  algoanbot reports (OpenAPI changes…) and hides the replies Claude wrote. It
-  hides the comments and reviews of bots and AI
-  reviewers (Copilot, CodeRabbit, Claude…, but not SonarCloud, Socket and
-  algoanbot), the replies posted with a
-  `Co-Authored-By: Claude … <noreply@anthropic.com>` signature or a
-  `🤖 Generated with Claude Code` footer, the `@coderabbitai review` (or
-  `full review`) commands, the resolved threads and the timeline events
-  (labels, review requests, draft/ready…; the Overview moves them to the
-  sidebar's Activity), leaving the description, the commits, the human comments and reviews, the
-  linked or mentioning issues and pull requests, and the merge. A thread a
-  human answered stays, with the comment it answers. The button shows how many items are hidden, and the
-  choice is remembered.
-- `github-readme-tab.user.js` moves the README of GitHub repositories (and
-  directories) into its own **README** tab, first in the repository navigation
-  bar: **Code** shows the files only, **README** shows the README with its
-  License / Code of conduct tabs instead of the files. The tab opens on
-  `#readme-ov-file` (also the sidebar's **Readme** link), so it can be linked
-  to and survives a reload; from the other tabs it goes to the repository home.
-  The repository home opens on **README** when it has one (unless reached
-  through **Code**); directories open on their files. Where the page has no
-  README (a repository or directory without one, a 404 page), the tab is
-  greyed out and Code is shown.
-- `google-meet-float-controls.user.js` gives the videos the whole window in a
-  Google Meet call: the tiles stretch over the room Meet keeps for its bottom
-  bar and its 16:9 boxes (cameras are cropped to fit, screen shares
-  letterboxed), and the call controls with the reactions row either float over
-  the bottom of the video, fading out when the mouse rests, or fold out of
-  sight against the left edge, opening when the mouse touches it. A button left
-  of the controls switches between docked (Meet's own layout), floating and
-  side, and the choice is remembered. It also hides the Gemini button at the
-  bottom left (`DEFAULT_MODE`, `SIDE`, `FILL` and `HIDE_GEMINI` at the top of
-  the script).
-- `google-meet-keyboard.user.js` drives a Google Meet call from the keyboard:
-  **c** opens the chat with the cursor in its message box (**Esc** leaves it,
-  **Cmd+Esc** closes the chat), **m** mutes or unmutes the sound of the call
-  (not your microphone, which stays on **Cmd+D**; a red badge shows while it
-  is off), **h** hides your own video (Meet's **Minimize**, closing the notice
-  that follows) or shows it again, **v** switches to the next layout (Auto,
-  Tiled, Spotlight, Sidebar, then back), **f** toggles full screen, **s** the
-  captions, **t** the translation (closing Meet's panel afterwards), **p**
-  presents your screen, **l** reacts with 👍, **r** opens Meet's emoji picker
-  with the cursor in its search, and holding **r** shows Meet's nine
-  reactions to pick with **1**–**9**. **?** lists the shortcuts, Meet's own
-  included.
-- `google-slides-declutter.user.js` gives the slide more room in the Google
-  Slides editor: it folds away the insert rail on the right of the slide
-  (Slide, Image, Media, Uploads, Convert to video, all still in the **Insert**
-  menu) and hands its room to the slide; a chevron at the end of the toolbar,
-  like the filmstrip one, folds it (`>`) and brings it back (`<`), and the
-  choice is remembered. It also closes the
-  **Enhance this slide** AI button under the slide whenever it shows up
-  (`FOLD_RAIL_BY_DEFAULT` and `CLOSE_AI_NUDGE` at the top of the script).
-- `hackernews-keyboard.user.js` drives Hacker News from the keyboard: **j** /
-  **k** (or **↓** / **↑**) move to the next / previous story, or comment in a
-  discussion (highlighted, skipping folded replies), **o** opens its link in a
-  new tab (a comment's first link), **d** opens its discussion and **f** folds
-  or unfolds a comment with its replies; **n** goes to the next page, **.** /
-  **t** to the top, **r** reloads and **h** opens the home page; **Esc** leaves
-  the comment box. **?** lists the shortcuts.
-- `linkedin-compose.user.js` makes LinkedIn's **Start a post** dialog fill the
-  window; adds **B**, **I** and **S** buttons (and Cmd/Ctrl+B, Cmd/Ctrl+I,
-  Cmd/Ctrl+Shift+X, which also work in comments) that toggle bold, italic or
-  strikethrough on the selection with Unicode letters and marks, as posts are
-  plain text;
-  shows attached images as a row of thumbnails at the bottom; and counts the
-  words and characters of the post against the 3,000 characters limit. Unicode
-  bold, italic and struck-through letters are poorly read by screen readers and are not found
-  by LinkedIn's search.
-- `linkedin-declutter.user.js` hides LinkedIn's Jobs, For Business and Premium
-  upsells, the footer links, the ad library card of company pages, the right
-  rail and "Recommended for you" cards; widens the feed and single posts, and
-  lays out the posts of company and profile pages like the feed; moves the post composer under **Saved
-  items**; shows post images beside the text with an expand button; adds panel
-  buttons at the page edges that fold away the left column of the feed and the
-  side column of company and profile pages (**People also viewed**, …; folded
-  by default), remembering their state; pauses off-screen videos; and, since LinkedIn
-  keeps every loaded post in memory, stops the feed after 50 posts with a
-  **Load a fresh feed** button (`FRESH_FEED_AFTER` at the top of the script).
-- `linkedin-keyboard.user.js` drives LinkedIn from the keyboard: **j** / **k**
-  (or **↓** / **↑**) move to the next / previous post (outlined), **l** likes it
-  and holding **l** shows a reaction picker (**t y u i o p** for Like,
-  Celebrate, Support, Love, Insightful and Funny; **l** or **Esc** cancels),
-  **c** opens its comment box, **r** reposts it with your thoughts (in the
-  composer), **s** copies its link, **o** opens it, **e** expands or collapses
-  its text, **←** / **→** browse its images or document pages, **Space**
-  plays or pauses its video and **m** mutes or unmutes it; **p** starts a post, **t** / **b** go to the top / bottom
-  of the page, **h** opens the feed and **u** your profile; in a post or comment
-  being written, **Cmd+U** (**Ctrl+U** off macOS) adds an image and **Esc**
-  leaves a comment box. **?** lists the shortcuts.
-- `reddit-declutter.user.js` hides Reddit's sign-up panel on the left (shown
-  logged out; the navigation shown logged in stays), the right column (related
-  posts, community card, footer links), ads, the feed of other posts under the
-  comments and Google's sign-in pop-up, giving their room to the main column;
-  on a post's own page, it shows the whole text without **Read more**. Each
-  part has a setting at the top of the script.
-- `slack-declutter.user.js` hides Slack's **Find a conversation** filter, the
-  **Huddles**, **Later** and **Directories** entries of the sidebar, and the
-  **Help** button of the top bar, closing the gaps they leave; it also folds
-  image and file previews in messages down to their file name.
-- `slack-fold-sidebar.user.js` adds a button left of the back/forward arrows
-  of Slack's top bar that folds the sidebar (workspace name, channels, direct
-  messages…) so the conversation takes the whole width; the last state is
-  remembered.
-- `slack-upload-shortcut.user.js` makes **Cmd+U** (**Ctrl+U** off macOS;
-  `MODIFIER` at the top of the script) open the file picker of the message
-  composer being typed in (or of the open conversation), like **Upload from
-  your computer** in its **+** menu. It leaves the shortcut alone when the
-  focus is in another input, such as the search box.
-- `twitch-home-following.user.js` replaces the Twitch home page (featured
-  carousel, recommended streams and categories) with the channels you follow:
-  live ones as stream cards, busiest first, the others as avatars, most
-  recently live first. The carousel and recommendations are not even fetched,
-  so the carousel's live stream never plays, and the side bar keeps only the
-  followed channels. It also hides the top bar's More options, Prime offers,
-  Bits and Turbo buttons, and on channel pages the Bits, upgrade and gift sub
-  buttons, the goals, the goal and leaderboard banner atop the chat and the
-  Bits, points and bonus buttons under it.
-- `youtube-fold-related.user.js` folds the right column of a YouTube video
-  (filter chips and related videos) so the video takes its space; a small
-  round button on the right edge unfolds it, and the last state is remembered.
-- `youtube-home-subscriptions.user.js` fills the empty YouTube home page
-  (watch history off) with a grid of your subscribed channels, read from the
-  sidebar; channels with new videos come first and carry a blue dot.
+- `greasyfork-users`: every script of these Greasy Fork users, read from
+  `https://api.greasyfork.org/en/users/<id>.json`;
+- `greasyfork-sets`: the scripts of Greasy Fork script sets, such as a user's
+  Favorites, read from `https://api.greasyfork.org/en/scripts.json?set=<id>`.
+  Greasy Fork currently answers HTTP 403 to these listings outside a browser,
+  so a set is then linked from the page rather than read; list favorites in
+  `greasyfork-scripts` instead;
+- `greasyfork-scripts`: single Greasy Fork scripts, by id;
+- `userscript-urls`: scripts published elsewhere, by their `.user.js` URL.
 
-One more script is made for a phone's browser, so it is not on the page: open
-[its raw URL](https://raw.githubusercontent.com/g-ongenae/dotfiles/main/userscripts/demonicscans-favorites.user.js)
-on the phone, in a browser running Violentmonkey (Firefox for Android has it).
+It downloads each script and packs them into
+`~/.config/dotfiles/userscripts.zip`, in Violentmonkey's backup format. No
+userscript manager installs scripts silently: from a link, Violentmonkey always
+asks for a confirmation per script, and no browser policy installs
+userscripts. Its backup import is the one exception, so the fastest way to
+install every script is a single import: in Violentmonkey's dashboard, open
+**Settings**, **Backup and maintenance**, **Import from zip**, and choose that
+file. Each script keeps updating from Greasy Fork (or the URL it came from),
+and importing a newer zip replaces the scripts in place. The page also lists
+each script's install link, and an **open them all** button that opens one
+Violentmonkey install tab per script (allow the page's pop-ups when the browser
+blocks them).
 
-- `demonicscans-favorites.user.js` keeps a list of favorite titles on
-  [Demonic Scans](https://demonicscans.org), without an account. Each title
-  page gets an **Add to favorites** button under the site's own Bookmark
-  button, and a star in the navigation bar opens the list: each title with its
-  cover, its latest chapter (a link to it) and that chapter's date, most recent
-  first, dates of the last day highlighted. From a chapter being read, the list
-  also offers to add its title. Opening the list reads again the latest
-  chapters read more than an hour ago (`STALE_MS` at the top of the script),
-  and its refresh button reads them all; the star of a row removes the title,
-  with an **Undo**, and the phone's back button closes the list. The favorites
-  are kept in the site's storage on that browser only: clearing the site's
-  data erases them.
+A source or script that cannot be downloaded, for example when Greasy Fork is
+unreachable, is reported at the end of the run and linked from the page, so it
+can be installed by hand or by running the browsers step again.
+
+Installed today:
+
+- [Demonic Scans — Favorites](https://greasyfork.org/scripts/606012-demonic-scans-favorites)
+- [GitHub — Fold comments](https://greasyfork.org/scripts/604905-github-fold-comments)
+- [GitHub — Fold profile sections](https://greasyfork.org/scripts/604906-github-fold-profile-sections)
+- [GitHub — Hide bots on pull requests](https://greasyfork.org/scripts/604910-github-hide-bots-on-pull-requests)
+- [GitHub — Hide repositories from notifications](https://greasyfork.org/scripts/604909-github-hide-repositories-from-notifications)
+- [GitHub — Hide sidebar sections](https://greasyfork.org/scripts/604908-github-hide-sidebar-sections)
+- [GitHub — Hide the Agents tab](https://greasyfork.org/scripts/604907-github-hide-the-agents-tab)
+- [GitHub — README tab](https://greasyfork.org/scripts/605019-github-readme-tab)
+- [Google Meet — Float call controls](https://greasyfork.org/scripts/604911-google-meet-float-call-controls)
+- [Google Meet — Keyboard shortcuts](https://greasyfork.org/scripts/604912-google-meet-keyboard-shortcuts)
+- [Google Slides — Declutter the editor](https://greasyfork.org/scripts/604913-google-slides-declutter-the-editor)
+- [Hacker News — Keyboard shortcuts](https://greasyfork.org/scripts/605852-hacker-news-keyboard-shortcuts)
+- [LinkedIn — Better post composer](https://greasyfork.org/scripts/604914-linkedin-better-post-composer)
+- [LinkedIn — Declutter & wide feed](https://greasyfork.org/scripts/604915-linkedin-declutter-wide-feed)
+- [LinkedIn — Keyboard shortcuts](https://greasyfork.org/scripts/604916-linkedin-keyboard-shortcuts)
+- [Reddit — Declutter](https://greasyfork.org/scripts/606132-reddit-declutter)
+- [Slack — Declutter](https://greasyfork.org/scripts/604917-slack-declutter)
+- [Slack — Fold sidebar](https://greasyfork.org/scripts/604918-slack-fold-sidebar)
+- [Slack — Upload shortcut](https://greasyfork.org/scripts/604919-slack-upload-shortcut)
+- [Twitch — Followed channels on the home page](https://greasyfork.org/scripts/604920-twitch-followed-channels-on-the-home-page)
+- [YouTube — Fold related videos](https://greasyfork.org/scripts/604921-youtube-fold-related-videos)
+- [YouTube — Subscriptions on the home page](https://greasyfork.org/scripts/604922-youtube-subscriptions-on-the-home-page)
+- Find active forks, a modified copy of [Greasy Fork script 397171](https://greasyfork.org/scripts/397171)
+  not published on Greasy Fork: installed from
+  [its raw URL](https://raw.githubusercontent.com/g-ongenae/userscripts/main/userscripts/github/find-active-forks.user.js)
+
+Demonic Scans — Favorites is made for a phone's browser. The zip installs it
+on the computer too, where it only runs on that site; on the phone, open its
+Greasy Fork page in a browser running Violentmonkey (Firefox for Android has
+it).
 
 `--firefox-policy` additionally resolves the real AMO IDs and generates
 `~/.config/dotfiles/firefox-policies.json`. This optional extension policy is

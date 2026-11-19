@@ -545,7 +545,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_browser_extensions_are_profile_specific(self):
         self.args.profile = 'fedora'
-        with patch.object(self.install, 'unduck'):
+        with patch.object(installer, 'fetch', side_effect=self.greasyfork), patch.object(self.install, 'unduck'):
             self.install.browsers()
         page = (self.install.config / 'browser-extensions.html').read_text()
         self.assertIn('/switchyard/', page)
@@ -555,11 +555,11 @@ class InstallerTests(unittest.TestCase):
         self.assertIn('/violentmonkey/', page)
         self.assertIn('https://github.com/g-ongenae/parrot', page)
         self.assertNotIn('/addon/g-ongenae/parrot', page)
-        self.assertIn(installer.USERSCRIPTS_URL + 'github-find-active-forks.user.js', page)
-        for name in installer.manifest(installer.ROOT / 'profiles/common/browser-extensions.yaml')['userscripts']:
-            self.assertTrue((installer.ROOT / 'userscripts' / name).is_file(), name)
+        self.assertIn('https://update.greasyfork.org/scripts/606132.user.js', page)
+        self.assertIn('>Find active forks</a>', page)
         self.args.profile = 'macos'
-        with patch.object(self.install, 'run'), patch.object(self.install, 'unduck'):
+        with patch.object(installer, 'fetch', side_effect=self.greasyfork), \
+                patch.object(self.install, 'run'), patch.object(self.install, 'unduck'):
             self.install.browsers()
         page = (self.install.config / 'browser-extensions.html').read_text()
         self.assertNotIn('/switchyard/', page)
@@ -567,13 +567,119 @@ class InstallerTests(unittest.TestCase):
         self.assertIn('jhkfjpfhioaoopiapaipleecedggpimi', page)
         self.assertIn('jdkfjefccncegmcelnnbfmmibppjchgi', page)
 
+    FORKS_URL = 'https://raw.githubusercontent.com/g-ongenae/userscripts/main/userscripts/github/find-active-forks.user.js'
+
+    @staticmethod
+    def userscript(name, version='1.0.0'):
+        return f'// ==UserScript==\n// @name         {name}\n// @version      {version}\n// ==/UserScript==\nvoid 0;\n'
+
+    def greasyfork(self, url):
+        """Answer `fetch` like Greasy Fork and GitHub do for the manifest's userscripts."""
+        scripts = [
+            {'id': 606132, 'name': 'Reddit — Declutter', 'code_url': 'https://update.greasyfork.org/scripts/606132/Reddit.user.js',
+             'code_updated_at': '2026-11-18T15:01:16.000Z', 'deleted': False},
+            {'id': 604905, 'name': 'GitHub — Fold comments', 'code_url': 'https://update.greasyfork.org/scripts/604905/GitHub.user.js',
+             'code_updated_at': '2026-11-11T19:12:58.000Z', 'deleted': False},
+            {'id': 1, 'name': 'Deleted', 'code_url': 'https://update.greasyfork.org/scripts/1/Deleted.user.js', 'deleted': True},
+            {'id': 2, 'name': 'A style', 'code_url': 'https://update.greasyfork.org/scripts/2/Style.user.css', 'deleted': False},
+        ]
+        answers = {
+            'https://api.greasyfork.org/en/users/1663163.json': {'id': 1663163, 'name': 'Test', 'scripts': scripts},
+            'https://update.greasyfork.org/scripts/606132.user.js': self.userscript('Reddit — Declutter'),
+            'https://update.greasyfork.org/scripts/604905.user.js': self.userscript('GitHub — Fold comments'),
+            self.FORKS_URL: self.userscript('Find active forks', '2.1.1'),
+        }
+        if url not in answers:
+            raise installer.urllib.error.HTTPError(url, 404, 'Not Found', {}, None)
+        answer = answers[url]
+        return (answer if isinstance(answer, str) else json.dumps(answer)).encode()
+
+    def test_userscripts_come_from_greasy_fork_and_raw_urls_in_one_violentmonkey_zip(self):
+        self.args.profile = 'fedora'
+        config = installer.manifest(ROOT / 'profiles/common/browser-extensions.yaml')
+        with patch.object(installer, 'fetch', side_effect=self.greasyfork) as fetch:
+            section = self.install.userscripts(config)
+        self.assertEqual(self.install.failures, [])
+        self.assertEqual(fetch.call_count, 4)
+        links = re.findall(r'<li><a href="([^"]+)">([^<]+)</a>', section)
+        self.assertEqual(links, [('https://update.greasyfork.org/scripts/606132.user.js', 'Reddit — Declutter'),
+                                 ('https://update.greasyfork.org/scripts/604905.user.js', 'GitHub — Fold comments'),
+                                 (self.FORKS_URL, 'Find active forks')])
+        self.assertIn('open them all</button>', section)
+        archive_path = self.install.config / 'userscripts.zip'
+        self.assertIn(html.escape(str(archive_path)), section)
+        with zipfile.ZipFile(archive_path) as archive:
+            self.assertEqual(archive.namelist(), ['Reddit — Declutter.user.js', 'GitHub — Fold comments.user.js',
+                                                  'Find active forks.user.js', 'violentmonkey'])
+            self.assertEqual(archive.getinfo('Reddit — Declutter.user.js').date_time, (2026, 11, 18, 15, 1, 16))
+            self.assertEqual(archive.read('Find active forks.user.js').decode(), self.userscript('Find active forks', '2.1.1'))
+            backup = json.loads(archive.read('violentmonkey'))
+        self.assertEqual(backup['scripts']['Find active forks'], {'custom': {'lastInstallURL': self.FORKS_URL}})
+        # An unchanged set of scripts leaves the zip alone.
+        self.output.truncate(0)
+        with patch.object(installer, 'fetch', side_effect=self.greasyfork):
+            self.install.userscripts(config)
+        self.assertNotIn('Write', self.output.getvalue())
+
+    def test_userscripts_link_a_source_that_cannot_be_read(self):
+        config = {'greasyfork-users': ['1663163'], 'greasyfork-sets': ['42'], 'userscript-urls': [self.FORKS_URL]}
+        with patch.object(installer, 'fetch', side_effect=self.greasyfork):
+            section = self.install.userscripts(config)
+        self.assertEqual(len(self.install.failures), 1)
+        self.assertIn('Greasy Fork script set 42', self.install.failures[0])
+        self.assertIn('<a href="https://greasyfork.org/scripts?set=42">Greasy Fork script set 42</a>', section)
+        self.assertIn('Find active forks', section)
+        # Unreachable Greasy Fork: nothing to pack, every source linked instead.
+        self.install.failures = []
+        archive = self.install.config / 'userscripts.zip'
+        archive.unlink()
+        with patch.object(installer, 'fetch', side_effect=installer.urllib.error.URLError('offline')):
+            section = self.install.userscripts(config)
+        self.assertEqual(len(self.install.failures), 3)
+        self.assertFalse(archive.exists())
+        self.assertNotIn('Import from zip', section)
+        self.assertIn('<a href="https://greasyfork.org/users/1663163">', section)
+
+    def test_userscript_script_that_cannot_be_downloaded_stays_linked(self):
+        def fetch(url):
+            if url == 'https://update.greasyfork.org/scripts/604905.user.js':
+                raise installer.urllib.error.URLError('reset')
+            return self.greasyfork(url)
+        with patch.object(installer, 'fetch', side_effect=fetch):
+            section = self.install.userscripts({'greasyfork-users': ['1663163']})
+        self.assertEqual(len(self.install.failures), 1)
+        self.assertIn('https://update.greasyfork.org/scripts/604905.user.js', self.install.failures[0])
+        self.assertIn('GitHub — Fold comments</a>', section)
+        with zipfile.ZipFile(self.install.config / 'userscripts.zip') as archive:
+            self.assertEqual(archive.namelist(), ['Reddit — Declutter.user.js', 'violentmonkey'])
+
+    def test_greasy_fork_script_sets_and_single_scripts_are_read_page_by_page(self):
+        def listing(number, count):
+            return [{'id': number * 1000 + n, 'name': f'Script {number}.{n}', 'code_url': f'https://example.test/{n}.user.js'}
+                    for n in range(count)]
+        url = 'https://api.greasyfork.org/en/scripts.json?set=7&per_page=100'
+        pages = {url: listing(1, 100), url + '&page=2': listing(2, 3)}
+        with patch.object(installer, 'fetch', side_effect=lambda u: json.dumps(pages[u]).encode()):
+            scripts = installer.greasyfork_scripts(url)
+        self.assertEqual(len(scripts), 103)
+        self.assertEqual(scripts[-1]['url'], 'https://update.greasyfork.org/scripts/2002.user.js')
+        single = {'id': 397171, 'name': 'Find forks', 'code_url': 'https://example.test/f.user.js'}
+        with patch.object(installer, 'fetch', return_value=json.dumps(single).encode()):
+            self.assertEqual([s['name'] for s in installer.greasyfork_scripts('https://example.test/s.json')], ['Find forks'])
+        sources = installer.userscript_sources({'greasyfork-sets': ['7'], 'greasyfork-scripts': ['397171']})
+        self.assertEqual([source[2] for source in sources], [url, 'https://api.greasyfork.org/en/scripts/397171.json'])
+        for config in ({'greasyfork-users': ['me']}, {'userscript-urls': ['http://example.test/a.user.js']},
+                       {'userscript-urls': ['https://example.test/a.js']}):
+            with self.subTest(config=config), self.assertRaises(ValueError):
+                installer.userscript_sources(config)
+
     def test_firefox_autoconfig_clones_then_pulls_and_installs_on_macos_only(self):
         app = self.home / 'Firefox.app'
         app.mkdir()
         checkout = self.install.data / 'firefox-autoconfig/firefox-memory-guard'
         self.args.profile = 'macos'
         with patch.object(installer, 'FIREFOX_APP', app), patch.object(self.install, 'run') as run, \
-                patch.object(self.install, 'unduck'):
+                patch.object(self.install, 'unduck'), patch.object(self.install, 'userscripts', return_value=''):
             self.install.browsers()
             checkout.mkdir(parents=True)
             self.install.browsers()
@@ -584,21 +690,21 @@ class InstallerTests(unittest.TestCase):
             ('sh', checkout / 'autoconfig/install.sh', app),
         ])
         self.args.profile = 'fedora'
-        with patch.object(self.install, 'run') as run, patch.object(self.install, 'unduck'):
+        with patch.object(self.install, 'run') as run, patch.object(self.install, 'unduck'), patch.object(self.install, 'userscripts', return_value=''):
             self.install.browsers()
         run.assert_not_called()
 
     def test_firefox_autoconfig_skips_missing_firefox_and_reports_clone_failure(self):
         self.args.profile = 'macos'
         with patch.object(installer, 'FIREFOX_APP', self.home / 'missing.app'), \
-                patch.object(self.install, 'run') as run, patch.object(self.install, 'unduck'):
+                patch.object(self.install, 'run') as run, patch.object(self.install, 'unduck'), patch.object(self.install, 'userscripts', return_value=''):
             self.install.browsers()
         run.assert_not_called()
         app = self.home / 'Firefox.app'
         app.mkdir()
         failure = subprocess.CalledProcessError(1, 'git')
         with patch.object(installer, 'FIREFOX_APP', app), \
-                patch.object(self.install, 'run', side_effect=failure), patch.object(self.install, 'unduck'):
+                patch.object(self.install, 'run', side_effect=failure), patch.object(self.install, 'unduck'), patch.object(self.install, 'userscripts', return_value=''):
             self.install.browsers()
         self.assertEqual(len(self.install.failures), 1)
         self.assertIn('firefox-memory-guard', self.install.failures[0])
