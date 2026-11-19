@@ -125,7 +125,7 @@ naming it in two places:
 
 `scripts/lint.sh` covers every file in the repository, tracked or newly added,
 except the vendored plugins under `zsh/plugins/`, which belong to their
-upstreams. [`.github/workflows/lint.yml`](../.github/workflows/lint.yml) runs
+upstreams. [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs
 the same script on every push and pull request.
 
 #### Shell files
@@ -139,6 +139,14 @@ the same script on every push and pull request.
   because ShellCheck has no Zsh dialect.
 
 Both tools are installed by every profile.
+
+#### Python files
+
+[Ruff](https://docs.astral.sh/ruff/) lints and formats them, configured by
+`ruff.toml`: its default rules, single quotes and lines of up to 120
+characters. `scripts/lint.sh` runs it through `uvx` at a pinned version; every
+profile installs uv. The configuration targets Python 3.9, which is what a
+fresh Mac runs the installer with.
 
 #### Markdown, YAML, JSON and JavaScript
 
@@ -158,5 +166,6 @@ python3 -m unittest discover -s tests -v
 
 Tests use temporary homes and mocked external installers. They check manifest
 parsing, dry-run isolation, migration, backups, repeat runs, SSH environment,
-browser selection and download verification. Full native installations still
+browser selection and download verification. The same workflow runs them on
+Linux with Python 3.9 and the latest Python. Full native installations still
 need testing on disposable macOS/Fedora/Debian machines.

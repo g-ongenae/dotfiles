@@ -9,7 +9,6 @@ import io
 import json
 import os
 import plistlib
-from pathlib import Path
 import re
 import shlex
 import shutil
@@ -17,8 +16,9 @@ import subprocess
 import tarfile
 import tempfile
 import unittest
-from unittest.mock import patch
 import zipfile
+from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location('installer', ROOT / 'scripts/install.py')
@@ -150,7 +150,7 @@ class InstallerTests(unittest.TestCase):
                     self.args.update = update
                     install = installer.Installer(self.args)
 
-                    def run(*argv, **kwargs):
+                    def run(*argv, installed=installed, **kwargs):
                         return installed if argv[1:] == ('list', '--formula') else ''
 
                     with patch.object(installer.shutil, 'which', return_value='/opt/homebrew/bin/brew'), \
@@ -300,8 +300,8 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual((framework, integration), (expected, expected))
 
     def bash(self, command, interactive=False):
-        env = dict(HOME=str(self.home), PATH='/usr/bin:/bin', TERM='dumb',
-                   DOTFILES_DIR=str(ROOT), DOTFILES_PROFILE=self.args.profile)
+        env = {'HOME': str(self.home), 'PATH': '/usr/bin:/bin', 'TERM': 'dumb',
+                   'DOTFILES_DIR': str(ROOT), 'DOTFILES_PROFILE': self.args.profile}
         binary = os.environ.get('DOTFILES_TEST_BASH', 'bash')
         result = subprocess.run([binary, '--noprofile', '--norc', '-ic' if interactive else '-c', command],
                                 env=env, text=True, capture_output=True, check=True)
@@ -370,7 +370,7 @@ class InstallerTests(unittest.TestCase):
         self.shell()
         command = prefix + '. "$HOME/.zshenv"; . "$HOME/.zshrc"; '
         command += 'alias g rp' if interactive else 'printf "%s:%s" "$DOTFILES_PROFILE" "$EDITOR"; (( ! $+aliases[g] ))'
-        env = dict(HOME=str(self.home), PATH='/usr/bin:/bin', TERM='dumb')
+        env = {'HOME': str(self.home), 'PATH': '/usr/bin:/bin', 'TERM': 'dumb'}
         return subprocess.run([binary, '-f', '-ic' if interactive else '-c', command],
                               env=env, text=True, capture_output=True, check=True)
 

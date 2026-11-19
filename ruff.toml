@@ -1,0 +1,19 @@
+# Ruff lints and formats the Python files; `scripts/lint.sh` runs it through
+# uvx at a pinned version.
+
+line-length = 120
+# A fresh Mac runs the installer with the Python 3.9 of the Command Line Tools.
+target-version = "py39"
+# Vendored Zsh plugins are upstream submodules, not ours to lint.
+extend-exclude = ["zsh/plugins"]
+
+[lint]
+ignore = [
+  # The scripts read `returncode` themselves wherever `check` is left out.
+  "PLW1510",
+  # A join over a list of literals reads better than one long f-string.
+  "FLY002",
+]
+
+[format]
+quote-style = "single"

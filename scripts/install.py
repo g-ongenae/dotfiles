@@ -3,6 +3,7 @@
 import argparse
 import ast
 import base64
+
 # Brew may upgrade and clean up this very interpreter mid-run, so preload the
 # modules that hostname lookups and tarfile.open would otherwise import lazily.
 import bz2  # noqa: F401
@@ -15,7 +16,6 @@ import io
 import json
 import lzma  # noqa: F401
 import os
-from pathlib import Path
 import platform
 import plistlib
 import re
@@ -27,6 +27,7 @@ import tarfile
 import tempfile
 import urllib.request
 import zipfile
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PROFILES = ('macos', 'fedora', 'debian-server')
@@ -104,7 +105,7 @@ def detect_profile():
     if sys.platform == 'darwin':
         return 'macos'
     release = Path('/etc/os-release')
-    values = dict(re.findall(r'^(\w+)=(.*)$', release.read_text(), re.M)) if release.exists() else {}
+    values = dict(re.findall(r'^(\w+)=(.*)$', release.read_text(), re.MULTILINE)) if release.exists() else {}
     distro = values.get('ID', '').strip('"')
     if distro == 'fedora':
         return 'fedora'
@@ -181,7 +182,7 @@ def greasyfork_scripts(url):
 
 def userscript_name(code, fallback):
     """The `@name` of a userscript, or `fallback` when its header has none."""
-    match = re.search(r'^//\s*@name\s+(.+?)\s*$', code.split('==/UserScript==', 1)[0], re.M)
+    match = re.search(r'^//\s*@name\s+(.+?)\s*$', code.split('==/UserScript==', 1)[0], re.MULTILINE)
     return match.group(1) if match else fallback
 
 
@@ -314,7 +315,7 @@ class Installer:
         if text.count(start) != text.count(end) or text.count(start) > 1:
             raise ValueError(f'Malformed managed block in {path}; refusing to overwrite')
         if start in text:
-            text = re.sub(re.escape(start) + r'.*?' + re.escape(end) + r'\n?', '', text, flags=re.S)
+            text = re.sub(re.escape(start) + r'.*?' + re.escape(end) + r'\n?', '', text, flags=re.DOTALL)
         block = start + '\n' + body.rstrip() + '\n' + end + '\n'
         self.write(path, block + text if prepend else text.rstrip() + '\n' + block)
 
@@ -326,7 +327,7 @@ class Installer:
             # Legacy Bash profiles are no longer migrated, only refused: a
             # machine still carrying one is handled by hand.
             text = migrate_startup(filename, path.read_text())
-            if re.search(r'^[^#\n]*(?:ZDOTDIR\s*=|/(?:run|system)/(?:\{?env|alias|\.zshrc)|CURRENT_SCRIPT=\$BASH_SOURCE|for completion_file in)', text, re.M):
+            if re.search(r'^[^#\n]*(?:ZDOTDIR\s*=|/(?:run|system)/(?:\{?env|alias|\.zshrc)|CURRENT_SCRIPT=\$BASH_SOURCE|for completion_file in)', text, re.MULTILINE):
                 raise ValueError(f'{path} has customized legacy startup/ZDOTDIR settings. Back it up and remove those settings before applying the shell step.')
 
     def ensure_identity(self):
@@ -440,7 +441,7 @@ class Installer:
             self.write(self.data / 'docs/zsh-lovers.html', fetch('https://grml.org/zsh/zsh-lovers.html'))
         elif tool == 'git-latest':
             refs = self.run('git', 'ls-remote', '--tags', 'https://github.com/git/git.git', capture=True)
-            tags = re.findall(r'refs/tags/(v\d+\.\d+\.\d+)$', refs, re.M)
+            tags = re.findall(r'refs/tags/(v\d+\.\d+\.\d+)$', refs, re.MULTILINE)
             if not tags:
                 raise ValueError('Cannot resolve latest stable Git tag')
             tag = max(tags, key=lambda s: tuple(map(int, s[1:].split('.'))))

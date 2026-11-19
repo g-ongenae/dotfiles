@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 """Enable magic-packet wake on supported physical Ethernet adapters."""
 import os
-from pathlib import Path
 import re
 import subprocess
+from pathlib import Path
 
 
 def configure(sysfs=Path('/sys/class/net')):

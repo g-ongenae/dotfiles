@@ -107,7 +107,7 @@ wrappers around three of them.
 | Script                                            | Purpose                                                                 |
 | ------------------------------------------------- | ----------------------------------------------------------------------- |
 | `./install.sh`                                    | install or update this machine — see the [README](../README.md#install) |
-| `./scripts/lint.sh [--fix]`                       | shfmt, ShellCheck and Prettier over the repository                      |
+| `./scripts/lint.sh [--fix]`                       | shfmt, ShellCheck, Ruff and Prettier over the repository                |
 | `bash scripts/t3.sh …`                            | the script behind `t3`, usable on a host without this checkout          |
 | `bash scripts/print-pretty.sh '@b@green[[Done]]'` | echo with colour markup, for your own scripts                           |
 | `python3 scripts/t3-service.py setup`             | create the T3 Code user service; `t3 setup` calls this                  |

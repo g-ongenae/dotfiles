@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Opt-in local service setup and macOS launchd control for the t3 shell helper."""
 import os
-from pathlib import Path
 import plistlib
 import re
 import shlex
@@ -9,7 +8,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 LABEL = 'com.dotfiles.t3code'
@@ -39,7 +38,7 @@ def setup(home, macos):
         executable = executable.parent.resolve() / executable.name
         help_text = run(str(executable), '--help', capture_output=True, text=True).stdout
         # Recent CLI releases use `serve`; older AppImage wrappers take flags directly.
-        command = [str(executable)] + (['serve'] if re.search(r'^\s*(?:t3\s+)?serve\b', help_text, re.M) else [])
+        command = [str(executable)] + (['serve'] if re.search(r'^\s*(?:t3\s+)?serve\b', help_text, re.MULTILINE) else [])
     else:
         appimage = shutil.which('t3-code')
         if macos or not appimage:

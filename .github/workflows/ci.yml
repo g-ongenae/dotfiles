@@ -1,5 +1,5 @@
-# Run the same checks as `scripts/lint.sh` on every push and pull request.
-name: lint
+# Run `scripts/lint.sh` and the test suite on every push and pull request.
+name: ci
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: shfmt, ShellCheck and Prettier
+    name: shfmt, ShellCheck, Ruff and Prettier
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,10 +27,36 @@ jobs:
           chmod +x "$HOME/.local/bin/shfmt"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      # Prettier runs through npx at the version `scripts/lint.sh` pins.
+      # Ruff runs through uvx and Prettier through npx, at the versions
+      # `scripts/lint.sh` pins.
+      - uses: astral-sh/setup-uv@v6
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
 
       - name: Check formatting and lint
         run: ./scripts/lint.sh
+
+  test:
+    name: Tests on Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.9 is what a fresh Mac runs the installer with, from the Command
+        # Line Tools; 3.x is the latest release.
+        python: ['3.9', '3.x']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      # The runner has Bash but not Zsh, whose startup files the tests source.
+      - name: Install Zsh
+        run: sudo apt-get update && sudo apt-get install -y zsh
+
+      - name: Run the tests
+        run: python -m unittest discover -s tests -v

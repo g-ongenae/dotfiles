@@ -8,12 +8,16 @@
 # section of `.editorconfig`, and correctness from ShellCheck, configured by
 # `.shellcheckrc`. Both are installed by every profile of this repository.
 #
+# Python files: linting and formatting come from Ruff, configured by `ruff.toml`.
+# It runs through uvx at the version pinned below.
+#
 # Markdown, YAML, JSON and JavaScript: formatting comes from Prettier,
 # configured by `.prettierrc.json` and `.prettierignore`. It runs through npx at
 # the version pinned below, so this repository has no package.json to install.
 
 set -euo pipefail
 
+RUFF_VERSION=0.17.5
 PRETTIER_VERSION=3.10.0
 
 DOTFILES_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -56,6 +60,7 @@ require() {
 
 require shfmt
 require shellcheck
+require uvx
 require npx
 
 status=0
@@ -70,6 +75,15 @@ fi
 
 echo "==> shellcheck"
 shellcheck -- "${checked_files[@]}" || status=1
+
+# Ruff finds its own files, skipping what Git and `ruff.toml` exclude.
+if "$fix"; then
+  echo "==> ruff check --fix"
+  uvx "ruff@$RUFF_VERSION" check --fix . || status=1
+else
+  echo "==> ruff check"
+  uvx "ruff@$RUFF_VERSION" check . || status=1
+fi
 
 # Prettier finds its own files, skipping what Git and `.prettierignore` ignore.
 if "$fix"; then

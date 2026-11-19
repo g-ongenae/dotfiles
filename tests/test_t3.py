@@ -1,16 +1,17 @@
 """Exercise the helper with fake commands; never touch services or networking."""
 import json
 import os
-from pathlib import Path
 import plistlib
 import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+# How `t3` asks whether T3 Connect is linked.
+T3_LINK_CHECK = ['t3', '--log-level', 'none', 'connect', 'status', '--json']
 
 
 class T3Tests(unittest.TestCase):
@@ -21,8 +22,8 @@ class T3Tests(unittest.TestCase):
         self.bin = self.home / 'bin'
         self.bin.mkdir()
         self.log = self.home / 'calls.jsonl'
-        self.env = dict(HOME=str(self.home), PATH=str(self.bin),
-                        DOTFILES_DIR=str(ROOT), CALL_LOG=str(self.log))
+        self.env = {'HOME': str(self.home), 'PATH': str(self.bin),
+                        'DOTFILES_DIR': str(ROOT), 'CALL_LOG': str(self.log)}
         (self.bin / 'bash').symlink_to(shutil.which('bash'))
         (self.bin / 'python3').symlink_to(sys.executable)
         # Real sleep: the macOS connect deadline times its own commands with it.
@@ -240,18 +241,16 @@ class T3Tests(unittest.TestCase):
             self.assertIn('T3_HOST', result.stderr)
         self.assertEqual(self.calls(), [])
 
-    T3_LINK_CHECK = ['t3', '--log-level', 'none', 'connect', 'status', '--json']
-
     def test_connect_links_t3_connect_and_restarts_to_apply_it(self):
         result = self.run_t3('connect')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('restarting T3', result.stdout)
         # No display on this Linux host, so authorization uses the device flow.
         self.assertEqual(self.calls(), [
-            self.T3_LINK_CHECK,
+            T3_LINK_CHECK,
             ['t3', 'connect', 'link', '--headless'],
             ['systemctl', '--user', 'restart', 't3code.service'],
-            self.T3_LINK_CHECK,
+            T3_LINK_CHECK,
             ['t3', 'connect', 'status'],
         ])
         self.assertFalse(any(call[0] in ('sudo', 'tailscale') for call in self.calls()))
@@ -337,10 +336,10 @@ class T3Tests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         target = f'gui/{os.getuid()}/com.dotfiles.t3code'
         self.assertEqual(self.calls()[1:], [
-            self.T3_LINK_CHECK,
+            T3_LINK_CHECK,
             ['t3', 'connect', 'link'],
             ['launchctl', 'print', target], ['launchctl', 'kickstart', '-k', target],
-            self.T3_LINK_CHECK,
+            T3_LINK_CHECK,
             ['t3', 'connect', 'status'],
         ])
         result = self.run_t3('connect', 'nosleep', DOTFILES_PROFILE='macos')
