@@ -78,9 +78,13 @@ shellcheck -- "${checked_files[@]}" || status=1
 
 # Ruff finds its own files, skipping what Git and `ruff.toml` exclude.
 if "$fix"; then
+  echo "==> ruff format"
+  uvx "ruff@$RUFF_VERSION" format .
   echo "==> ruff check --fix"
   uvx "ruff@$RUFF_VERSION" check --fix . || status=1
 else
+  echo "==> ruff format --diff"
+  uvx "ruff@$RUFF_VERSION" format --diff . || status=1
   echo "==> ruff check"
   uvx "ruff@$RUFF_VERSION" check . || status=1
 fi

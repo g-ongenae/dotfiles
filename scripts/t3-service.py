@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Opt-in local service setup and macOS launchd control for the t3 shell helper."""
+
 import os
 import plistlib
 import re
@@ -20,8 +21,9 @@ def run(*args, **kwargs):
 
 def setup(home, macos):
     data = home / '.local/share/dotfiles/t3'
-    service = (home / 'Library/LaunchAgents' / (LABEL + '.plist') if macos
-               else home / '.config/systemd/user/t3code.service')
+    service = (
+        home / 'Library/LaunchAgents' / (LABEL + '.plist') if macos else home / '.config/systemd/user/t3code.service'
+    )
     existing = service.exists() or service.is_symlink()
     upstream = home / 'Library/LaunchAgents/com.t3tools.t3code.service.plist'
     if macos and not existing and upstream.exists():
@@ -38,11 +40,13 @@ def setup(home, macos):
         executable = executable.parent.resolve() / executable.name
         help_text = run(str(executable), '--help', capture_output=True, text=True).stdout
         # Recent CLI releases use `serve`; older AppImage wrappers take flags directly.
-        command = [str(executable)] + (['serve'] if re.search(r'^\s*(?:t3\s+)?serve\b', help_text, re.MULTILINE) else [])
+        command = [str(executable)] + (
+            ['serve'] if re.search(r'^\s*(?:t3\s+)?serve\b', help_text, re.MULTILINE) else []
+        )
     else:
         appimage = shutil.which('t3-code')
         if macos or not appimage:
-            raise ValueError('Install this profile\'s T3 package before running t3 setup.')
+            raise ValueError("Install this profile's T3 package before running t3 setup.")
         data.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix='extract-', dir=data) as temporary:
             run(appimage, '--appimage-extract', cwd=temporary, stdout=subprocess.DEVNULL)
@@ -58,11 +62,13 @@ def setup(home, macos):
     command += ['--host', '127.0.0.1', '--port', '3773', '--no-browser']
     data.mkdir(parents=True, exist_ok=True)
     launcher = data / 'server.sh'
-    launcher.write_text('#!/bin/sh\n'
-                        f'export DOTFILES_DIR={shlex.quote(str(ROOT))}\n'
-                        f'export DOTFILES_PROFILE={shlex.quote(os.environ.get("DOTFILES_PROFILE", ""))}\n'
-                        '. "$DOTFILES_DIR/shell/common/init.sh"\n'
-                        f'exec {shlex.join(command)}\n')
+    launcher.write_text(
+        '#!/bin/sh\n'
+        f'export DOTFILES_DIR={shlex.quote(str(ROOT))}\n'
+        f'export DOTFILES_PROFILE={shlex.quote(os.environ.get("DOTFILES_PROFILE", ""))}\n'
+        '. "$DOTFILES_DIR/shell/common/init.sh"\n'
+        f'exec {shlex.join(command)}\n'
+    )
     launcher.chmod(0o755)
     if existing:
         # The service file is left as it is, but the launcher beside it is
@@ -73,22 +79,30 @@ def setup(home, macos):
         return
     service.parent.mkdir(parents=True, exist_ok=True)
     if macos:
-        service.write_bytes(plistlib.dumps({
-            'Label': LABEL, 'ProgramArguments': ['/bin/sh', str(launcher)],
-            'WorkingDirectory': str(home), 'RunAtLoad': True,
-            'KeepAlive': {'SuccessfulExit': False},
-            'EnvironmentVariables': {'PATH': os.environ['PATH'], 'HOME': str(home)},
-            'StandardOutPath': str(data / 'server.log'),
-            'StandardErrorPath': str(data / 'server.log'),
-        }))
+        service.write_bytes(
+            plistlib.dumps(
+                {
+                    'Label': LABEL,
+                    'ProgramArguments': ['/bin/sh', str(launcher)],
+                    'WorkingDirectory': str(home),
+                    'RunAtLoad': True,
+                    'KeepAlive': {'SuccessfulExit': False},
+                    'EnvironmentVariables': {'PATH': os.environ['PATH'], 'HOME': str(home)},
+                    'StandardOutPath': str(data / 'server.log'),
+                    'StandardErrorPath': str(data / 'server.log'),
+                }
+            )
+        )
     else:
         # systemd expands percent specifiers even in quoted command arguments.
         quoted_launcher = '"' + str(launcher).replace('\\', '\\\\').replace('"', '\\"').replace('%', '%%') + '"'
-        service.write_text('[Unit]\nDescription=T3 Code server\nAfter=network.target\n\n'
-                           '[Service]\nType=simple\nWorkingDirectory=%h\n'
-                           f'ExecStart=/bin/sh {quoted_launcher}\n'
-                           'Restart=on-failure\nRestartSec=5\n\n'
-                           '[Install]\nWantedBy=default.target\n')
+        service.write_text(
+            '[Unit]\nDescription=T3 Code server\nAfter=network.target\n\n'
+            '[Service]\nType=simple\nWorkingDirectory=%h\n'
+            f'ExecStart=/bin/sh {quoted_launcher}\n'
+            'Restart=on-failure\nRestartSec=5\n\n'
+            '[Install]\nWantedBy=default.target\n'
+        )
         run('systemctl', '--user', 'daemon-reload')
     print(f'Created {service}. Run t3 start, then t3 connect (or t3 tailscale connect) to share it.')
 
@@ -100,8 +114,10 @@ def mac_action(home, action):
         service = upstream
     # Without a service, launchctl only reports that the label is unknown.
     if not service.exists():
-        raise ValueError('No local service on this machine: run t3 setup to create one, '
-                         'or set T3_HOST=user@tailnet-host to control a Linux server.')
+        raise ValueError(
+            'No local service on this machine: run t3 setup to create one, '
+            'or set T3_HOST=user@tailnet-host to control a Linux server.'
+        )
     config = plistlib.loads(service.read_bytes())
     target = f'gui/{os.getuid()}/{config["Label"]}'
     if action in ('inspect', 'status'):
@@ -114,8 +130,12 @@ def mac_action(home, action):
     elif action == 'stop':
         run('launchctl', 'bootout', target)
     elif action in ('start', 'restart'):
-        loaded = subprocess.run(['launchctl', 'print', target], stdout=subprocess.DEVNULL,
-                                stderr=subprocess.DEVNULL).returncode == 0
+        loaded = (
+            subprocess.run(
+                ['launchctl', 'print', target], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            ).returncode
+            == 0
+        )
         if loaded:
             run('launchctl', 'kickstart', *(['-k'] if action == 'restart' else []), target)
         else:

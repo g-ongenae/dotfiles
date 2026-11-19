@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 """Enable magic-packet wake on supported physical Ethernet adapters."""
+
 import os
 import re
 import subprocess
@@ -9,13 +10,15 @@ from pathlib import Path
 def configure(sysfs=Path('/sys/class/net')):
     enabled = 0
     for interface in sorted(sysfs.iterdir()):
-        if (not (interface / 'device').exists()
-                or (interface / 'wireless').exists()
-                or (interface / 'type').read_text().strip() != '1'):
+        if (
+            not (interface / 'device').exists()
+            or (interface / 'wireless').exists()
+            or (interface / 'type').read_text().strip() != '1'
+        ):
             continue
-        result = subprocess.run(['/usr/sbin/ethtool', interface.name],
-                                env=dict(os.environ, LC_ALL='C'),
-                                text=True, capture_output=True)
+        result = subprocess.run(
+            ['/usr/sbin/ethtool', interface.name], env=dict(os.environ, LC_ALL='C'), text=True, capture_output=True
+        )
         support = re.search(r'Supports Wake-on:\s*([a-z]+)', result.stdout)
         if result.returncode or not support or 'g' not in support[1]:
             print(f'Skip {interface.name}: magic-packet wake is not supported or could not be queried')
