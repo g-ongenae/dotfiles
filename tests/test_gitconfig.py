@@ -21,6 +21,8 @@ class BranchDeleteTests(unittest.TestCase):
             f'[include]\n  path = {ROOT / "git/.gitconfig"}\n'
             '[user]\n  name = Test\n  email = test@example.test\n'
             '[core]\n  pager = cat\n'
+            # Lets the tests add submodules from local repositories.
+            '[protocol "file"]\n  allow = always\n'
         )
         self.env = {
             **os.environ,
@@ -94,6 +96,93 @@ class BranchDeleteTests(unittest.TestCase):
 
         self.assertEqual(self.branches(), {'main', 'extended', 'dirty'})
         self.assertTrue(dirty.exists())
+
+    def squash_merged_worktree_with_submodule(self, branch):
+        """Squash-merge a branch whose worktree has a submodule checked out, itself with one."""
+        for name in ('inner', 'library'):
+            self.git('init', '-q', '-b', 'main', str(self.temp / name), cwd=self.temp)
+            self.commit(name, f'{name}.txt', cwd=self.temp / name)
+        self.git('submodule', 'add', '-q', '../inner', 'inner', cwd=self.temp / 'library')
+        self.git('commit', '-q', '-m', 'Add inner', cwd=self.temp / 'library')
+        self.git('submodule', 'add', '-q', '../library', 'library')
+        self.git('commit', '-q', '-m', 'Add library')
+        worktree = self.branch_with_commits(branch, worktree=True)
+        self.git('submodule', 'update', '-q', '--init', '--recursive', cwd=worktree)
+        self.squash_merge(branch)
+        return worktree
+
+    def test_deletes_a_squash_merged_branch_whose_worktree_has_submodules(self):
+        worktree = self.squash_merged_worktree_with_submodule('with-submodule')
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main'})
+        self.assertFalse(worktree.exists())
+
+    def test_keeps_a_worktree_with_a_dirty_nested_submodule(self):
+        worktree = self.squash_merged_worktree_with_submodule('dirty-submodule')
+        (worktree / 'library/inner/untracked.txt').write_text('work in progress\n')
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'dirty-submodule'})
+        self.assertTrue(worktree.exists())
+
+    def test_keeps_a_worktree_whose_submodule_has_unpushed_commits(self):
+        worktree = self.squash_merged_worktree_with_submodule('unpushed-submodule')
+        library = worktree / 'library'
+        # A commit on a local branch, with the recorded commit checked out again afterwards.
+        self.git('switch', '-q', '-c', 'feature', cwd=library)
+        self.commit('unpushed', 'unpushed.txt', cwd=library)
+        self.git('switch', '-q', '--detach', 'HEAD~1', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'unpushed-submodule'})
+        self.assertTrue(worktree.exists())
+
+    def test_keeps_a_worktree_whose_submodule_has_a_stash(self):
+        worktree = self.squash_merged_worktree_with_submodule('stashed-submodule')
+        library = worktree / 'library'
+        (library / 'library.txt').write_text('stashed\n')
+        self.git('stash', '-q', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'stashed-submodule'})
+        self.assertTrue(worktree.exists())
+
+    def test_keeps_a_worktree_whose_deinitialized_submodule_has_unpushed_commits(self):
+        worktree = self.squash_merged_worktree_with_submodule('deinitialized-submodule')
+        library = worktree / 'library'
+        self.git('switch', '-q', '-c', 'feature', cwd=library)
+        self.commit('unpushed', 'unpushed.txt', cwd=library)
+        self.git('switch', '-q', '--detach', 'HEAD~1', cwd=library)
+        self.git('submodule', 'deinit', '-q', '--force', 'library', cwd=worktree)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'deinitialized-submodule'})
+        self.assertTrue(worktree.exists())
+
+    def test_deletes_a_merged_branch_whose_worktree_directory_is_missing(self):
+        worktree = self.branch_with_commits('moved', worktree=True)
+        self.git('merge', '-q', '--ff-only', 'moved')
+        worktree.rename(self.temp / 'moved-aside')
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main'})
+
+    def test_wt_remove_resolves_a_relative_path_from_the_current_directory(self):
+        (self.repo / 'subdir').mkdir()
+        self.git('worktree', 'add', '-q', '-b', 'at-root', 'pick')
+        self.git('worktree', 'add', '-q', '-b', 'in-subdir', 'subdir/pick')
+
+        self.git('wt-remove', 'pick', cwd=self.repo / 'subdir')
+
+        self.assertTrue((self.repo / 'pick').exists())
+        self.assertFalse((self.repo / 'subdir/pick').exists())
 
     def test_deletes_a_stacked_branch_squash_merged_in_parts(self):
         self.branch_with_commits('first')
