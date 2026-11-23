@@ -152,6 +152,127 @@ class BranchDeleteTests(unittest.TestCase):
         self.assertEqual(self.branches(), {'main', 'stashed-submodule'})
         self.assertTrue(worktree.exists())
 
+    def checkpoint(self, cwd, reflog=True, parents=('HEAD',), body='first'):
+        """Snapshot the index in a commit kept only under refs/t3/, as T3 does."""
+        ref = 'refs/t3/checkpoints/thread/ordinal/0'
+        tree = self.git('write-tree', cwd=cwd).strip()
+        options = [option for parent in parents for option in ('-p', parent)]
+        message = ('-m', f't3 checkpoint ref={ref}', '-m', body)
+        checkpoint = self.git('commit-tree', tree, *options, *message, cwd=cwd).strip()
+        self.git('update-ref', *(['--create-reflog'] if reflog else []), ref, checkpoint, cwd=cwd)
+        return checkpoint
+
+    def test_deletes_a_worktree_whose_submodule_only_has_t3_checkpoints_of_pushed_commits(self):
+        worktree = self.squash_merged_worktree_with_submodule('checkpointed-submodule')
+        self.checkpoint(worktree / 'library')
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main'})
+        self.assertFalse(worktree.exists())
+
+    def test_keeps_a_worktree_whose_submodule_has_a_t3_checkpoint_of_changes(self):
+        worktree = self.squash_merged_worktree_with_submodule('checkpointed-changes')
+        library = worktree / 'library'
+        # The checkpoint alone holds the new file once the submodule is reset, no reflog having it.
+        (library / 'new.txt').write_text('saved in a checkpoint\n')
+        self.git('add', 'new.txt', cwd=library)
+        self.checkpoint(library, reflog=False)
+        self.git('reset', '-q', '--hard', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'checkpointed-changes'})
+        self.assertTrue(worktree.exists())
+
+    def test_keeps_a_worktree_whose_submodule_has_commits_only_in_a_reflog(self):
+        worktree = self.squash_merged_worktree_with_submodule('reflog-submodule')
+        library = worktree / 'library'
+        self.checkpoint(library)
+        self.commit('unpushed', 'unpushed.txt', cwd=library)
+        self.git('switch', '-q', '--detach', 'HEAD~1', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'reflog-submodule'})
+        self.assertTrue(worktree.exists())
+
+    def test_deletes_a_worktree_whose_submodule_has_an_expired_t3_checkpoint_entry(self):
+        worktree = self.squash_merged_worktree_with_submodule('expired-checkpoint')
+        library = worktree / 'library'
+        self.checkpoint(library)
+        self.checkpoint(library, body='second')
+        # The entry left keeps the first checkpoint as its old value.
+        self.git('reflog', 'delete', 'refs/t3/checkpoints/thread/ordinal/0@{1}', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main'})
+        self.assertFalse(worktree.exists())
+
+    def test_deletes_a_worktree_whose_submodule_has_no_reflog_left(self):
+        worktree = self.squash_merged_worktree_with_submodule('no-reflog')
+        library = worktree / 'library'
+        self.checkpoint(library, reflog=False)
+        self.git('reflog', 'expire', '--expire=all', '--all', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main'})
+        self.assertFalse(worktree.exists())
+
+    def test_keeps_a_worktree_whose_submodule_has_an_unpushed_detached_head(self):
+        worktree = self.squash_merged_worktree_with_submodule('detached-submodule')
+        library = worktree / 'library'
+        # The worktree records the unpushed commit, so it stays clean.
+        self.commit('unpushed', 'unpushed.txt', cwd=library)
+        self.git('commit', '-q', '-am', 'Update library', cwd=worktree)
+        self.squash_merge('detached-submodule')
+        # The pushed main branch keeps its reflog.
+        self.git('reflog', 'expire', '--expire=all', 'HEAD', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'detached-submodule'})
+        self.assertTrue(worktree.exists())
+
+    def test_keeps_a_worktree_whose_submodule_has_a_t3_checkpoint_merging_unpushed_work(self):
+        worktree = self.squash_merged_worktree_with_submodule('checkpointed-merge')
+        library = worktree / 'library'
+        self.git('switch', '-q', '-c', 'feature', cwd=library)
+        self.commit('unpushed', 'unpushed.txt', cwd=library)
+        self.git('switch', '-q', '--detach', 'HEAD~1', cwd=library)
+        self.checkpoint(library, parents=('HEAD', 'feature'))
+        self.git('branch', '-q', '-D', 'feature', cwd=library)
+        # The checkpoint and the pushed main branch keep their reflog.
+        self.git('reflog', 'expire', '--expire=all', 'HEAD', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'checkpointed-merge'})
+        self.assertTrue(worktree.exists())
+
+    def test_keeps_a_worktree_whose_submodule_tags_a_t3_checkpoint(self):
+        worktree = self.squash_merged_worktree_with_submodule('tagged-checkpoint')
+        library = worktree / 'library'
+        self.git('tag', 'keep-checkpoint', self.checkpoint(library), cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'tagged-checkpoint'})
+        self.assertTrue(worktree.exists())
+
+    def test_keeps_a_worktree_whose_submodule_has_an_empty_commit_only_in_a_reflog(self):
+        worktree = self.squash_merged_worktree_with_submodule('empty-commit')
+        library = worktree / 'library'
+        self.git('commit', '-q', '--allow-empty', '-m', 'empty', cwd=library)
+        self.git('switch', '-q', '--detach', 'HEAD~1', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'empty-commit'})
+        self.assertTrue(worktree.exists())
+
     def test_keeps_a_worktree_whose_deinitialized_submodule_has_unpushed_commits(self):
         worktree = self.squash_merged_worktree_with_submodule('deinitialized-submodule')
         library = worktree / 'library'
