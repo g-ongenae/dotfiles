@@ -46,15 +46,22 @@
       [ -n \"$wt\" ] && { git wt-remove \"$wt\" || continue; }; \
       git branch \"$flag\" \"$branch\"; done; \
     }; f"
-    # Remove the worktree at <path> when it is clean, its submodules included: no change, no
-    # untracked file, and no commit of a local branch missing from the remotes in any submodule.
+    # Remove the worktree at <path> when it is clean, its submodules included: no change and no
+    # untracked file in any checked-out submodule, and no commit missing from the remotes in the
+    # git dirs of its submodules, deinitialized ones too, since the removal deletes them: local
+    # branches, tags, stashes, and commits only left in a reflog.
     # git worktree remove refuses worktrees with submodules unless forced, hence these checks.
   wt-remove = "!f() {\
+    cd \"${GIT_PREFIX:-.}\" || return; \
+    [ -d \"$1\" ] || { git worktree remove \"$1\"; return; }; \
     st=$(git -C \"$1\" status --porcelain --ignore-submodules=none) || return; \
     [ -z \"$st\" ] || { echo \"Keeping worktree $1: it has changes\" >&2; return 1; }; \
-    un=$(git -C \"$1\" submodule foreach --quiet --recursive \
-      'git log --oneline --branches --not --remotes') || return; \
-    [ -z \"$un\" ] || { echo \"Keeping worktree $1: a submodule has unpushed commits\" >&2; return 1; }; \
+    gd=$(git -C \"$1\" rev-parse --absolute-git-dir) || return; \
+    [ -d \"$gd/modules\" ] || { git worktree remove \"$1\"; return; }; \
+    un=$(find \"$gd/modules\" -type d -name objects -prune | while read -r objects; do \
+      git --git-dir=\"${objects%/objects}\" log --oneline -1 --all --reflog --not --remotes || echo error; \
+      done); \
+    [ -z \"$un\" ] || { echo \"Keeping worktree $1: a submodule has commits missing from its remotes\" >&2; return 1; }; \
     git worktree remove --force \"$1\"; \
     }; f"
     # Succeed when HEAD already holds every change of <branch>, landed by squash merges:

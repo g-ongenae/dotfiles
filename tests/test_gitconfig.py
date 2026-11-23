@@ -141,6 +141,49 @@ class BranchDeleteTests(unittest.TestCase):
         self.assertEqual(self.branches(), {'main', 'unpushed-submodule'})
         self.assertTrue(worktree.exists())
 
+    def test_keeps_a_worktree_whose_submodule_has_a_stash(self):
+        worktree = self.squash_merged_worktree_with_submodule('stashed-submodule')
+        library = worktree / 'library'
+        (library / 'library.txt').write_text('stashed\n')
+        self.git('stash', '-q', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'stashed-submodule'})
+        self.assertTrue(worktree.exists())
+
+    def test_keeps_a_worktree_whose_deinitialized_submodule_has_unpushed_commits(self):
+        worktree = self.squash_merged_worktree_with_submodule('deinitialized-submodule')
+        library = worktree / 'library'
+        self.git('switch', '-q', '-c', 'feature', cwd=library)
+        self.commit('unpushed', 'unpushed.txt', cwd=library)
+        self.git('switch', '-q', '--detach', 'HEAD~1', cwd=library)
+        self.git('submodule', 'deinit', '-q', '--force', 'library', cwd=worktree)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'deinitialized-submodule'})
+        self.assertTrue(worktree.exists())
+
+    def test_deletes_a_merged_branch_whose_worktree_directory_is_missing(self):
+        worktree = self.branch_with_commits('moved', worktree=True)
+        self.git('merge', '-q', '--ff-only', 'moved')
+        worktree.rename(self.temp / 'moved-aside')
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main'})
+
+    def test_wt_remove_resolves_a_relative_path_from_the_current_directory(self):
+        (self.repo / 'subdir').mkdir()
+        self.git('worktree', 'add', '-q', '-b', 'at-root', 'pick')
+        self.git('worktree', 'add', '-q', '-b', 'in-subdir', 'subdir/pick')
+
+        self.git('wt-remove', 'pick', cwd=self.repo / 'subdir')
+
+        self.assertTrue((self.repo / 'pick').exists())
+        self.assertFalse((self.repo / 'subdir/pick').exists())
+
     def test_deletes_a_stacked_branch_squash_merged_in_parts(self):
         self.branch_with_commits('first')
         self.branch_with_commits('second', start='first')
