@@ -33,7 +33,7 @@
   bu = "!sh -c \"git branch -c "backup/$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Remove all merged branch of the current repository, squash-merged ones too when run from
     # a main branch (master, main), which are never deleted.
-    # Handle worktrees: a dirty one is kept, along with its branch.
+    # Handle worktrees, with submodules too: a dirty one is kept, along with its branch.
   bd = "!f() {\
     case $(git rev-parse --abbrev-ref HEAD) in master|main) squash=1;; *) squash=;; esac; \
     git for-each-ref --format='%(HEAD)|%(refname:short)|%(worktreepath)' refs/heads | \
@@ -43,8 +43,19 @@
       if git merge-base --is-ancestor \"$branch\" HEAD; then flag=-d; \
       elif [ -n \"$squash\" ] && git squashed \"$branch\"; then flag=-D; \
       else continue; fi; \
-      [ -n \"$wt\" ] && { git worktree remove \"$wt\" || continue; }; \
+      [ -n \"$wt\" ] && { git wt-remove \"$wt\" || continue; }; \
       git branch \"$flag\" \"$branch\"; done; \
+    }; f"
+    # Remove the worktree at <path> when it is clean, its submodules included: no change, no
+    # untracked file, and no commit of a local branch missing from the remotes in any submodule.
+    # git worktree remove refuses worktrees with submodules unless forced, hence these checks.
+  wt-remove = "!f() {\
+    st=$(git -C \"$1\" status --porcelain --ignore-submodules=none) || return; \
+    [ -z \"$st\" ] || { echo \"Keeping worktree $1: it has changes\" >&2; return 1; }; \
+    un=$(git -C \"$1\" submodule foreach --quiet --recursive \
+      'git log --oneline --branches --not --remotes') || return; \
+    [ -z \"$un\" ] || { echo \"Keeping worktree $1: a submodule has unpushed commits\" >&2; return 1; }; \
+    git worktree remove --force \"$1\"; \
     }; f"
     # Succeed when HEAD already holds every change of <branch>, landed by squash merges:
     # merging the branch would leave HEAD's tree as it is (one or several squash merges), or
