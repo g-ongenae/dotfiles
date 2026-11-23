@@ -152,12 +152,15 @@ class BranchDeleteTests(unittest.TestCase):
         self.assertEqual(self.branches(), {'main', 'stashed-submodule'})
         self.assertTrue(worktree.exists())
 
-    def checkpoint(self, cwd, reflog=True):
+    def checkpoint(self, cwd, reflog=True, parents=('HEAD',), body='first'):
         """Snapshot the index in a commit kept only under refs/t3/, as T3 does."""
+        ref = 'refs/t3/checkpoints/thread/ordinal/0'
         tree = self.git('write-tree', cwd=cwd).strip()
-        checkpoint = self.git('commit-tree', tree, '-p', 'HEAD', '-m', 't3 checkpoint', cwd=cwd).strip()
-        options = ['--create-reflog'] if reflog else []
-        self.git('update-ref', *options, 'refs/t3/checkpoints/thread/ordinal/0', checkpoint, cwd=cwd)
+        options = [option for parent in parents for option in ('-p', parent)]
+        message = ('-m', f't3 checkpoint ref={ref}', '-m', body)
+        checkpoint = self.git('commit-tree', tree, *options, *message, cwd=cwd).strip()
+        self.git('update-ref', *(['--create-reflog'] if reflog else []), ref, checkpoint, cwd=cwd)
+        return checkpoint
 
     def test_deletes_a_worktree_whose_submodule_only_has_t3_checkpoints_of_pushed_commits(self):
         worktree = self.squash_merged_worktree_with_submodule('checkpointed-submodule')
@@ -192,6 +195,55 @@ class BranchDeleteTests(unittest.TestCase):
         self.git('bd')
 
         self.assertEqual(self.branches(), {'main', 'reflog-submodule'})
+        self.assertTrue(worktree.exists())
+
+    def test_deletes_a_worktree_whose_submodule_has_an_expired_t3_checkpoint_entry(self):
+        worktree = self.squash_merged_worktree_with_submodule('expired-checkpoint')
+        library = worktree / 'library'
+        self.checkpoint(library)
+        self.checkpoint(library, body='second')
+        # The entry left keeps the first checkpoint as its old value.
+        self.git('reflog', 'delete', 'refs/t3/checkpoints/thread/ordinal/0@{1}', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main'})
+        self.assertFalse(worktree.exists())
+
+    def test_keeps_a_worktree_whose_submodule_has_a_t3_checkpoint_merging_unpushed_work(self):
+        worktree = self.squash_merged_worktree_with_submodule('checkpointed-merge')
+        library = worktree / 'library'
+        self.git('switch', '-q', '-c', 'feature', cwd=library)
+        self.commit('unpushed', 'unpushed.txt', cwd=library)
+        self.git('switch', '-q', '--detach', 'HEAD~1', cwd=library)
+        self.checkpoint(library, parents=('HEAD', 'feature'))
+        self.git('branch', '-q', '-D', 'feature', cwd=library)
+        self.git('reflog', 'expire', '--expire=all', '--all', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'checkpointed-merge'})
+        self.assertTrue(worktree.exists())
+
+    def test_keeps_a_worktree_whose_submodule_tags_a_t3_checkpoint(self):
+        worktree = self.squash_merged_worktree_with_submodule('tagged-checkpoint')
+        library = worktree / 'library'
+        self.git('tag', 'keep-checkpoint', self.checkpoint(library), cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'tagged-checkpoint'})
+        self.assertTrue(worktree.exists())
+
+    def test_keeps_a_worktree_whose_submodule_has_an_empty_commit_only_in_a_reflog(self):
+        worktree = self.squash_merged_worktree_with_submodule('empty-commit')
+        library = worktree / 'library'
+        self.git('commit', '-q', '--allow-empty', '-m', 'empty', cwd=library)
+        self.git('switch', '-q', '--detach', 'HEAD~1', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'empty-commit'})
         self.assertTrue(worktree.exists())
 
     def test_keeps_a_worktree_whose_deinitialized_submodule_has_unpushed_commits(self):

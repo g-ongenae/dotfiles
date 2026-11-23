@@ -49,9 +49,9 @@
     # Remove the worktree at <path> when it is clean, its submodules included: no change and no
     # untracked file in any checked-out submodule, and no commit missing from the remotes in the
     # git dirs of its submodules, deinitialized ones too, since the removal deletes them: local
-    # branches, tags, stashes, and commits only left in a reflog. A T3 checkpoint (refs/t3/, which
-    # T3 uses to snapshot the submodules of its worktrees, reflog included) counts as no work when
-    # its tree is the one of its parent, itself on a remote; any other checkpoint keeps it.
+    # branches, tags, stashes, and commits only left in a reflog. Found under refs/t3/ or in a
+    # reflog, a T3 checkpoint (T3 snapshots the submodules of its worktrees) that changes nothing
+    # on its only parent counts as that parent; any other checkpoint is work.
     # git worktree remove refuses worktrees with submodules unless forced, hence these checks.
   wt-remove = "!f() {\
     cd \"${GIT_PREFIX:-.}\" || return; \
@@ -62,12 +62,13 @@
     [ -d \"$gd/modules\" ] || { git worktree remove \"$1\"; return; }; \
     un=$(find \"$gd/modules\" -type d -name objects -prune | while read -r objects; do ( \
       export GIT_DIR=\"${objects%/objects}\"; \
-      git for-each-ref --format='%(refname)' refs/t3 | while read -r ref; do \
-        git rev-parse \"$ref\"; git log -g --format=%H \"$ref\" -- 2>/dev/null; done | sort -u | \
-        while read -r c; do \
-        [ \"$(git rev-parse -q --verify \"$c^{tree}\")\" = \"$(git rev-parse -q --verify \"$c^^{tree}\")\" ] && \
-        pushed=$(git rev-list -1 \"$c^\" --not --remotes) && [ -z \"$pushed\" ] && echo \"^$c\"; done | \
-      git log --oneline -1 --stdin --all --reflog --not --remotes || echo error; \
+      refs=$(git rev-parse --exclude='refs/t3/*' --all) && t3=$(git rev-parse --glob='refs/t3/*') && \
+        logged=$(git rev-list --no-walk --reflog) || { echo error; exit; }; \
+      { [ -z \"$refs\" ] || echo \"$refs\"; printf '%s\\n' \"$t3\" \"$logged\" | sort -u | while read -r c; do \
+        [ -n \"$c\" ] && git log -1 --format='%T %P %s' \"$c\" | { read -r tree parent subject; \
+          case $subject in ('t3 checkpoint ref=refs/t3/'*) \
+            [ \"$tree\" = \"$(git rev-parse \"$parent^{tree}\")\" ] && c=$parent;; esac; echo \"$c\"; }; \
+        done; } | git log --oneline -1 --stdin --not --remotes || echo error; \
       ); done); \
     [ -z \"$un\" ] || { echo \"Keeping worktree $1: a submodule has commits missing from its remotes\" >&2; return 1; }; \
     git worktree remove --force \"$1\"; \
