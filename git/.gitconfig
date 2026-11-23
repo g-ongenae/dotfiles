@@ -31,15 +31,24 @@
   b = branch
     # Create a [b]ack[u]p of the current branch (useful to create before a merge or rebase)
   bu = "!sh -c \"git branch -c "backup/$(git rev-parse --abbrev-ref HEAD)"\" -"
-    # Remove all merged branch of the current repository
-    # Handle worktrees, and skip the main branches (master, main)
+    # Remove all merged branch of the current repository, squash-merged ones included
+    # Handle worktrees (a dirty one keeps its branch), and skip the main branches (master, main)
+    # A squash merge leaves the branch out of HEAD's history, so the branch's whole diff is
+    # squashed into a throwaway commit, and `git cherry` reports (`-`) when HEAD already holds
+    # an equivalent patch.
   bd = "!f() {\
-    git for-each-ref --merged HEAD --format='%(HEAD)|%(refname:short)|%(worktreepath)' refs/heads | \
+    git for-each-ref --format='%(HEAD)|%(refname:short)|%(worktreepath)' refs/heads | \
       while IFS='|' read -r head branch wt; do \
       [ \"$head\" = '*' ] && continue; \
       case \"$branch\" in master|main) continue;; esac; \
+      if git merge-base --is-ancestor \"$branch\" HEAD; then flag=-d; \
+      else \
+        base=$(git merge-base HEAD \"$branch\") || continue; \
+        squash=$(git commit-tree \"$branch^{tree}\" -p \"$base\" -m squash) || continue; \
+        case $(git cherry HEAD \"$squash\") in -*) flag=-D;; *) continue;; esac; \
+      fi; \
       [ -n \"$wt\" ] && { git worktree remove \"$wt\" || continue; }; \
-      git branch -d \"$branch\"; done; \
+      git branch \"$flag\" \"$branch\"; done; \
     }; f"
   cu = current-branch
   current-branch = rev-parse --abbrev-ref HEAD                  # Get the current branch name
