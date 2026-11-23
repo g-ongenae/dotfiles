@@ -152,6 +152,19 @@ class BranchDeleteTests(unittest.TestCase):
         self.assertEqual(self.branches(), {'main', 'stashed-submodule'})
         self.assertTrue(worktree.exists())
 
+    def test_deletes_a_worktree_whose_submodule_only_has_t3_checkpoints(self):
+        worktree = self.squash_merged_worktree_with_submodule('checkpointed-submodule')
+        library = worktree / 'library'
+        # T3 snapshots the working tree in commits kept only under refs/t3/.
+        tree = self.git('write-tree', cwd=library).strip()
+        checkpoint = self.git('commit-tree', tree, '-p', 'HEAD', '-m', 't3 checkpoint', cwd=library).strip()
+        self.git('update-ref', 'refs/t3/checkpoints/thread/ordinal/0', checkpoint, cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main'})
+        self.assertFalse(worktree.exists())
+
     def test_keeps_a_worktree_whose_deinitialized_submodule_has_unpushed_commits(self):
         worktree = self.squash_merged_worktree_with_submodule('deinitialized-submodule')
         library = worktree / 'library'
