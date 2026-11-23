@@ -106,6 +106,11 @@ pair_t3() (
 
   if [ "$result" -eq 0 ]; then
     printf '%s\n' "$output"
+  elif [[ "$output" == *ServerOwnsDatabaseError* ]]; then
+    printf '%s\n' \
+      't3: the running T3 server is another version of T3 than its machine'"'"'s CLI, which will' \
+      'not touch its database. Run t3 setup on that machine, then t3 restart, so that the' \
+      'service runs the T3 on its PATH; then retry.' >&2
   elif [[ "$output" == *NoRunningServerError* ]]; then
     # Serve is up but the server's runtime discovery file is missing or stale.
     printf '%s\n' \
@@ -138,17 +143,51 @@ t3_revoke() (
 
 # Keep these functions self-contained for remote hosts without dotfiles.
 
+# Whether the local service is up, as launchd or systemd sees it: started, if
+# not necessarily listening yet.
+t3_service_running() {
+  if [ "${DOTFILES_PROFILE:-}" = macos ]; then
+    python3 "${DOTFILES_DIR:?}/scripts/t3-service.py" status > /dev/null 2>&1
+  else
+    systemctl --user is-active --quiet t3code.service 2> /dev/null
+  fi
+}
+
 # Pair this machine's browser with the local server: mint a loopback token,
 # which needs no Tailscale, and open its pairing URL. Local only, since a
 # server's 127.0.0.1 is not this machine's.
 open_t3_local() {
-  local output result url
-  output=$(t3_cli pair --label local 2>&1)
-  result=$?
+  local output result url waited=0
+  while :; do
+    output=$(t3_cli pair --label local 2>&1)
+    result=$?
+    # A service just started takes a few seconds to open its database and
+    # publish where it listens, so `t3 start; t3 local` waits for it.
+    if [ "$result" -eq 0 ] || [[ "$output" != *NoRunningServerError* ]] ||
+      [ "$waited" -ge "${T3_LOCAL_DEADLINE:-30}" ] || ! t3_service_running; then
+      break
+    fi
+    [ "$waited" -eq 0 ] && printf 't3: waiting for the T3 server to start.\n' >&2
+    sleep 1
+    waited=$((waited + 1))
+  done
+
   if [ "$result" -ne 0 ]; then
-    printf '%s\n' "$output" >&2
-    [[ "$output" == *NoRunningServerError* ]] &&
+    # Both errors come with advice meant for the T3 CLI's own commands, such
+    # as `t3 serve`, which this helper does not have.
+    if [[ "$output" == *ServerOwnsDatabaseError* ]]; then
+      printf '%s\n' \
+        't3: the running T3 server is another version of T3 than the CLI here, which will not' \
+        'touch its database. Run t3 setup, then t3 restart, so that the service runs the same' \
+        'T3 as this shell; then retry t3 local.' >&2
+    elif [[ "$output" == *NoRunningServerError* ]] && [ "$waited" -gt 0 ]; then
+      printf 't3: the T3 service is running but its server did not start within %ss; check t3 logs.\n' \
+        "$waited" >&2
+    elif [[ "$output" == *NoRunningServerError* ]]; then
       printf 't3: no running T3 server found; run t3 start, then retry t3 local.\n' >&2
+    else
+      printf '%s\n' "$output" >&2
+    fi
     return "$result"
   fi
 

@@ -30,6 +30,8 @@ def setup(home, macos):
         print(f'Keeping existing service: {upstream}')
         return
 
+    # Directory appended to the launcher's PATH, for a CLI it runs by name.
+    fallback = None
     executable = shutil.which('t3code-server') or shutil.which('t3')
     if executable:
         # Resolve fnm's per-shell symlink, since a service outlives the shell
@@ -39,8 +41,15 @@ def setup(home, macos):
         executable = Path(executable)
         executable = executable.parent.resolve() / executable.name
         help_text = run(str(executable), '--help', capture_output=True, text=True).stdout
+        # The launcher runs the CLI by name, after the shared environment has
+        # put this machine's default Node first, so the service runs the same
+        # CLI as the shell and `t3 update` once that default moves on: a
+        # service pinned to the old Node keeps the old server, whose database
+        # the newer CLI then refuses to touch. The directory found now is the
+        # fallback, for a CLI the shared environment does not reach.
+        fallback = executable.parent
         # Recent CLI releases use `serve`; older AppImage wrappers take flags directly.
-        command = [str(executable)] + (
+        command = [executable.name] + (
             ['serve'] if re.search(r'^\s*(?:t3\s+)?serve\b', help_text, re.MULTILINE) else []
         )
     else:
@@ -67,7 +76,8 @@ def setup(home, macos):
         f'export DOTFILES_DIR={shlex.quote(str(ROOT))}\n'
         f'export DOTFILES_PROFILE={shlex.quote(os.environ.get("DOTFILES_PROFILE", ""))}\n'
         '. "$DOTFILES_DIR/shell/common/init.sh"\n'
-        f'exec {shlex.join(command)}\n'
+        + (f'export PATH="$PATH":{shlex.quote(str(fallback))}\n' if fallback else '')
+        + f'exec {shlex.join(command)}\n'
     )
     launcher.chmod(0o755)
     if existing:
@@ -121,7 +131,14 @@ def mac_action(home, action):
     config = plistlib.loads(service.read_bytes())
     target = f'gui/{os.getuid()}/{config["Label"]}'
     if action in ('inspect', 'status'):
-        run('launchctl', 'print', target)
+        # `t3 stop` boots the service out, after which launchd no longer knows
+        # the label and answers only "Bad request". Exit 3, as systemctl does
+        # for a stopped unit.
+        result = subprocess.run(['launchctl', 'print', target], capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f'{config["Label"]} is stopped; run t3 start.')
+            return 3
+        print(result.stdout, end='')
     elif action == 'logs':
         paths = list(dict.fromkeys(config[key] for key in ('StandardOutPath', 'StandardErrorPath') if key in config))
         if not paths:
@@ -150,7 +167,7 @@ def main():
         if sys.argv[1] == 'setup':
             setup(home, os.environ.get('DOTFILES_PROFILE') == 'macos')
         else:
-            mac_action(home, sys.argv[1])
+            return mac_action(home, sys.argv[1]) or 0
     except (ValueError, OSError) as error:
         print(f't3: {error}', file=sys.stderr)
         return 1
