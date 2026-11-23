@@ -58,7 +58,9 @@ done
 # --------------------------------------------------------------------------------
 # Fetch, pull, prune and show branches
 
-git multi fetch --all
+# --prune drops the remote-tracking refs of branches deleted on the remote, such
+# as those GitHub deletes after merging their pull request.
+git multi fetch --all --prune
 git multi pl
 git multi bd
 git multi branch

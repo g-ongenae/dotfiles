@@ -31,15 +31,30 @@
   b = branch
     # Create a [b]ack[u]p of the current branch (useful to create before a merge or rebase)
   bu = "!sh -c \"git branch -c "backup/$(git rev-parse --abbrev-ref HEAD)"\" -"
-    # Remove all merged branch of the current repository
-    # Handle worktrees, and skip the main branches (master, main)
+    # Remove all merged branch of the current repository, squash-merged ones too when run from
+    # a main branch (master, main), which are never deleted.
+    # Handle worktrees: a dirty one is kept, along with its branch.
   bd = "!f() {\
-    git for-each-ref --merged HEAD --format='%(HEAD)|%(refname:short)|%(worktreepath)' refs/heads | \
+    case $(git rev-parse --abbrev-ref HEAD) in master|main) squash=1;; *) squash=;; esac; \
+    git for-each-ref --format='%(HEAD)|%(refname:short)|%(worktreepath)' refs/heads | \
       while IFS='|' read -r head branch wt; do \
       [ \"$head\" = '*' ] && continue; \
       case \"$branch\" in master|main) continue;; esac; \
+      if git merge-base --is-ancestor \"$branch\" HEAD; then flag=-d; \
+      elif [ -n \"$squash\" ] && git squashed \"$branch\"; then flag=-D; \
+      else continue; fi; \
       [ -n \"$wt\" ] && { git worktree remove \"$wt\" || continue; }; \
-      git branch -d \"$branch\"; done; \
+      git branch \"$flag\" \"$branch\"; done; \
+    }; f"
+    # Succeed when HEAD already holds every change of <branch>, landed by squash merges:
+    # merging the branch would leave HEAD's tree as it is (one or several squash merges), or
+    # the branch's whole diff matches, whitespace included, one commit of HEAD since they
+    # diverged (one squash merge, with lines changed again later on HEAD).
+  squashed = "!f() {\
+    [ \"$(git merge-tree --write-tree HEAD \"$1\" 2>/dev/null)\" = \"$(git rev-parse HEAD^{tree})\" ] && return; \
+    base=$(git merge-base HEAD \"$1\") || return; \
+    id=$(git diff --no-ext-diff \"$base\" \"$1\" | git patch-id --verbatim | cut -d' ' -f1); \
+    [ -n \"$id\" ] && git log -p --no-ext-diff \"$base..HEAD\" | git patch-id --verbatim | grep -q \"^$id \"; \
     }; f"
   cu = current-branch
   current-branch = rev-parse --abbrev-ref HEAD                  # Get the current branch name
