@@ -32,12 +32,12 @@
     # Create a [b]ack[u]p of the current branch (useful to create before a merge or rebase)
   bu = "!sh -c \"git branch -c "backup/$(git rev-parse --abbrev-ref HEAD)"\" -"
     # Remove all merged branch of the current repository
-    # Handle worktrees, and skip the main branches (master, main, develop, beta)
+    # Handle worktrees, and skip the main branches (master, main, develop)
   bd = "!f() {\
     git for-each-ref --merged HEAD --format='%(HEAD)|%(refname:short)|%(worktreepath)' refs/heads | \
       while IFS='|' read -r head branch wt; do \
       [ \"$head\" = '*' ] && continue; \
-      case \"$branch\" in master|main|develop|beta) continue;; esac; \
+      case \"$branch\" in master|main|develop) continue;; esac; \
       [ -n \"$wt\" ] && { git worktree remove \"$wt\" || continue; }; \
       git branch -d \"$branch\"; done; \
     }; f"
@@ -45,7 +45,7 @@
   current-branch = rev-parse --abbrev-ref HEAD                  # Get the current branch name
     # Get the default (HEAD) branch of the current repository
   head = "!sh -c \"git checkout $(git head-name)\" -"
-  # head = !f() { if [[ -z \"$(git current-branch | tr -d ' ' | grep -Eq  '^(master|main|develop|beta)$')\" ]] ; then git checkout "$(git head-name)" ; fi ; }; f"
+  # head = !f() { if [[ -z \"$(git current-branch | tr -d ' ' | grep -Eq  '^(master|main|develop)$')\" ]] ; then git checkout "$(git head-name)" ; fi ; }; f"
   head-name = "!sh -c \"git remote show origin | grep -E 'Branche HEAD :|HEAD branch:|Hauptbranch:' | cut -d':' -f2\" -"
   m = merge
     # Print the last commit of each branch, order by date, source: https://stackoverflow.com/a/30076212
