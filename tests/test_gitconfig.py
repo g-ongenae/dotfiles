@@ -210,6 +210,32 @@ class BranchDeleteTests(unittest.TestCase):
         self.assertEqual(self.branches(), {'main'})
         self.assertFalse(worktree.exists())
 
+    def test_deletes_a_worktree_whose_submodule_has_no_reflog_left(self):
+        worktree = self.squash_merged_worktree_with_submodule('no-reflog')
+        library = worktree / 'library'
+        self.checkpoint(library, reflog=False)
+        self.git('reflog', 'expire', '--expire=all', '--all', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main'})
+        self.assertFalse(worktree.exists())
+
+    def test_keeps_a_worktree_whose_submodule_has_an_unpushed_detached_head(self):
+        worktree = self.squash_merged_worktree_with_submodule('detached-submodule')
+        library = worktree / 'library'
+        # The worktree records the unpushed commit, so it stays clean.
+        self.commit('unpushed', 'unpushed.txt', cwd=library)
+        self.git('commit', '-q', '-am', 'Update library', cwd=worktree)
+        self.squash_merge('detached-submodule')
+        # The pushed main branch keeps its reflog.
+        self.git('reflog', 'expire', '--expire=all', 'HEAD', cwd=library)
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'detached-submodule'})
+        self.assertTrue(worktree.exists())
+
     def test_keeps_a_worktree_whose_submodule_has_a_t3_checkpoint_merging_unpushed_work(self):
         worktree = self.squash_merged_worktree_with_submodule('checkpointed-merge')
         library = worktree / 'library'
@@ -218,7 +244,8 @@ class BranchDeleteTests(unittest.TestCase):
         self.git('switch', '-q', '--detach', 'HEAD~1', cwd=library)
         self.checkpoint(library, parents=('HEAD', 'feature'))
         self.git('branch', '-q', '-D', 'feature', cwd=library)
-        self.git('reflog', 'expire', '--expire=all', '--all', cwd=library)
+        # The checkpoint and the pushed main branch keep their reflog.
+        self.git('reflog', 'expire', '--expire=all', 'HEAD', cwd=library)
 
         self.git('bd')
 

@@ -62,8 +62,9 @@
     [ -d \"$gd/modules\" ] || { git worktree remove \"$1\"; return; }; \
     un=$(find \"$gd/modules\" -type d -name objects -prune | while read -r objects; do ( \
       export GIT_DIR=\"${objects%/objects}\"; \
-      refs=$(git rev-parse --exclude='refs/t3/*' --all) && t3=$(git rev-parse --glob='refs/t3/*') && \
-        logged=$(git rev-list --no-walk --reflog) || { echo error; exit; }; \
+      refs=$(git rev-list --no-walk --exclude='refs/t3/*' --all --stdin </dev/null) && \
+        t3=$(git rev-parse --glob='refs/t3/*') && \
+        logged=$(git rev-list --no-walk --reflog --stdin </dev/null) || { echo error; exit; }; \
       { [ -z \"$refs\" ] || echo \"$refs\"; printf '%s\\n' \"$t3\" \"$logged\" | sort -u | while read -r c; do \
         [ -n \"$c\" ] && git log -1 --format='%T %P %s' \"$c\" | { read -r tree parent subject; \
           case $subject in ('t3 checkpoint ref=refs/t3/'*) \
