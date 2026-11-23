@@ -453,6 +453,64 @@ class T3Tests(unittest.TestCase):
         self.assertEqual(self.run_t3('local', COMMAND_EXIT='1').returncode, 1)
         self.assertEqual(self.calls(), [['t3', 'pair', '--label', 'local']])
 
+    def fail_pairing(self, error, times=None):
+        """Make the fake T3 CLI fail `pair` with error, the first `times` calls or always."""
+        tool = self.bin / 't3'
+        count = self.home / 'pair-count'
+        tool.write_text(
+            tool.read_text().replace(
+                'elif Path(sys.argv[0]).name == "t3":\n',
+                'elif Path(sys.argv[0]).name == "t3" and sys.argv[1] == "pair" and (\n'
+                f'    {times!r} is None or len(Path({str(count)!r}).read_text() if Path({str(count)!r}).exists() else "") < {times or 0}\n'
+                '):\n'
+                f'    Path({str(count)!r}).open("a").write(".")\n'
+                f'    print("[10:15:10] ERROR: {error}: ... Start one with `t3 serve`.")\n'
+                '    sys.exit(1)\n'
+                'elif Path(sys.argv[0]).name == "t3":\n',
+            )
+        )
+
+    def test_local_waits_for_a_service_that_is_still_starting(self):
+        # `t3 start; t3 local`: launchd or systemd reports the service up a few
+        # seconds before the server has opened its database and said where it
+        # listens.
+        self.fail_pairing('NoRunningServerError', times=2)
+        result = self.run_t3('local')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('waiting for the T3 server to start', result.stderr)
+        pairs = [call for call in self.calls() if call[0] == 't3']
+        self.assertEqual(len(pairs), 3)
+        self.assertEqual(self.calls()[-1], ['open', 'https://server:3773/#token=code'])
+
+    def test_local_gives_up_on_a_service_that_never_serves(self):
+        self.fail_pairing('NoRunningServerError')
+        result = self.run_t3('local', T3_LOCAL_DEADLINE='1')
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('did not start within 1s', result.stderr)
+        self.assertIn('t3 logs', result.stderr)
+
+    def test_local_with_a_stopped_service_names_this_helpers_start(self):
+        # The T3 CLI advises its own `t3 serve`, which this helper shadows
+        # without offering; the helper's own advice replaces it.
+        self.fail_pairing('NoRunningServerError')
+        result = self.run_t3('local', T3_STATE='inactive')
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('run t3 start', result.stderr)
+        self.assertNotIn('t3 serve', result.stderr)
+        self.assertEqual(len([call for call in self.calls() if call[0] == 't3']), 1)
+
+    def test_pairing_against_a_server_of_another_version_names_setup(self):
+        # The service still runs the T3 it was set up with, while the shell's
+        # newer CLI refuses to touch that server's database.
+        self.fail_pairing('ServerOwnsDatabaseError')
+        for action in (('local',), ('pair', 'phone')):
+            result = self.run_t3(*action)
+            self.assertEqual(result.returncode, 1)
+            self.assertIn('t3 setup', result.stderr)
+            self.assertIn('t3 restart', result.stderr)
+            self.assertNotIn('t3 serve', result.stderr)
+        self.assertFalse(any(call[0] in ('open', 'systemctl') for call in self.calls()))
+
     def test_devices_lists_both_kinds_and_revoke_drops_an_id(self):
         self.assertEqual(self.run_t3('devices').returncode, 0)
         self.assertEqual(self.run_t3('revoke', 'ab12-34').returncode, 0)
@@ -576,9 +634,9 @@ class T3Tests(unittest.TestCase):
         service = self.home / '.config/systemd/user/t3code.service'
         self.assertIn('ExecStart=/bin/sh', service.read_text())
         launcher = self.home / '.local/share/dotfiles/t3/server.sh'
-        self.assertIn('serve --host 127.0.0.1 --port 3773 --no-browser', launcher.read_text())
-        # npm's entry point, not the file behind it, which an update may move.
-        self.assertIn(str(self.bin / 't3') + ' serve', launcher.read_text())
+        self.assertIn('exec t3 serve --host 127.0.0.1 --port 3773 --no-browser', launcher.read_text())
+        # Run by name, falling back on the directory setup found it in.
+        self.assertIn(f'export PATH="$PATH":{self.bin.resolve()}\n', launcher.read_text())
         self.assertIn('shell/common/init.sh', launcher.read_text())
         self.assertEqual(self.calls(), [['t3', '--help'], ['systemctl', '--user', 'daemon-reload']])
         # A second setup leaves the service alone, but refreshes the launcher
@@ -606,8 +664,38 @@ class T3Tests(unittest.TestCase):
         result = self.run_t3('setup', DOTFILES_PROFILE='fedora')
         self.assertEqual(result.returncode, 0, result.stderr)
         launcher = (self.home / '.local/share/dotfiles/t3/server.sh').read_text()
-        self.assertIn(str(self.bin / 't3') + ' serve', launcher)
-        self.assertNotIn(str(implementation), launcher)
+        self.assertIn('exec t3 serve', launcher)
+        self.assertIn(f'export PATH="$PATH":{self.bin.resolve()}\n', launcher)
+        self.assertNotIn(str(implementation.parent), launcher)
+
+    def test_launcher_follows_the_default_node_rather_than_the_one_at_setup(self):
+        # Setup found T3 under one Node; the installer has since made another
+        # Node the default, and `t3 update` updates the T3 under that one. The
+        # service has to run that T3 too, or the shell's newer CLI refuses to
+        # touch the database of the older server.
+        self.assertEqual(self.run_t3('setup', DOTFILES_PROFILE='fedora').returncode, 0)
+        node = self.home / 'node-v26/bin'
+        node.mkdir(parents=True)
+        (node / 't3').write_text(
+            f'#!{sys.executable}\n'
+            'import json, os, sys\n'
+            'with open(os.environ["CALL_LOG"], "a") as output:\n'
+            '    output.write(json.dumps(["default-node-t3"] + sys.argv[1:]) + "\\n")\n'
+        )
+        (node / 't3').chmod(0o755)
+        record = self.home / '.config/dotfiles/node-path.sh'
+        record.parent.mkdir(parents=True)
+        record.write_text(f'dotfiles_prepend_path {node}\n')
+        launcher = self.home / '.local/share/dotfiles/t3/server.sh'
+        env = dict(self.env, PATH=f'{self.bin}:/usr/bin:/bin')
+        subprocess.run(['/bin/sh', str(launcher)], env=env, check=True, capture_output=True)
+        self.assertEqual(
+            self.calls()[-1], ['default-node-t3', 'serve', '--host', '127.0.0.1', '--port', '3773', '--no-browser']
+        )
+        # Without that record, the directory setup found it in still serves.
+        record.unlink()
+        subprocess.run(['/bin/sh', str(launcher)], env=dict(env, PATH='/usr/bin:/bin'), check=True, capture_output=True)
+        self.assertEqual(self.calls()[-1], ['t3', 'serve', '--host', '127.0.0.1', '--port', '3773', '--no-browser'])
 
     def test_macos_setup_and_local_lifecycle(self):
         result = self.run_t3('setup', DOTFILES_PROFILE='macos')
@@ -657,6 +745,14 @@ class T3Tests(unittest.TestCase):
                 str(self.home / 'Library/LaunchAgents/com.dotfiles.t3code.plist'),
             ],
         )
+
+    def test_macos_status_of_a_stopped_service_says_so(self):
+        # `t3 stop` boots the service out, after which launchd only answers
+        # "Bad request" about its label.
+        self.assertEqual(self.run_t3('setup', DOTFILES_PROFILE='macos').returncode, 0)
+        result = self.run_t3('status', DOTFILES_PROFILE='macos', COMMAND_EXIT='113')
+        self.assertEqual(result.returncode, 3)
+        self.assertIn('com.dotfiles.t3code is stopped; run t3 start.', result.stdout)
 
     def test_macos_existing_upstream_agent_is_preserved_and_controlled(self):
         service = self.home / 'Library/LaunchAgents/com.t3tools.t3code.service.plist'
