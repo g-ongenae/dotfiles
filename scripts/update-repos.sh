@@ -28,7 +28,7 @@ fi
 
 # Equivalent to git multi head
 # But it does not call the distant repos if the current branch
-# is already considered stable (main, master or develop)
+# is already considered stable (main or master)
 # This will speed up the process when you have many repos
 echo "\
 --------------------------------------------------------------------------------
@@ -42,9 +42,9 @@ for DIR in ./*/; do
   if [ -d "${DIR}/.git" ]; then
     CURRENT_BRANCH=$(git -C "${DIR}" rev-parse --abbrev-ref HEAD)
 
-    # Do not change branch if on main, master or develop branches
+    # Do not change branch if on main or master branches
     case "${CURRENT_BRANCH}" in
-      main | master | develop)
+      main | master)
         echo "Skipping ${DIR} on branch ${CURRENT_BRANCH}"
         ;;
       *)
