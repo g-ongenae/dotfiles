@@ -49,8 +49,9 @@
     # Remove the worktree at <path> when it is clean, its submodules included: no change and no
     # untracked file in any checked-out submodule, and no commit missing from the remotes in the
     # git dirs of its submodules, deinitialized ones too, since the removal deletes them: local
-    # branches, tags, stashes, and commits only left in a reflog. T3's checkpoint refs (refs/t3/)
-    # are left out: T3 snapshots the submodules of its worktrees there, which holds no work.
+    # branches, tags, stashes, and commits only left in a reflog. A T3 checkpoint (refs/t3/, which
+    # T3 uses to snapshot the submodules of its worktrees, reflog included) counts as no work when
+    # its tree is the one of its parent, itself on a remote; any other checkpoint keeps it.
     # git worktree remove refuses worktrees with submodules unless forced, hence these checks.
   wt-remove = "!f() {\
     cd \"${GIT_PREFIX:-.}\" || return; \
@@ -59,9 +60,15 @@
     [ -z \"$st\" ] || { echo \"Keeping worktree $1: it has changes\" >&2; return 1; }; \
     gd=$(git -C \"$1\" rev-parse --absolute-git-dir) || return; \
     [ -d \"$gd/modules\" ] || { git worktree remove \"$1\"; return; }; \
-    un=$(find \"$gd/modules\" -type d -name objects -prune | while read -r objects; do \
-      git --git-dir=\"${objects%/objects}\" log --oneline -1 --exclude='refs/t3/*' --all --reflog --not --remotes || echo error; \
-      done); \
+    un=$(find \"$gd/modules\" -type d -name objects -prune | while read -r objects; do ( \
+      export GIT_DIR=\"${objects%/objects}\"; \
+      git for-each-ref --format='%(refname)' refs/t3 | while read -r ref; do \
+        git rev-parse \"$ref\"; git log -g --format=%H \"$ref\" -- 2>/dev/null; done | sort -u | \
+        while read -r c; do \
+        [ \"$(git rev-parse -q --verify \"$c^{tree}\")\" = \"$(git rev-parse -q --verify \"$c^^{tree}\")\" ] && \
+        pushed=$(git rev-list -1 \"$c^\" --not --remotes) && [ -z \"$pushed\" ] && echo \"^$c\"; done | \
+      git log --oneline -1 --stdin --all --reflog --not --remotes || echo error; \
+      ); done); \
     [ -z \"$un\" ] || { echo \"Keeping worktree $1: a submodule has commits missing from its remotes\" >&2; return 1; }; \
     git worktree remove --force \"$1\"; \
     }; f"
