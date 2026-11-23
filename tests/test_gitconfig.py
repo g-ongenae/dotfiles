@@ -36,20 +36,20 @@ class BranchDeleteTests(unittest.TestCase):
             ['git', *args], cwd=cwd or self.repo, env=self.env, check=True, capture_output=True, text=True
         ).stdout
 
-    def commit(self, message, name, cwd=None):
+    def commit(self, message, name, cwd=None, content=None):
         path = Path(cwd or self.repo) / name
-        path.write_text(message + '\n')
+        path.write_text((message if content is None else content) + '\n')
         self.git('add', name, cwd=cwd)
         self.git('commit', '-q', '-m', message, cwd=cwd)
 
-    def branch_with_commits(self, branch, worktree=False):
+    def branch_with_commits(self, branch, worktree=False, start='HEAD'):
         """Create a branch with two commits, in its own worktree when asked."""
         if worktree:
             cwd = self.temp / branch
-            self.git('worktree', 'add', '-q', '-b', branch, str(cwd))
+            self.git('worktree', 'add', '-q', '-b', branch, str(cwd), start)
         else:
             cwd = self.repo
-            self.git('switch', '-q', '-c', branch)
+            self.git('switch', '-q', '-c', branch, start)
         self.commit(f'{branch} one', f'{branch}-1.txt', cwd=cwd)
         self.commit(f'{branch} two', f'{branch}-2.txt', cwd=cwd)
         if not worktree:
@@ -94,6 +94,46 @@ class BranchDeleteTests(unittest.TestCase):
 
         self.assertEqual(self.branches(), {'main', 'extended', 'dirty'})
         self.assertTrue(dirty.exists())
+
+    def test_deletes_a_stacked_branch_squash_merged_in_parts(self):
+        self.branch_with_commits('first')
+        self.branch_with_commits('second', start='first')
+        self.squash_merge('first')
+        self.squash_merge('second')
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main'})
+
+    def test_deletes_a_squash_merged_branch_whose_lines_main_changed_since(self):
+        self.git('switch', '-q', '-c', 'edited')
+        self.commit('topic', 'base.txt')
+        self.git('switch', '-q', 'main')
+        self.squash_merge('edited')
+        self.commit('changed again on main', 'base.txt')
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main'})
+
+    def test_keeps_a_branch_whose_change_differs_from_main_only_in_whitespace(self):
+        self.git('switch', '-q', '-c', 'spaced')
+        self.commit('topic', 'value.txt', content='value = "a b"')
+        self.git('switch', '-q', 'main')
+        self.commit('main', 'value.txt', content='value = "ab"')
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'spaced'})
+
+    def test_squash_merges_count_only_from_a_main_branch(self):
+        self.branch_with_commits('topic')
+        self.git('switch', '-q', '-c', 'integration')
+        self.squash_merge('topic')
+
+        self.git('bd')
+
+        self.assertEqual(self.branches(), {'main', 'integration', 'topic'})
 
 
 if __name__ == '__main__':
